@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIAKANUDA — WhatsApp Bot Panel</title>
+  <meta name="description" content="Panel manajemen WhatsApp Bot SIAKANUDA — SMK NU Darussalam">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────────── -->
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <img src="/logo-smk.png" alt="Logo" class="logo-img">
+      <div>
+        <h1>SIAKA<strong>NUDA</strong></h1>
+        <p>WhatsApp Bot Panel</p>
+      </div>
+    </div>
+    <div class="top-bar-right">
+      <span class="status-pill" id="wa-status-pill">
+        <span class="dot"></span>
+        <span id="wa-status-text">Menghubungkan...</span>
+      </span>
+      <a href="http://localhost:8080" target="_blank" class="btn-dashboard" id="link-dashboard" title="Buka Dashboard Utama CI4">
+        <i class="fa-solid fa-gauge-high"></i>
+        <span>Dashboard</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ── Main Grid ──────────────────────────────────────────────── -->
+  <main class="grid-container">
+
+    <!-- Card: Koneksi WA ──────────────────────────────────────── -->
+    <section class="card card-connection" id="card-connection">
+      <div class="card-header">
+        <h2><i class="fa-brands fa-whatsapp"></i> Koneksi WhatsApp</h2>
+        <span class="badge" id="conn-badge">Offline</span>
+      </div>
+      <div class="card-body center-col">
+        <!-- QR Code area -->
+        <div id="qr-container" class="qr-box">
+          <div class="qr-placeholder">
+            <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+            <p>Menunggu koneksi server...</p>
+          </div>
+        </div>
+        <!-- Info Bot -->
+        <div class="info-grid" id="bot-info">
+          <div class="info-item">
+            <span class="info-label">Nomor Bot</span>
+            <span class="info-value" id="info-phone">—</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Nama Akun</span>
+            <span class="info-value" id="info-name">—</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Versi</span>
+            <span class="info-value" id="info-version">—</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Card: Kirim Pesan ─────────────────────────────────────── -->
+    <section class="card card-send">
+      <div class="card-header">
+        <h2><i class="fa-solid fa-paper-plane"></i> Kirim Pesan Manual</h2>
+      </div>
+      <div class="card-body">
+        <form id="form-send">
+          <div class="form-group">
+            <label for="send-phone">Nomor Penerima</label>
+            <input type="text" id="send-phone" placeholder="628xxxxxxxxxx" required>
+          </div>
+          <div class="form-group">
+            <label for="send-message">Isi Pesan</label>
+            <textarea id="send-message" rows="3" placeholder="Ketik pesan yang ingin dikirim..." required></textarea>
+          </div>
+          <button type="submit" class="btn-primary" id="btn-send">
+            <i class="fa-solid fa-paper-plane"></i> Kirim
+          </button>
+        </form>
+        <div class="send-result" id="send-result"></div>
+      </div>
+    </section>
+
+    <!-- Card: Cron Jobs ───────────────────────────────────────── -->
+    <section class="card card-cron">
+      <div class="card-header">
+        <h2><i class="fa-solid fa-clock"></i> Cron Jobs</h2>
+      </div>
+      <div class="card-body">
+        <p class="card-desc">Trigger manual untuk simulasi jadwal otomatis.</p>
+        <div class="cron-grid">
+          <button class="cron-btn" data-job="1" title="Cek kelas yang belum di-absen">
+            <i class="fa-solid fa-clipboard-check"></i>
+            <span>08:30 — Cek Absensi KBM</span>
+          </button>
+          <button class="cron-btn" data-job="2" title="Pengingat jurnal PKL">
+            <i class="fa-solid fa-briefcase"></i>
+            <span>16:00 — Pengingat PKL</span>
+          </button>
+          <button class="cron-btn" data-job="3" title="Eskalasi laporan PKL ke pembimbing">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>19:00 — Eskalasi PKL</span>
+          </button>
+          <button class="cron-btn" data-job="4" title="Auto-alpha siswa tanpa keterangan">
+            <i class="fa-solid fa-user-xmark"></i>
+            <span>23:59 — Auto Alpha</span>
+          </button>
+        </div>
+        <div class="cron-result" id="cron-result"></div>
+      </div>
+    </section>
+
+    <!-- Card: Riwayat Pesan ───────────────────────────────────── -->
+    <section class="card card-logs">
+      <div class="card-header">
+        <h2><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Pesan Bot</h2>
+        <button class="btn-icon" id="btn-refresh-logs" title="Refresh">
+          <i class="fa-solid fa-arrows-rotate"></i>
+        </button>
+      </div>
+      <div class="card-body no-pad">
+        <div class="table-scroll">
+          <table id="table-logs">
+            <thead>
+              <tr>
+                <th>Waktu</th>
+                <th>Nomor</th>
+                <th>Arah</th>
+                <th>Pesan</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-logs">
+              <tr><td colspan="4" class="empty">Memuat riwayat pesan...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Footer ─────────────────────────────────────────────────── -->
+  <footer class="footer">
+    <p>SIAKANUDA v1.4.6 — Background Service &bull; <a href="http://localhost:8080" id="footer-link">Buka Dashboard Utama →</a></p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

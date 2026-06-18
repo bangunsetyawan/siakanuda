@@ -1,0 +1,119 @@
+/**
+ * execution/ai_processor.js
+ * SIAKANUDA v1.0.0 — Tier 3: Gemini AI command parser.
+ *
+ * STRATEGI HEMAT TOKEN:
+ * - AI HANYA dipanggil jika pesan tidak cocok dengan menu angka atau perintah #
+ * - Daftar siswa TIDAK dikirim jika pesan tidak mengandung nama/kata kunci siswa
+ * - Model: gemini-1.5-flash (paling hemat, gratis 1.500 req/hari)
+ * - System prompt dipadatkan seminimal mungkin
+ */
+
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import * as db from './db.js';
+
+let genAI;
+let model;
+
+export function initAI(apiKey) {
+  if (!apiKey) {
+    console.warn('[AI] ⚠️  GEMINI_API_KEY tidak diset. Mode AI dinonaktifkan.');
+    return;
+  }
+  genAI = new GoogleGenerativeAI(apiKey);
+  // Gunakan model Flash — paling cepat & hemat token
+  model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  console.log('[AI] Gemini 2.5 Flash siap (hemat token)');
+}
+
+// ─── Deteksi: apakah pesan mungkin berisi nama siswa? ─────────────────────────
+// Jika iya, kirim daftar siswa ke AI. Jika tidak, hemat token — kirim prompt ringkas.
+function likelySiswaQuery(text) {
+  const triggers = ['siswa', 'murid', 'nama', 'kelas', 'absen', 'hadir', 'alpha',
+                    'pelanggaran', 'poin', 'konseling', 'bimbingan', 'rekap',
+                    'siapa', 'daftar', 'list', 'laporan', 'data'];
+  const lower = text.toLowerCase();
+  return triggers.some(t => lower.includes(t));
+}
+
+/**
+ * Parse pesan WA menjadi array JSON action untuk dieksekusi.
+ * Mengembalikan minimal 1 action, atau action 'unknown' jika tidak dimengerti.
+ */
+export async function parseCommand(text, students, senderName) {
+  if (!model) {
+    return [{ action: 'unknown', params: {}, confirmation: '⚠️ Fitur AI tidak aktif. Gunakan perintah menu (1-4) atau format #absen, #poin, #cek.' }];
+  }
+
+  // ── Bangun konteks DB (ringkas) ──────────────────────────────────────────────
+  let dbStats = '';
+  let studentList = '';
+
+  try {
+    const stats = db.getDashboardStats();
+    dbStats = `DB: ${stats.totalStudents} siswa, ${stats.totalTeachers} guru, absen tidak hadir hari ini: ${stats.absenToday}`;
+  } catch (_) {}
+
+  // Hemat token: hanya sertakan daftar siswa jika relevan
+  if (likelySiswaQuery(text) && students && students.length > 0) {
+    // Kirim format ringkas: "Nama (Kelas)" bukan objek lengkap
+    studentList = students
+      .slice(0, 200) // maksimal 200 siswa untuk hemat token
+      .map(s => `${s.name}(${s.class})`)
+      .join(',');
+  }
+
+  // ── System Prompt (dipadatkan) ───────────────────────────────────────────────
+  const systemPrompt = `Kamu asisten ${senderName} di ${process.env.SCHOOL_NAME || 'SMKN U DARUSSALAM'}.
+Tanggal: ${new Date().toLocaleDateString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric' })}.
+${dbStats}
+${studentList ? `Daftar siswa: ${studentList}` : ''}
+
+Ubah pesan menjadi JSON array. Setiap elemen: {"action":"...","params":{...},"confirmation":"...","error":null}
+
+Actions: add_attendance(name,class?,status[alpha/sakit/izin/hadir],date?,note?), add_violation(name,class?,category,points,description?), add_counseling(name,class?,type,content,counselor?), query_student(name,class?), query_attendance(status?,class?,date?), query_violations(name?,class?), query_stats, add_student(name,class,nis?,gender?), delete_record(table,id), unknown.
+
+BALAS HANYA JSON VALID. Tanpa markdown/penjelasan.`;
+
+  try {
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: `${systemPrompt}\n\nPesan: ${text}` }] }],
+      generationConfig: { temperature: 0.1, maxOutputTokens: 512, responseMimeType: 'application/json' }, // batasi output token
+    });
+
+    const raw = result.response.text().trim();
+
+    // Bersihkan markdown code block jika ada
+    const clean = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/g, '').trim();
+
+    const parsed = JSON.parse(clean);
+    return Array.isArray(parsed) ? parsed : [parsed];
+
+  } catch (err) {
+    console.error('[AI] Parse error:', err.message);
+    return [{
+      action: 'unknown',
+      params: {},
+      confirmation: '❓ Saya kurang memahami perintah tersebut. Coba gunakan format:\n• `#absen [Nama] [H/S/I/A]`\n• `#poin [Nama] [Poin] [Kasus]`\n• `#cek [Nama]`\n• Atau ketik *menu* untuk panduan lengkap.',
+      error: err.message
+    }];
+  }
+}
+
+/**
+ * Generate laporan/narasi ringkas dari data.
+ * Dipanggil hanya saat admin minta rekap naratif — bukan untuk setiap pesan.
+ */
+export async function generateReport(prompt, data) {
+  if (!model) return 'Fitur AI tidak aktif.';
+  try {
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: `${prompt}\n\nData: ${JSON.stringify(data)}` }] }],
+      generationConfig: { temperature: 0.3, maxOutputTokens: 800 },
+    });
+    return result.response.text();
+  } catch (err) {
+    console.error('[AI] Report error:', err.message);
+    return `Gagal generate laporan: ${err.message}`;
+  }
+}

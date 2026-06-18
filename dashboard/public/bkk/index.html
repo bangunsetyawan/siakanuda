@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bursa Kerja Khusus — SMK NU Darussalam</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
+
+        :root {
+            --sage: #0284c7;
+            --sage-dark: #0369a1;
+            --sage-light: #f0f9ff;
+            --sage-dim: rgba(2, 132, 199, 0.1);
+            --warm-cream: #faf8f5;
+            --pure-white: #ffffff;
+            --charcoal: #0f172a;
+            --text-muted: #64748b;
+            --border: rgba(2, 132, 199, 0.15);
+            --gold-accent: #10b981;
+            --shadow: 0 15px 35px rgba(2, 132, 199, 0.05);
+            --primary-bg: #e0f2fe;
+            --primary-dark: #0369a1;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--warm-cream);
+            color: var(--charcoal);
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- LEFT COLUMN: LOGIN SIDEBAR --- */
+        .login-sidebar {
+            background-color: var(--pure-white);
+            border-right: 1px solid var(--border);
+            padding: 40px 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100vh;
+            overflow-y: auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .brand-header img {
+            height: 35px;
+            width: auto;
+        }
+
+        .brand-divider {
+            width: 1px;
+            height: 22px;
+            background-color: var(--border);
+        }
+
+        .brand-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            color: var(--sage-dark);
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        .form-section {
+            margin: auto 0;
+            padding: 20px 0;
+        }
+
+        .form-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--charcoal);
+            line-height: 1.1;
+            margin-bottom: 8px;
+        }
+
+        .form-desc {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--sage-dark);
+            margin-bottom: 6px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+
+        .input-field {
+            width: 100%;
+            background-color: var(--sage-light);
+            border: 1px solid rgba(125, 157, 123, 0.1);
+            padding: 12px 14px 12px 40px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            color: var(--charcoal);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            background-color: var(--pure-white);
+            border-color: var(--sage);
+            box-shadow: 0 0 0 4px rgba(125, 157, 123, 0.08);
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .error-message {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            background-color: rgba(231, 76, 60, 0.06);
+            border: 1px solid rgba(231, 76, 60, 0.12);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.8rem;
+            color: #c0392b;
+            margin-bottom: 18px;
+        }
+
+        .error-message.show {
+            display: flex;
+            animation: shake 0.4s ease both;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, var(--sage) 0%, var(--sage-dark) 100%);
+            border: none;
+            border-radius: 10px;
+            color: var(--pure-white);
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 15px rgba(125, 157, 123, 0.18);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(125, 157, 123, 0.25);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .security-notice {
+            background-color: var(--sage-light);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 0.76rem;
+            color: var(--sage-dark);
+            line-height: 1.4;
+            display: flex;
+            gap: 8px;
+            margin-top: 25px;
+        }
+
+        .security-notice i {
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-footer {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(125, 157, 123, 0.08);
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+
+        .server-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background-color: var(--sage-light);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            color: var(--sage-dark);
+        }
+
+        .status-dot {
+            width: 5px;
+            height: 5px;
+            background-color: #2ecc71;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #2ecc71;
+        }
+
+        /* --- RIGHT COLUMN: PUBLIC LANDING DASHBOARD --- */
+        .landing-main {
+            height: 100vh;
+            overflow-y: auto;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .welcome-banner {
+            background: linear-gradient(135deg, var(--sage-dark) 0%, var(--charcoal) 100%);
+            color: var(--pure-white);
+            border-radius: 24px;
+            padding: 35px 40px;
+            box-shadow: 0 15px 35px rgba(62, 82, 61, 0.15);
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 30px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            flex-shrink: 0;
+        }
+
+        .welcome-banner::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(197, 168, 128, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .banner-main h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.3rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 12px;
+            color: var(--pure-white);
+        }
+
+        .banner-main h1 span {
+            color: var(--gold-accent);
+        }
+
+        .banner-badge {
+            display: inline-block;
+            background-color: var(--gold-accent);
+            color: var(--charcoal);
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            letter-spacing: 0.05em;
+        }
+
+        .banner-contacts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 15px;
+            font-size: 0.85rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            padding-top: 15px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .contact-item i {
+            color: var(--gold-accent);
+        }
+
+        .banner-services {
+            background: rgba(255, 255, 255, 0.04);
+            border-left: 3px solid var(--gold-accent);
+            padding: 20px;
+            border-radius: 0 12px 12px 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .service-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.88rem;
+            font-weight: 500;
+        }
+
+        .service-item i {
+            color: var(--gold-accent);
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 992px) {
+            .welcome-banner {
+                grid-template-columns: 1fr;
+                padding: 25px;
+            }
+            .banner-services {
+                border-left: none;
+                border-top: 3px solid var(--gold-accent);
+                border-radius: 0 0 12px 12px;
+                padding-top: 20px;
+            }
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+        }
+
+        .stat-card {
+            background-color: var(--pure-white);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            background-color: rgba(125, 157, 123, 0.1);
+            color: var(--sage-dark);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .stat-info h3 {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .stat-info p {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--charcoal);
+        }
+
+        /* Filter & Charts */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--charcoal);
+        }
+
+        .filter-year {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--pure-white);
+            padding: 6px 12px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+
+        .filter-year select {
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 3px 6px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 20px;
+        }
+
+        .chart-box {
+            background: var(--pure-white);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            padding: 20px;
+        }
+
+        .chart-box h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-container {
+            height: 240px;
+            position: relative;
+        }
+
+        /* Search Section */
+        .search-section {
+            background: var(--pure-white);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            padding: 25px;
+        }
+
+        .search-header {
+            margin-bottom: 15px;
+        }
+
+        .search-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--charcoal);
+            margin-bottom: 4px;
+        }
+
+        .search-desc {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-input-wrapper {
+            flex-grow: 1;
+            position: relative;
+        }
+
+        .search-input-wrapper i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .search-field {
+            width: 100%;
+            padding: 12px 14px 12px 40px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-field:focus {
+            border-color: var(--sage);
+            box-shadow: 0 0 0 4px rgba(125, 157, 123, 0.08);
+        }
+
+        .btn-search {
+            padding: 12px 25px;
+            background-color: var(--sage-dark);
+            color: var(--pure-white);
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-search:hover {
+            background-color: var(--charcoal);
+        }
+
+        .search-results {
+            display: none;
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            text-align: left;
+        }
+
+        .results-table th {
+            background-color: var(--sage-light);
+            color: var(--sage-dark);
+            font-weight: 700;
+            padding: 10px 15px;
+            position: sticky;
+            top: 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .results-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* --- GLOBAL LOADER --- */
+        #globalLoader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        /* Mobile Toggle Styles */
+        .btn-toggle-stats {
+            display: none;
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, var(--gold-accent) 0%, #059669 100%);
+            border: none;
+            border-radius: 10px;
+            color: var(--pure-white);
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-bottom: 20px;
+            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.18);
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.25s ease;
+        }
+        .btn-toggle-stats:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(16, 185, 129, 0.25);
+        }
+        .mobile-close-stats {
+            display: none;
+            margin-bottom: 15px;
+        }
+        .btn-close-stats {
+            width: 100%;
+            padding: 12px;
+            background: var(--pure-white);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--sage-dark);
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: var(--shadow);
+            transition: all 0.25s ease;
+        }
+
+        /* --- RESPONSIVE LAYOUT --- */
+        @media (max-width: 1024px) {
+            html {
+                font-size: 13px !important;
+            }
+
+            body {
+                grid-template-columns: 1fr;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            .login-sidebar {
+                height: 100vh;
+                border-right: none;
+                padding: 30px 20px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .form-title {
+                font-size: 1.8rem;
+            }
+
+            .landing-main {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                background-color: var(--warm-cream);
+                z-index: 1000;
+                padding: 20px 15px;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch; /* Smooth scrolling for older WebViews */
+                will-change: transform; /* Hardware acceleration hint */
+            }
+
+            .banner-main h1 {
+                font-size: 1.6rem;
+            }
+
+            body.show-stats .landing-main {
+                display: flex;
+                flex-direction: column;
+                animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+
+            .btn-toggle-stats {
+                display: flex;
+            }
+
+            .mobile-close-stats {
+                display: block;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            .welcome-banner {
+                padding: 20px;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .social-footer-bar a:hover {
+            color: var(--sage) !important;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Global Loading Overlay -->
+    <div id="globalLoader">
+        <i class="fas fa-sync fa-spin" style="font-size: 3rem; color: var(--sage); margin-bottom: 15px;"></i>
+        <h2 style="color: var(--charcoal); margin-bottom: 5px;">Menghubungkan Database</h2>
+        <p style="color: var(--text-muted);">Sedang mengambil data alumni dari Supabase Cloud...</p>
+    </div>
+
+    <!-- ===== SISI KIRI: LOGIN SIDEBAR PANEL ===== -->
+    <aside class="login-sidebar">
+        <!-- Brand Header -->
+        <div class="brand-header">
+            <img src="logo-bkk.png" alt="Logo BKK">
+            <div class="brand-divider"></div>
+            <img src="logo-smk.png" alt="Logo SMK">
+            <div class="brand-title">BKK SMK NU<br>Darussalam</div>
+        </div>
+
+        <!-- Form Login Minimalis -->
+        <div class="form-section">
+            <h2 class="form-title">Portal Admin</h2>
+            <p class="form-desc">Masukkan kredensial pengelola untuk mengedit database alumni.</p>
+
+            <!-- Mobile Toggle Button (Hanya terlihat di HP) -->
+            <button type="button" class="btn-toggle-stats" onclick="togglePublicDashboard()">
+                <i class="fas fa-chart-bar"></i> Lihat Statistik Alumni
+            </button>
+
+            <form id="loginForm" onsubmit="handleLogin(event)" autocomplete="off">
+                <!-- Username -->
+                <div class="input-group">
+                    <label class="input-label" for="username">Username</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" id="username" class="input-field" placeholder="Masukkan username" required autofocus>
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="input-group">
+                    <label class="input-label" for="password">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="password" class="input-field" placeholder="Masukkan password" required>
+                        <button type="button" class="toggle-password" onclick="togglePassword()">
+                            <i class="fas fa-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Error Box -->
+                <div class="error-message" id="loginError">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Username atau password salah!</span>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-login" id="submitBtn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Masuk Panel Admin</span>
+                </button>
+                
+                <a href="../login" style="display: flex; align-items: center; justify-content: center; margin-top: 15px; text-decoration: none; font-size: 0.85rem; font-weight: 600; color: #6b7280; gap: 6px; transition: color 0.2s;" onmouseover="this.style.color='#10b981'" onmouseout="this.style.color='#6b7280'">
+                    <i class="fas fa-arrow-left"></i> Kembali ke SIAKANUDA
+                </a>
+            </form>
+
+            <div class="security-notice">
+                <i class="fas fa-shield-alt"></i>
+                <span>Akses data sensitif dan manajemen dashboard dibatasi khusus bagi staf BKK SMK NU Darussalam yang berwenang.</span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="sidebar-footer">
+            <span>© 2026 TIM TKJ</span>
+            <div class="server-status">
+                <div class="status-dot"></div>
+                <span>Supabase Live</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ===== SISI KANAN: PUBLIC LANDING DASHBOARD ===== -->
+    <main class="landing-main">
+        <!-- Mobile Close Button (Hanya terlihat di HP saat statistik terbuka) -->
+        <div class="mobile-close-stats">
+            <button type="button" class="btn-close-stats" onclick="togglePublicDashboard()">
+                <i class="fas fa-arrow-left"></i> Kembali ke Form Login (Minimize)
+            </button>
+        </div>
+
+        <!-- Banner Spanduk Selamat Datang -->
+        <section class="welcome-banner">
+            <div class="banner-main">
+                <div class="eyebrow" style="color: var(--gold-accent);">Bursa Kerja Khusus (BKK)</div>
+                <h1>Pusat Informasi Kerja &amp;<br>Pelayanan Alumni <span>SMK NU Darussalam</span></h1>
+                <div class="banner-badge">No. Tanda Daftar: SK.560/446/429.106/2025</div>
+                
+                <div class="banner-contacts">
+                    <div class="contact-item">
+                        <i class="fas fa-clock"></i>
+                        <span>Layanan: 08.00 - 11.00 WIB</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fab fa-whatsapp"></i>
+                        <span>Call Center: 0838-3028-3379 / 0853-3435-4102</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="banner-services">
+                <div class="service-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Informasi Lowongan Kerja</span>
+                </div>
+                <div class="service-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Rekrutmen &amp; Penempatan Kerja</span>
+                </div>
+                <div class="service-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Bimbingan Karier &amp; Minat Bakat</span>
+                </div>
+                <div class="service-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Pengembangan Kewirausahaan</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section Title & Filter Tahun -->
+        <div class="section-header">
+            <h2 class="section-title"><i class="fas fa-chart-line"></i> Rekapitulasi Data Alumni</h2>
+            <div class="filter-year">
+                <label for="yearFilter" style="font-weight: 600;"><i class="fas fa-filter"></i> Tahun Kelulusan:</label>
+                <select id="yearFilter">
+                    <option value="all">Semua Angkatan</option>
+                    <option value="2027">2027 (Mendatang)</option>
+                    <option value="2026">2026</option>
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                    <option value="2022">2022</option>
+                    <option value="2021">2021</option>
+                    <option value="2020">2020</option>
+                    <option value="2019">2019</option>
+                    <option value="2018">2018</option>
+                    <option value="2017">2017</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Metrics Cards Grid -->
+        <section class="stats-grid">
+            <!-- Total Alumni -->
+            <div class="stat-card">
+                <div class="stat-icon" style="background-color: rgba(30, 41, 59, 0.08); color: #1e293b;">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Total Lulusan</h3>
+                    <p id="statTotal" style="font-weight: 700; color: #1e293b;">0</p>
+                </div>
+            </div>
+            <!-- Bekerja -->
+            <div class="stat-card">
+                <div class="stat-icon" style="background-color: rgba(0, 180, 216, 0.12); color: #00b4d8;">
+                    <i class="fas fa-briefcase"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Bekerja</h3>
+                    <p id="statKerja" style="color: #00b4d8; font-weight: 700;">0</p>
+                </div>
+            </div>
+            <!-- Kuliah -->
+            <div class="stat-card">
+                <div class="stat-icon" style="background-color: rgba(236, 72, 153, 0.12); color: #ec4899;">
+                    <i class="fas fa-university"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Studi Lanjut</h3>
+                    <p id="statKuliah" style="color: #ec4899; font-weight: 700;">0</p>
+                </div>
+            </div>
+            <!-- Wirausaha -->
+            <div class="stat-card">
+                <div class="stat-icon" style="background-color: rgba(234, 179, 8, 0.12); color: #eab308;">
+                    <i class="fas fa-store"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Wirausaha</h3>
+                    <p id="statUsaha" style="color: #ca8a04; font-weight: 700;">0</p>
+                </div>
+            </div>
+            <!-- Belum Bekerja -->
+            <div class="stat-card">
+                <div class="stat-icon" style="background-color: rgba(239, 68, 68, 0.12); color: #ef4444;">
+                    <i class="fas fa-user-clock"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Mencari Kerja</h3>
+                    <p id="statBelum" style="color: #ef4444; font-weight: 700;">0</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Grid Layout -->
+        <section class="charts-grid">
+            <!-- Doughnut: Status -->
+            <div class="chart-box">
+                <h3><i class="fas fa-chart-pie"></i> Distribusi Status Alumni</h3>
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+            <!-- Bar: Jurusan -->
+            <div class="chart-box">
+                <h3><i class="fas fa-chart-bar"></i> Tren Lulusan Per Jurusan (TKJ, AKL, TKR)</h3>
+                <div class="chart-container">
+                    <canvas id="majorTrendChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Search Bar Section Publik (Read Only) -->
+        <section class="search-section">
+            <div class="search-header">
+                <h3 class="search-title"><i class="fas fa-search"></i> Cari Status Tracer Alumni</h3>
+                <p class="search-desc">Masukkan nama lengkap alumni di bawah ini untuk melihat tahun lulus, jurusan, dan status penempatan karirnya secara mandiri.</p>
+            </div>
+            <div class="search-bar">
+                <div class="search-input-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchAlumni" class="search-field" placeholder="Masukkan nama alumni yang dicari...">
+                </div>
+                <button class="btn-search" onclick="searchAlumniData()">Cari Nama</button>
+            </div>
+            <!-- Table Container -->
+            <div id="searchResults" class="search-results">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Nama Lengkap</th>
+                            <th>Angkatan</th>
+                            <th>Status Kerja / Studi</th>
+                            <th>Instansi / Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="searchTableBody">
+                        <!-- Diisi otomatis oleh JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Social Media Footer Bar (Dari banner.png) -->
+        <div class="social-footer-bar" style="display: flex; justify-content: center; gap: 25px; flex-wrap: wrap; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--text-muted);">
+            <a href="https://instagram.com/smknudarussalamsrono" target="_blank" style="color: var(--text-muted); display: flex; align-items: center; gap: 6px; transition: color 0.2s;"><i class="fab fa-instagram" style="color: #e1306c;"></i> @smknudarussalamsrono</a>
+            <a href="https://instagram.com/bkk_smknuda" target="_blank" style="color: var(--text-muted); display: flex; align-items: center; gap: 6px; transition: color 0.2s;"><i class="fab fa-instagram" style="color: #e1306c;"></i> @bkk_smknuda</a>
+            <a href="https://tiktok.com/@smknudarussalam" target="_blank" style="color: var(--text-muted); display: flex; align-items: center; gap: 6px; transition: color 0.2s;"><i class="fab fa-tiktok" style="color: #000;"></i> smknudarussalam</a>
+            <a href="mailto:bkksmknudarussalam@gmail.com" style="color: var(--text-muted); display: flex; align-items: center; gap: 6px; transition: color 0.2s;"><i class="fas fa-envelope" style="color: var(--sage);"></i> bkksmknudarussalam@gmail.com</a>
+        </div>
+    </main>
+
+    <!-- Supabase SDK -->
+    <script src="js/supabase.js"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js Plugin Datalabels -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <!-- Global JS (Auth check, dsb) -->
+    <script src="js/main.js"></script>
+
+    <script>
+        // Register ChartDataLabels plugin globally
+        if (typeof ChartDataLabels !== 'undefined') {
+            Chart.register(ChartDataLabels);
+        }
+
+        // Clear session on login page load
+        sessionStorage.removeItem('role');
+
+        const OFFLINE_USERS = [
+            { username: 'admin', password: 'bkknuda2026', name: 'Admin Utama BKK' },
+            { username: 'bkk',   password: 'smknuda',     name: 'Staf BKK' }
+        ];
+
+        // =====================================================
+        // AUTHENTICATION LOGIN HANDLER
+        // =====================================================
+        async function handleLogin(e) {
+            e.preventDefault();
+            const uname = document.getElementById('username').value.trim();
+            const pwd   = document.getElementById('password').value;
+            const err   = document.getElementById('loginError');
+            const btn   = document.getElementById('submitBtn');
+
+            // Set Loading state
+            const originalBtnHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Memverifikasi...</span>';
+            btn.style.pointerEvents = 'none';
+            err.classList.remove('show');
+
+            let authenticated = false;
+            let loggedInUser = null;
+
+            try {
+                if (!supabase) throw new Error("Supabase SDK gagal dimuat");
+                const { data: users, error } = await supabase.from('users').select('*');
+                if (error) throw error;
+                
+                if (users && users.length > 0) {
+                    loggedInUser = users.find(u => u.username === uname && u.password === pwd);
+                    if (loggedInUser) authenticated = true;
+                }
+            } catch (error) {
+                console.warn("Koneksi Supabase gagal, menggunakan offline fallback credentials:", error);
+                loggedInUser = OFFLINE_USERS.find(u => u.username === uname && u.password === pwd);
+                if (loggedInUser) authenticated = true;
+            }
+
+            if (authenticated) {
+                sessionStorage.setItem('role', 'admin');
+                localStorage.setItem('adminName', loggedInUser.name || 'Administrator');
+                setTimeout(() => {
+                    window.location.replace('admin_dashboard.html');
+                }, 500);
+            } else {
+                btn.innerHTML = originalBtnHTML;
+                btn.style.pointerEvents = 'auto';
+                void err.offsetWidth; // Force Reflow
+                err.classList.add('show');
+                document.getElementById('password').value = '';
+                document.getElementById('password').focus();
+            }
+        }
+
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const icon  = document.getElementById('eyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
+        // =====================================================
+        // PUBLIC STATISTICAL FETCH & GRAPH RENDERING
+        // =====================================================
+        let statusChartObj = null;
+        let trendChartObj = null;
+
+        window.onload = function () {
+            const yearFilter = document.getElementById('yearFilter');
+            if (yearFilter) {
+                yearFilter.addEventListener('change', function (e) {
+                    if (window._alumniDataCache) {
+                        loadPublicDashboardData(e.target.value, window._alumniDataCache);
+                    }
+                });
+            }
+
+            if (!supabase) {
+                console.warn("Supabase SDK gagal dimuat. Menjalankan fallback offline...");
+                document.getElementById('globalLoader').style.display = 'none';
+                
+                let offlineData = [];
+                try {
+                    const saved = localStorage.getItem('alumniData');
+                    if (saved) offlineData = JSON.parse(saved);
+                } catch(err) {}
+                window._alumniDataCache = offlineData;
+                loadPublicDashboardData('all', offlineData);
+                return;
+            }
+
+            // Fetch data alumni
+            supabase.from('alumni').select('*')
+                .then(({ data: cloudData, error }) => {
+                    if (error) throw error;
+                    document.getElementById('globalLoader').style.display = 'none';
+
+                    // Normalisasi kolom ke UPPERCASE
+                    const normalized = (cloudData || []).map(row => {
+                        const newRow = {};
+                        for (let key in row) {
+                            newRow[key.toUpperCase()] = row[key];
+                        }
+                        return newRow;
+                    });
+
+                    window._alumniDataCache = normalized;
+                    localStorage.setItem('alumniData', JSON.stringify(normalized));
+                    loadPublicDashboardData('all', normalized);
+                })
+                .catch(e => {
+                    console.warn("Gagal koneksi ke Supabase:", e);
+                    document.getElementById('globalLoader').style.display = 'none';
+                    
+                    let offlineData = [];
+                    try {
+                        const saved = localStorage.getItem('alumniData');
+                        if (saved) offlineData = JSON.parse(saved);
+                    } catch(err) {}
+                    window._alumniDataCache = offlineData;
+                    loadPublicDashboardData('all', offlineData);
+                });
+        };
+
+        function loadPublicDashboardData(filterYear, dataSource) {
+            let dataArray = dataSource || window._alumniDataCache || [];
+
+            let total = 0, bekerja = 0, kuliah = 0, wirausaha = 0, belumBekerja = 0;
+            let yearCounts = {};
+            let majorCountsByYear = {};
+
+            for (let y = 2017; y <= 2027; y++) {
+                yearCounts[y] = { total: 0, bekerja: 0, kuliah: 0, wirausaha: 0, belum: 0 };
+                majorCountsByYear[y] = { tkj: 0, akl: 0, tkr: 0, total: 0 };
+            }
+
+            dataArray.forEach(row => {
+                let status = (row['STATUS_UTAMA'] || row['STATUS'] || row['Status'] || row['status'] || '').toLowerCase().replace(/study/g, 'studi');
+                let year = parseInt(row['TAHUN_LULUS'] || row['Tahun Lulus'] || row['Angkatan']) || 0;
+
+                let isKerja = false, isKuliah = false, isUsaha = false, isBelum = false;
+
+                if (status.includes('tidak') || status.includes('mencari')) {
+                    isBelum = true;
+                } else if (status.includes('studi') && !status.includes('bekerja') && !status.includes('usaha')) {
+                    isKuliah = true;
+                } else if (status.includes('usaha')) {
+                    isUsaha = true;
+                } else if (status.includes('kerja') || status.includes('bekerja')) {
+                    isKerja = true;
+                } else if (status.includes('kuliah')) {
+                    isKuliah = true;
+                } else {
+                    isBelum = true;
+                }
+
+                if (yearCounts[year]) {
+                    yearCounts[year].total++;
+                    if (isKerja) yearCounts[year].bekerja++;
+                    if (isKuliah) yearCounts[year].kuliah++;
+                    if (isUsaha) yearCounts[year].wirausaha++;
+                    if (isBelum) yearCounts[year].belum++;
+                }
+
+                if (majorCountsByYear[year]) {
+                    let major = (row['KOMPETENSI_KEAHLIAN'] || row['KOMPETENSI'] || row['Jurusan'] || '').toLowerCase();
+                    if (major.includes('tkj') || major.includes('komputer')) {
+                        majorCountsByYear[year].tkj++;
+                        majorCountsByYear[year].total++;
+                    } else if (major.includes('akuntansi') || major.includes('akl')) {
+                        majorCountsByYear[year].akl++;
+                        majorCountsByYear[year].total++;
+                    } else if (major.includes('kendaraan') || major.includes('tkr')) {
+                        majorCountsByYear[year].tkr++;
+                        majorCountsByYear[year].total++;
+                    }
+                }
+
+                if (filterYear !== 'all' && year !== parseInt(filterYear)) {
+                    return;
+                }
+
+                total++;
+                if (isKerja) bekerja++;
+                if (isKuliah) kuliah++;
+                if (isUsaha) wirausaha++;
+                if (isBelum) belumBekerja++;
+            });
+
+            // Update DOM Cards
+            document.getElementById('statTotal').innerText = total.toLocaleString('id-ID');
+            document.getElementById('statKerja').innerText = bekerja.toLocaleString('id-ID');
+            document.getElementById('statKuliah').innerText = kuliah.toLocaleString('id-ID');
+            document.getElementById('statUsaha').innerText = wirausaha.toLocaleString('id-ID');
+            document.getElementById('statBelum').innerText = belumBekerja.toLocaleString('id-ID');
+
+            // Draw Charts
+            updatePublicCharts(bekerja, kuliah, wirausaha, belumBekerja, yearCounts, majorCountsByYear);
+        }
+
+        function updatePublicCharts(bekerja, kuliah, wirausaha, belum, yearCounts, majorCountsByYear) {
+            if (typeof Chart === 'undefined') {
+                console.warn("Chart.js tidak termuat. Grafik tidak akan digambar.");
+                return;
+            }
+            const sumStatus = bekerja + kuliah + wirausaha + belum;
+            const statusLabels = sumStatus === 0 ? ['Tidak Ada Data'] : ['Bekerja', 'Studi Lanjut', 'Wirausaha', 'Mencari Kerja'];
+            const statusData = sumStatus === 0 ? [1] : [bekerja, kuliah, wirausaha, belum];
+            // Bright CMYK Palette (Cyan, Magenta, Yellow/Gold, Red)
+            const statusColors = sumStatus === 0 ? ['#e2e8f0'] : ['#00b4d8', '#ec4899', '#eab308', '#ef4444'];
+
+            // Status Chart
+            const ctxStatus = document.getElementById('statusChart').getContext('2d');
+            if (statusChartObj) statusChartObj.destroy();
+            statusChartObj = new Chart(ctxStatus, {
+                type: 'doughnut',
+                data: {
+                    labels: statusLabels,
+                    datasets: [{
+                        data: statusData,
+                        backgroundColor: statusColors,
+                        borderWidth: sumStatus === 0 ? 0 : 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 6,
+                        borderRadius: sumStatus === 0 ? 0 : 6,
+                        spacing: sumStatus === 0 ? 0 : 4
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    cutout: '78%',
+                    plugins: {
+                        datalabels: {
+                            display: false // Sembunyikan datalabels pada status doughnut chart agar tidak bertumpuk
+                        },
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }
+                    }
+                }
+            });
+
+            // Trend Chart
+            const years = [];
+            const tkjData = [];
+            const aklData = [];
+            const tkrData = [];
+            const totalData = [];
+
+            for (let y = 2017; y <= 2026; y++) {
+                years.push(y);
+                tkjData.push(majorCountsByYear[y].tkj);
+                aklData.push(majorCountsByYear[y].akl);
+                tkrData.push(majorCountsByYear[y].tkr);
+                totalData.push(majorCountsByYear[y].total);
+            }
+
+            const ctxTrend = document.getElementById('majorTrendChart').getContext('2d');
+            if (trendChartObj) trendChartObj.destroy();
+
+            // Membuat gradasi warna bar premium (CMYK Terang)
+            const gradTkj = ctxTrend.createLinearGradient(0, 0, 0, 300);
+            gradTkj.addColorStop(0, '#00b4d8');
+            gradTkj.addColorStop(1, 'rgba(0, 180, 216, 0.15)');
+
+            const gradAkl = ctxTrend.createLinearGradient(0, 0, 0, 300);
+            gradAkl.addColorStop(0, '#ec4899');
+            gradAkl.addColorStop(1, 'rgba(236, 72, 153, 0.15)');
+
+            const gradTkr = ctxTrend.createLinearGradient(0, 0, 0, 300);
+            gradTkr.addColorStop(0, '#eab308');
+            gradTkr.addColorStop(1, 'rgba(234, 179, 8, 0.15)');
+
+            trendChartObj = new Chart(ctxTrend, {
+                type: 'bar',
+                data: {
+                    labels: years,
+                    datasets: [
+                        { 
+                            label: 'TKJ', 
+                            data: tkjData, 
+                            backgroundColor: gradTkj, 
+                            borderColor: '#00b4d8',
+                            borderWidth: 1.5,
+                            borderRadius: 6,
+                            borderSkipped: false
+                        },
+                        { 
+                            label: 'AKL', 
+                            data: aklData, 
+                            backgroundColor: gradAkl, 
+                            borderColor: '#ec4899',
+                            borderWidth: 1.5,
+                            borderRadius: 6,
+                            borderSkipped: false
+                        },
+                        { 
+                            label: 'TKR', 
+                            data: tkrData, 
+                            backgroundColor: gradTkr, 
+                            borderColor: '#eab308',
+                            borderWidth: 1.5,
+                            borderRadius: 6,
+                            borderSkipped: false
+                        },
+                        {
+                            label: 'Total Lulusan',
+                            type: 'line',
+                            data: totalData,
+                            borderColor: '#4f46e5',
+                            backgroundColor: '#4f46e5',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#4f46e5',
+                            pointBorderWidth: 2,
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            tension: 0.35,
+                            fill: false,
+                            datalabels: {
+                                display: function(context) {
+                                    return context.dataset.data[context.dataIndex] > 0;
+                                },
+                                color: '#ffffff',
+                                backgroundColor: '#4f46e5',
+                                borderRadius: 4,
+                                padding: { top: 4, bottom: 4, left: 6, right: 6 },
+                                font: { weight: 'bold', size: 10, family: 'Inter' },
+                                align: 'top',
+                                offset: 8
+                            }
+                        }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: {
+                        datalabels: {
+                            display: function(context) {
+                                // Tampilkan angka kelulusan hanya jika nilainya > 0
+                                return context.dataset.data[context.dataIndex] > 0;
+                            },
+                            anchor: 'end',
+                            align: 'top',
+                            offset: 2,
+                            font: {
+                                family: 'Inter',
+                                size: 10,
+                                weight: '600'
+                            },
+                            color: '#475569'
+                        },
+                        legend: { 
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 15,
+                                usePointStyle: true,
+                                font: { family: 'Inter', size: 10, weight: '600' }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            grace: '25%', // Memberikan ruang di atas grafik agar datalabels tidak terpotong
+                            grid: { 
+                                color: '#e2e8f0',
+                                borderDash: [5, 5],
+                                drawBorder: false 
+                            },
+                            ticks: {
+                                font: { family: 'Inter', size: 11, weight: '500' }
+                            }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            ticks: {
+                                font: { family: 'Inter', size: 11, weight: '500' }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // =====================================================
+        // PUBLIC SEARCH ALUMNI HANDLER
+        // =====================================================
+        function searchAlumniData() {
+            const searchVal = document.getElementById('searchAlumni').value.trim().toLowerCase();
+            const resultsContainer = document.getElementById('searchResults');
+            const tbody = document.getElementById('searchTableBody');
+
+            if (!searchVal) {
+                resultsContainer.style.display = 'none';
+                return;
+            }
+
+            const savedData = localStorage.getItem('alumniData');
+            if (!savedData) return;
+
+            let dataArray = [];
+            try { dataArray = JSON.parse(savedData); } catch (e) { }
+
+            const results = dataArray.filter(row => {
+                let nama = (row['NAMA_LENGKAP'] || row['Nama Lengkap'] || row['NAMA'] || '').toLowerCase();
+                return nama.includes(searchVal);
+            });
+
+            if (results.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="padding: 15px; text-align: center; color: var(--text-muted);">Tidak ada alumni dengan nama tersebut.</td></tr>`;
+            } else {
+                let html = '';
+                results.forEach(row => {
+                    let nama = row['NAMA_LENGKAP'] || row['Nama Lengkap'] || row['NAMA'] || '-';
+                    let tahun = row['TAHUN_LULUS'] || row['Tahun Lulus'] || row['Angkatan'] || '-';
+                    let jurusan = row['KOMPETENSI_KEAHLIAN'] || row['KOMPETENSI'] || row['Jurusan'] || '-';
+                    let status = row['STATUS_UTAMA'] || row['STATUS'] || row['Status'] || row['status'] || '-';
+                    let tempat = row['NAMA_TEMPAT_KERJA'] || row['NAMA_KAMPUS_PERUSAHAAN'] || row['Nama Tempat Kerja'] || row['JABATAN_PEKERJAAN'] || '-';
+
+                    let statusBadge = '';
+                    if (status.toLowerCase().includes('kerja')) statusBadge = '<span style="background: rgba(46, 204, 113, 0.12); color: #27ae60; padding: 3px 8px; border-radius: 20px; font-weight: bold;">Bekerja</span>';
+                    else if (status.toLowerCase().includes('kuliah') || status.toLowerCase().includes('studi') || status.toLowerCase().includes('study')) statusBadge = '<span style="background: rgba(52, 152, 219, 0.12); color: #2980b9; padding: 3px 8px; border-radius: 20px; font-weight: bold;">Studi Lanjut</span>';
+                    else if (status.toLowerCase().includes('usaha')) statusBadge = '<span style="background: rgba(241, 196, 15, 0.12); color: #f39c12; padding: 3px 8px; border-radius: 20px; font-weight: bold;">Wirausaha</span>';
+                    else statusBadge = `<span style="color: var(--text-muted);">${status}</span>`;
+
+                    html += `
+                    <tr>
+                        <td style="font-weight: 600; color: var(--charcoal);">${nama}</td>
+                        <td>${tahun} <br> <span style="font-size: 0.72rem; color: var(--text-muted);">${jurusan}</span></td>
+                        <td>${statusBadge}</td>
+                        <td>${tempat}</td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+            }
+            resultsContainer.style.display = 'block';
+        }
+
+        // Trigger search on Enter key press
+        document.getElementById('searchAlumni').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                searchAlumniData();
+            }
+        });
+
+        // Toggle public stats drawer on mobile
+        function togglePublicDashboard() {
+            document.body.classList.toggle('show-stats');
+        }
+    </script>
+
+</body>
+</html>

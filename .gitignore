@@ -1,0 +1,67 @@
+# =============================================
+# SIAKANUDA — .gitignore
+# =============================================
+
+# Dependencies (install ulang dengan npm install / composer install)
+node_modules/
+dashboard/vendor/
+
+# Environment & Credentials (JANGAN PERNAH DI-COMMIT!)
+.env
+dashboard/.env
+*.env.local
+*.env.production
+
+# WhatsApp Session (scan QR ulang jika perlu)
+sessions/
+sessions_corrupt/
+auth_info_multi/
+
+# Upload foto PKL (ada di Supabase Storage)
+uploads/
+!uploads/.gitkeep
+
+# SQLite database files (data siswa — RAHASIA!)
+*.db
+!seed.db
+*.db-shm
+*.db-wal
+
+# File temporary & scratch
+.tmp/
+scratch/
+*.tar.gz
+*.zip
+~$*.xlsx
+~$*
+~*
+
+# Database backups (keep folder, ignore db files)
+backups/*.db
+backups/boot-*.log
+!backups/.gitkeep
+
+# Binary tools
+ngrok.exe
+*.exe
+
+# Logs
+*.log
+dashboard/writable/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+.cursor/
+
+# Android build directory (separate repository)
+siakanuda-apk/
+
+# Testing artifacts
+playwright-report/
+test-results/

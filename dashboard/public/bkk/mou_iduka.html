@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOU IDUKA - BKK SMK NU Darussalam</title>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- AdminLTE 3.2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+    <div class="wrapper">
+
+        <!-- Navbar -->
+        <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+            <!-- Left navbar links -->
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link d-flex align-items-center" data-widget="pushmenu" href="#" role="button">
+                        <i class="fas fa-bars mr-2"></i>
+                        <span class="font-weight-bold" style="font-size: 0.9rem;">Menu</span>
+                    </a>
+                </li>
+                <li class="nav-item d-none d-sm-inline-block">
+                    <a href="admin_dashboard.html" class="nav-link">Home</a>
+                </li>
+            </ul>
+
+            <!-- Right navbar links -->
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link d-flex align-items-center" data-toggle="dropdown" href="#">
+                        <span class="mr-2 d-none d-md-inline font-weight-bold text-dark" id="displayAdminName">Admin BKK</span>
+                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 32px; height: 32px;" id="displayAdminInitials">A</div>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right rounded-lg border-0 shadow">
+                        <span class="dropdown-item dropdown-header font-weight-bold text-dark border-bottom">Admin BKK</span>
+                        <a href="index.html" class="dropdown-item text-danger" onclick="sessionStorage.removeItem('role'); localStorage.removeItem('adminName');">
+                            <i class="fas fa-sign-out-alt mr-2"></i> Keluar
+                        </a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+        <!-- /.navbar -->
+
+        <!-- Main Sidebar Container -->
+        <aside class="main-sidebar sidebar-light-primary elevation-0">
+            <!-- Brand Logo -->
+            <a href="admin_dashboard.html" class="brand-link">
+                <img src="logo-bkk.png" alt="BKK" class="brand-image" style="opacity: .8">
+                <span class="brand-text font-weight-light">BKK SMK<strong class="text-success">NUDAR</strong></span>
+            </a>
+
+            <!-- Sidebar -->
+            <div class="sidebar py-3">
+                <!-- Sidebar Menu -->
+                <nav class="mt-2">
+                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                        <li class="nav-header">MENU UTAMA</li>
+                        <li class="nav-item">
+                            <a href="admin_dashboard.html" class="nav-link">
+                                <i class="nav-icon fas fa-home"></i>
+                                <p>Home Dashboard</p>
+                            </a>
+                        </li>
+                        <li class="nav-header">MANAJEMEN DATA</li>
+                        <li class="nav-item">
+                            <a href="data_alumni.html" class="nav-link">
+                                <i class="nav-icon fas fa-users"></i>
+                                <p>Data Alumni</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="mitra_industri.html" class="nav-link">
+                                <i class="nav-icon fas fa-building"></i>
+                                <p>Mitra Industri</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="mou_iduka.html" class="nav-link active">
+                                <i class="nav-icon fas fa-handshake"></i>
+                                <p>MOU IDUKA</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="kunjungan_industri.html" class="nav-link">
+                                <i class="nav-icon fas fa-truck"></i>
+                                <p>Kunjungan Industri</p>
+                            </a>
+                        </li>
+                        <li class="nav-header">SISTEM</li>
+                        <li class="nav-item">
+                            <a href="pengaturan.html" class="nav-link">
+                                <i class="nav-icon fas fa-cog"></i>
+                                <p>Pengaturan</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="index.html" class="nav-link text-danger" onclick="sessionStorage.removeItem('role'); localStorage.removeItem('adminName');">
+                                <i class="nav-icon fas fa-sign-out-alt text-danger"></i>
+                                <p>Logout</p>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                <!-- /.sidebar-menu -->
+            </div>
+            <!-- /.sidebar -->
+        </aside>
+
+        <!-- Content Wrapper. Contains page content -->
+        <div class="content-wrapper">
+            <!-- Content Header (Page header) -->
+            <div class="content-header">
+                <div class="container-fluid">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <h1 class="page-title" style="margin-bottom: 4px; letter-spacing: -0.02em;">Daftar MOU IDUKA</h1>
+                            <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">Kelola data kerja sama (MOU) dengan Industri, Dunia Usaha, dan Dunia Kerja (IDUKA).</p>
+                        </div>
+                        <div class="action-btns" style="display: flex; gap: 10px;">
+                            <button class="btn btn-primary" onclick="addEmptyRow()">
+                                <i class="fas fa-plus"></i> Tambah Data
+                            </button>
+                            <button class="btn btn-success" onclick="saveData()">
+                                <i class="fas fa-save"></i> Simpan Perubahan
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="window.print()" style="border-color: #0284c7; color: #0284c7;">
+                                <i class="fas fa-print"></i> Cetak PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main content -->
+            <section class="content px-3 pb-5">
+                <div class="container-fluid">
+                    <div class="card card-primary card-outline">
+                        <div class="card-header">
+                            <h3 class="card-title font-weight-bold"><i class="fas fa-handshake text-primary mr-2"></i> Dokumen Kerja Sama IDUKA</h3>
+                            <div class="card-tools">
+                                <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <button type="button" class="btn btn-tool" data-card-widget="maximize">
+                                    <i class="fas fa-expand"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive" style="border: none; box-shadow: none; margin-bottom: 0;">
+                                <table class="data-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 60px; text-align: center;">NO</th>
+                                            <th>NO. MOU</th>
+                                            <th>IDUKA / INSTANSI</th>
+                                            <th>ALAMAT</th>
+                                            <th>BIDANG</th>
+                                            <th>KONSENTRASI JURUSAN</th>
+                                            <th>BENTUK KERJASAMA</th>
+                                            <th style="width: 90px; text-align: center;">AKSI</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dataTableBody">
+                                        <tr>
+                                            <td colspan="8" style="text-align: center; padding: 30px;">
+                                                <i class="fas fa-sync fa-spin text-primary mr-2"></i> Memuat data...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <!-- /.content-wrapper -->
+
+        <footer class="main-footer bg-white border-top text-center py-3">
+            <strong>Copyright &copy; 2026 <a href="#">SMK NU Darussalam</a>.</strong>
+            All rights reserved.
+        </footer>
+    </div>
+    <!-- ./wrapper -->
+
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <!-- Bootstrap 4 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.1/js/bootstrap.bundle.min.js"></script>
+    <!-- AdminLTE App -->
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+    <!-- Supabase SDK CDN -->
+    <script src="js/supabase.js"></script>
+    <!-- Custom JS -->
+    <script src="js/main.js"></script>
+    <script>
+        let tableData = [];
+
+        window.onload = function() {
+            loadData();
+        };
+
+        function loadData() {
+            const tbody = document.getElementById('dataTableBody');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 30px;"><i class="fas fa-sync fa-spin text-primary mr-2"></i> Sinkronisasi Cloud...</td></tr>`;
+            }
+
+            if (!supabase) {
+                console.warn("Supabase SDK gagal dimuat. Menjalankan fallback offline...");
+                const savedData = localStorage.getItem('mouData');
+                if (savedData) {
+                    try {
+                        tableData = JSON.parse(savedData);
+                    } catch(err) {
+                        tableData = [];
+                    }
+                } else {
+                    tableData = [];
+                }
+                renderTable();
+                return;
+            }
+
+            supabase.from('mou').select('*')
+                .then(({ data, error }) => {
+                    if (error) throw error;
+                    tableData = data || [];
+                    localStorage.setItem('mouData', JSON.stringify(tableData));
+                    renderTable();
+                })
+                .catch(e => {
+                    console.error("Gagal sinkronisasi Supabase, menggunakan data lokal:", e);
+                    const savedData = localStorage.getItem('mouData');
+                    if (savedData) {
+                        try {
+                            tableData = JSON.parse(savedData);
+                        } catch(err) {
+                            tableData = [];
+                        }
+                    } else {
+                        tableData = [];
+                    }
+                    renderTable();
+                });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('dataTableBody');
+            
+            if (tableData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">Belum ada data MOU. Klik "Tambah Data" untuk memulai.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            tableData.forEach((row, index) => {
+                html += `
+                <tr data-index="${index}">
+                    <td style="text-align: center; font-weight: bold; color: var(--text-muted);">${index + 1}</td>
+                    <td contenteditable="true" class="editable-cell font-weight-bold text-dark" data-field="mou_no">${row.mou_no || ''}</td>
+                    <td contenteditable="true" class="editable-cell font-weight-bold" data-field="instansi">${row.instansi || ''}</td>
+                    <td contenteditable="true" class="editable-cell" data-field="alamat">${row.alamat || ''}</td>
+                    <td contenteditable="true" class="editable-cell" data-field="bidang">${row.bidang || ''}</td>
+                    <td style="padding: 0;">
+                        <select class="editable-cell" data-field="konsentrasi" style="border:none; outline:none; background:transparent; font-family:inherit; font-size:inherit; color:inherit; width:100%; height:100%; cursor:pointer; padding: 12px;">
+                            <option value="" ${!row.konsentrasi ? 'selected' : ''}>Pilih...</option>
+                            <option value="Teknik Komputer dan Jaringan (TKJ)" ${row.konsentrasi === 'Teknik Komputer dan Jaringan (TKJ)' ? 'selected' : ''}>TKJ</option>
+                            <option value="Teknik Kendaraan Ringan Otomotif (TKRO)" ${row.konsentrasi === 'Teknik Kendaraan Ringan Otomotif (TKRO)' ? 'selected' : ''}>TKRO</option>
+                            <option value="Akuntansi dan Keuangan Lembaga (AKL)" ${row.konsentrasi === 'Akuntansi dan Keuangan Lembaga (AKL)' ? 'selected' : ''}>AKL</option>
+                            <option value="Semua Jurusan" ${row.konsentrasi === 'Semua Jurusan' ? 'selected' : ''}>Semua Jurusan</option>
+                        </select>
+                    </td>
+                    <td contenteditable="true" class="editable-cell" data-field="kerjasama">${row.kerjasama || ''}</td>
+                    <td style="text-align: center;">
+                        <button onclick="deleteRow(${index})" class="btn btn-outline-danger btn-sm" style="padding: 4px 8px; border-radius: 8px;" title="Hapus Baris">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function addEmptyRow() {
+            syncDataFromDOM();
+            tableData.unshift({
+                mou_no: '',
+                instansi: '',
+                alamat: '',
+                bidang: '',
+                konsentrasi: '',
+                kerjasama: ''
+            });
+            renderTable();
+        }
+
+        function deleteRow(index) {
+            if(confirm("Yakin ingin menghapus baris ini?")) {
+                syncDataFromDOM();
+                tableData.splice(index, 1);
+                renderTable();
+            }
+        }
+
+        function syncDataFromDOM() {
+            const rows = document.querySelectorAll('#dataTableBody tr[data-index]');
+            tableData = [];
+            rows.forEach(row => {
+                const rowData = {};
+                row.querySelectorAll('.editable-cell').forEach(cell => {
+                    const field = cell.getAttribute('data-field');
+                    if(cell.tagName === 'SELECT' || cell.tagName === 'INPUT') {
+                        rowData[field] = cell.value;
+                    } else {
+                        rowData[field] = cell.innerText.trim();
+                    }
+                });
+                tableData.push(rowData);
+            });
+        }
+
+        async function saveData() {
+            const btn = document.querySelector('.btn-success[onclick="saveData()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Menyimpan...';
+            btn.style.pointerEvents = 'none';
+
+            syncDataFromDOM();
+            localStorage.setItem('mouData', JSON.stringify(tableData));
+
+            try {
+                // 1. Hapus seluruh data MOU lama dari Supabase
+                const { error: deleteError } = await supabase.from('mou').delete().neq('id', 0);
+                if (deleteError) throw deleteError;
+
+                // 2. Insert baris data MOU baru jika ada
+                if (tableData.length > 0) {
+                    const dbRows = tableData.map(row => {
+                        return {
+                            mou_no: row.mou_no,
+                            instansi: row.instansi,
+                            alamat: row.alamat,
+                            bidang: row.bidang,
+                            konsentrasi: row.konsentrasi,
+                            kerjasama: row.kerjasama
+                        };
+                    });
+                    const { error: insertError } = await supabase.from('mou').insert(dbRows);
+                    if (insertError) throw insertError;
+                }
+
+                // 3. Tarik kembali data terbaru agar memiliki ID Supabase yang sah
+                const { data: cloudData, error: fetchError } = await supabase.from('mou').select('*');
+                if (fetchError) throw fetchError;
+                tableData = cloudData || [];
+                localStorage.setItem('mouData', JSON.stringify(tableData));
+                renderTable();
+
+                btn.innerHTML = '<i class="fas fa-check"></i> Tersimpan!';
+                btn.style.backgroundColor = '#27ae60';
+            } catch(e) {
+                console.error("Gagal menyimpan ke Supabase:", e);
+                btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Gagal!';
+                btn.style.backgroundColor = '#e74c3c';
+            }
+
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.backgroundColor = '';
+                btn.style.pointerEvents = 'auto';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

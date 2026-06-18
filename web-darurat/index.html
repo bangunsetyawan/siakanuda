@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIAKANUDA - Server Offline</title>
+    <!-- Import Boxicons untuk memunculkan ikon sosial media -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            position: relative;
+        }
+        .container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            border-top: 5px solid #dc3545;
+            max-height: 90vh; /* Agar bisa di-scroll jika layar HP pendek */
+            overflow-y: auto;
+        }
+        .logo {
+            max-width: 120px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #dc3545;
+            font-size: 24px;
+            margin-bottom: 15px;
+            margin-top: 0;
+        }
+        p {
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            color: #555;
+        }
+        
+        /* Box Informasi */
+        .info-box {
+            background-color: #f8f9fa; 
+            padding: 15px; 
+            border-left: 4px solid #6c757d; 
+            margin-bottom: 20px; 
+            text-align: left; 
+            font-size: 14px; 
+            color: #444;
+        }
+        .warning-box {
+            background-color: #fff3cd; 
+            padding: 15px; 
+            border-left: 4px solid #ffc107; 
+            margin-bottom: 20px; 
+            text-align: left; 
+            font-size: 14px; 
+            color: #856404;
+        }
+
+        /* Ikon Sosial Media */
+        .social-links {
+            margin-top: 25px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .social-links a {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            height: 40px;
+            background-color: #f8f9fa;
+            color: #555;
+            border-radius: 50%;
+            text-decoration: none;
+            font-size: 22px;
+            transition: all 0.3s ease;
+        }
+        .social-links a:hover {
+            transform: translateY(-3px);
+            color: white;
+        }
+        .social-links a.ig:hover { background-color: #E1306C; }
+        .social-links a.tt:hover { background-color: #000000; }
+        .social-links a.fb:hover { background-color: #1877F2; }
+        .social-links a.wa:hover { background-color: #25D366; }
+        .social-links a.mail:hover { background-color: #D44638; }
+
+        .footer {
+            font-size: 13px;
+            color: #888;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            margin-top: 25px;
+        }
+
+        /* Tombol WhatsApp Melayang (Floating) */
+        .floating-wa {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #25D366;
+            color: white;
+            border-radius: 50px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            box-shadow: 0 4px 10px rgba(37, 211, 102, 0.4);
+            font-weight: bold;
+            font-size: 15px;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        .floating-wa:hover {
+            transform: scale(1.05);
+            color: white;
+        }
+        .floating-wa i {
+            font-size: 26px;
+        }
+        
+        /* Penyesuaian Tombol Melayang di HP */
+        @media (max-width: 600px) {
+            .floating-wa {
+                bottom: 20px;
+                right: 20px;
+                padding: 12px;
+                border-radius: 50%;
+            }
+            .floating-wa span {
+                display: none; /* Sembunyikan teks di layar kecil agar rapi */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Logo SMK -->
+        <img src="https://smknudarussalam.sch.id/wp-content/uploads/2026/05/logosmk.svg" alt="Logo SMK NU Darussalam" class="logo">
+        
+        <h1>Sistem Sedang Offline</h1>
+        <p>Mohon maaf, layanan <strong>SIAKANUDA</strong> saat ini sedang tidak dapat diakses.</p>
+        
+        <div class="info-box">
+            <strong>Kenapa ini terjadi?</strong><br>
+            Karena SIAKANUDA berjalan secara mandiri menggunakan server fisik yang berada di gedung sekolah, maka jika koneksi internet atau aliran listrik PLN di sekolah mengalami gangguan (pemadaman), sistem ini otomatis akan ikut <em>offline</em>.
+        </div>
+
+        <div class="warning-box">
+            <strong>Instruksi Khusus untuk Siswa PKL:</strong><br>
+            Ketua PKL dan Anggota PKL <strong>tetap harus melakukan absensi secara manual</strong> dengan menuliskan kegiatan di buku jurnal fisik dan menyimpan dokumentasi (foto) terlebih dahulu di HP masing-masing.<br><br>
+            Nanti jika sistem sudah kembali <em>online</em>, akan ada pemberitahuan dari WhatsApp SIAKANUDA untuk meng-<em>input</em>-kan data tersebut ke dalam sistem.
+        </div>
+
+        <p>Sistem akan otomatis kembali beroperasi sesaat setelah aliran listrik kembali normal. Terima kasih atas pengertiannya.</p>
+        
+        <!-- Social Media Links (Membutuhkan akses internet untuk meload font Boxicons) -->
+        <div class="social-links">
+            <a href="https://www.instagram.com/smknudarusslamsrono/" target="_blank" title="Instagram" class="ig"><i class="bx bxl-instagram"></i></a>
+            <a href="https://www.tiktok.com/@smknudarussalam" target="_blank" title="TikTok" class="tt"><i class="bx bxl-tiktok"></i></a>
+            <a href="https://www.facebook.com/ppdb.smuda/" target="_blank" title="Facebook" class="fb"><i class="bx bxl-facebook-square"></i></a>
+            <a href="https://wa.me/6285334354102" target="_blank" title="WhatsApp" class="wa"><i class="bx bxl-whatsapp"></i></a>
+            <a href="mailto:humas.smknudarussalam@gmail.com" title="Email" class="mail"><i class="bx bxs-envelope"></i></a>
+        </div>
+
+        <div class="footer">
+            &copy; 2026 SMK NU Darussalam
+        </div>
+    </div>
+
+    <!-- Floating Whatsapp Action Button -->
+    <a href="https://wa.me/6285334354102" target="_blank" class="floating-wa" title="Hubungi Admin">
+        <i class='bx bxl-whatsapp'></i>
+        <span>Hubungi Admin</span>
+    </a>
+</body>
+</html>
