@@ -196,8 +196,8 @@ Panduan lengkap: [docs/DEPLOY_NOTES.md](docs/DEPLOY_NOTES.md)
 |-------|-----|------------|
 | **Internet (Publik)** | [https://siakanuda.qzz.io](https://siakanuda.qzz.io) | Via Cloudflare Tunnel |
 | **Shortlink** | [https://s.id/siakanuda](https://s.id/siakanuda) | Redirect ke URL di atas |
-| **LAN Sekolah** | `http://10.10.11.37:8080` | Akses langsung tanpa internet |
-| **SSH (Tailscale VPN)** | `ssh smknuda@100.110.83.48` | Administrasi server |
+| **LAN Sekolah** | `http://[ip-lokal]:8080` | Akses langsung tanpa internet |
+
 
 ### 🔒 Cloudflare Tunnel
 
