@@ -12,7 +12,7 @@ Dokumen ini berisi rencana pengembangan dan status rilis proyek SIAKANUDA.
 - [x] **Penyederhanaan Bot WhatsApp (v1.2.3)** — Bot kini murni sebagai agen notifikasi & broadcast di latar belakang (Port 7860).
 - [x] **Rombak Panel Port 7860 (v1.5.0)** — Dari SPA penuh (1357 baris) menjadi WA Panel ringan (~160 baris). Hapus PWA (sw.js, manifest.json).
 - [x] **Database Hybrid** — SQLite lokal + Supabase Cloud PostgreSQL (offline-first).
-- [x] **APK WebView** — Target port 8080 dengan script `BUILD-APK.bat` & `GANTI-IP.bat`.
+- [x] **PWA (Progressive Web App)** - Install via Chrome ke layar utama.
 - [x] **Manajemen Tahun Pelajaran (v1.6.0 - v1.8.2)** — Integrasi indikator utama data transaksional (KBM, PKL, BK, Prestasi, Masukan) dan global banner di dashboard. Penyederhanaan menjadi struktur 1 Tahun tanpa Semester.
 - [x] **Cloudflare Tunnel Integration (v1.7.0)** — Akses dashboard dari internet via domain.
 - [x] **9Router AI Gateway Integration (v1.8.6)** — Pembaruan parser Node.js untuk kompatibilitas REST model agnostik.
@@ -41,7 +41,7 @@ Dokumen ini berisi rencana pengembangan dan status rilis proyek SIAKANUDA.
 
 ### UI/UX & WhatsApp Bot
 - [x] **Dashboard Adaptif per Role (v1.2.4)** — Shortcut, sidebar, welcome message disesuaikan per role.
-- [x] **Optimasi Mobile (v1.3.0)** — Navbar, sidebar, footer compact untuk WebView APK.
+- [x] **Optimasi Mobile (v1.3.0)** - Navbar, sidebar, footer compact untuk PWA Mobile.
 - [x] **Jam Real-time (v1.4.1)** — Widget jam, hari, tanggal di header dashboard.
 - [x] **WhatsApp Bot Config Dashboard (v1.7.0)** — Manajemen setting bot, template WA, cron jobs, dan target grup langsung dari dashboard CI4 tanpa menyentuh source code.
 
@@ -83,7 +83,7 @@ Dokumen ini berisi rencana pengembangan dan status rilis proyek SIAKANUDA.
 ## 🔮 Rencana Jangka Panjang (v2.x)
 
 - [ ] **Perpustakaan Digital** — Modul pinjam-meminjam buku digital untuk siswa.
-- [ ] **Notifikasi Push (Firebase/OneSignal)** — Push notification ke APK sebagai alternatif/pelengkap WA bot.
+- [ ] **Notifikasi Push (Firebase/OneSignal)** - Push notification ke PWA/Browser sebagai alternatif/pelengkap WA bot.
 - [ ] **Multi-Sekolah (SaaS)** — Arsitektur multi-tenant untuk adopsi oleh sekolah lain.
 
 ---

@@ -9,6 +9,14 @@
         </div>
         <?php if (in_array(session()->get('role'), ['admin', 'kepsek', 'guru', 'guru_mapel', 'guru_bk'])): ?>
         <div>
+            <?php if (in_array(session()->get('role'), ['admin', 'kepsek'])): ?>
+            <form action="<?= base_url('/pkl/reset-all-ketua-passwords') ?>" method="post" onsubmit="return confirm('Apakah Anda yakin ingin RESET SEMUA password ketua PKL ke default (NISN)?\n\nSemua ketua harus login ulang dan mengganti password.');" class="d-inline m-0">
+                <?= csrf_field() ?>
+                <button type="submit" class="btn btn-outline-warning mr-2">
+                    <i class="fas fa-key mr-2"></i> Reset Password Ketua
+                </button>
+            </form>
+            <?php endif; ?>
             <button class="btn btn-outline-success mr-2" data-toggle="modal" data-target="#modal-import-group">
                 <i class="fas fa-file-excel mr-2"></i> Import Excel
             </button>
@@ -21,8 +29,18 @@
 </div>
 
 <div class="card mb-4">
-    <div class="card-header border-bottom">
-        <h3 class="card-title font-weight-bold text-dark"><i class="fas fa-map-marked-alt mr-2 text-primary"></i> Daftar Tempat PKL</h3>
+    <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+        <h3 class="card-title font-weight-bold text-dark m-0"><i class="fas fa-map-marked-alt mr-2 text-primary"></i> Daftar Tempat PKL</h3>
+        <div class="card-tools m-0">
+            <div class="input-group input-group-sm" style="width: 250px;">
+                <input type="text" id="tableSearch" class="form-control float-right" placeholder="Cari Tempat / Anggota / Ketua...">
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-default">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
     <!-- /.card-header -->
     <div class="card-body p-0">
@@ -32,16 +50,17 @@
                     <tr>
                         <th style="width: 80px;">#</th>
                         <th>Tempat DU/DI</th>
-                        <th>Ketua Kelompok (WA)</th>
+                        <th>Ketua Kelompok</th>
                         <th>Daftar Anggota</th>
                         <th>Guru Pembimbing</th>
+                        <th>Instruktur DU/DI</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="groupTableBody">
                     <?php if (empty($groups)): ?>
                         <tr>
-                            <td colspan="6" class="text-center text-secondary py-5">
+                            <td colspan="7" class="text-center text-secondary py-5">
                                 <i class="fas fa-map-pin mb-2" style="font-size: 32px;"></i>
                                 <p class="mb-0">Belum ada pemetaan kelompok PKL.</p>
                             </td>
@@ -69,7 +88,15 @@
                             <tr>
                                 <td><?= $i++ ?></td>
                                 <td class="font-weight-bold text-dark"><?= htmlspecialchars($group['tempat_pkl']) ?></td>
-                                <td><?= htmlspecialchars($group['ketua_phone']) ?></td>
+                                <td>
+                                    <?php if ($ketuaName): ?>
+                                        <div class="font-weight-bold text-primary" style="font-size: 14px;"><?= htmlspecialchars($ketuaName) ?></div>
+                                        <small class="text-secondary"><i class="fab fa-whatsapp mr-1"></i><?= htmlspecialchars($group['ketua_phone']) ?></small>
+                                    <?php else: ?>
+                                        <div class="text-secondary font-italic" style="font-size: 13px;">Nama tidak ditemukan</div>
+                                        <small class="text-secondary"><i class="fab fa-whatsapp mr-1"></i><?= htmlspecialchars($group['ketua_phone']) ?></small>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <?php
                                     $members = explode(',', $group['anggota']);
@@ -79,6 +106,14 @@
                                     ?>
                                 </td>
                                 <td class="font-weight-bold text-success"><?= htmlspecialchars($pembimbingName) ?></td>
+                                <td>
+                                    <?php if (!empty($group['instruktur_phone'])): ?>
+                                        <div class="font-weight-bold text-dark" style="font-size: 13px;">Tersimpan</div>
+                                        <small class="text-secondary"><i class="fab fa-whatsapp mr-1"></i><?= htmlspecialchars($group['instruktur_phone']) ?></small>
+                                    <?php else: ?>
+                                        <div class="text-danger font-italic" style="font-size: 13px;">Belum Diisi</div>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <?php
                                     $role = session()->get('role');
@@ -167,6 +202,10 @@
                                                 <?php else: ?>
                                                     <input type="hidden" name="pembimbing_phone" value="<?= htmlspecialchars($group['pembimbing_phone']) ?>">
                                                 <?php endif; ?>
+                                                <div class="form-group mb-3">
+                                                    <label class="font-weight-bold text-secondary">No. WA Instruktur / Tempat PKL</label>
+                                                    <input type="text" name="instruktur_phone" class="form-control" value="<?= htmlspecialchars($group['instruktur_phone'] ?? '') ?>" placeholder="Contoh: 628xxxx">
+                                                </div>
                                             </div>
                                             <div class="modal-footer border-top">
                                                 <button type="button" class="btn btn-light" data-dismiss="modal">Batal</button>
@@ -228,6 +267,10 @@
                             <?php endforeach; ?>
                         </select>
                     </div>
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold text-secondary">No. WA Instruktur / Tempat PKL</label>
+                        <input type="text" name="instruktur_phone" class="form-control" placeholder="Contoh: 628xxxx">
+                    </div>
                 </div>
                 <div class="modal-footer border-top">
                     <button type="button" class="btn btn-light" data-dismiss="modal">Batal</button>
@@ -254,13 +297,13 @@
                     <hr class="my-1 border-light">
                     <strong>1. Format Per Siswa (Satu Baris Per Siswa - Direkomendasikan):</strong>
                     <div class="font-weight-bold mt-1 text-monospace">
-                        [Nama] &nbsp;|&nbsp; [Tempat Pkl] &nbsp;|&nbsp; [No WA Ketua] &nbsp;|&nbsp; [No WA Pembimbing]
+                        [Nama] &nbsp;|&nbsp; [Tempat Pkl] &nbsp;|&nbsp; [No WA / NISN Ketua] &nbsp;|&nbsp; [No WA Pembimbing]
                     </div>
-                    <span class="text-secondary small">Sistem otomatis mengelompokkan siswa dengan Tempat Pkl yang sama menjadi satu kelompok. Isi nomor WA Ketua di salah satu baris siswa untuk menetapkan ketua kelompok tersebut.</span>
+                    <span class="text-secondary small">Sistem otomatis mengelompokkan siswa dengan Tempat Pkl yang sama menjadi satu kelompok. Isi nomor WA atau NISN Ketua di salah satu baris siswa untuk menetapkan ketua kelompok tersebut.</span>
                     
                     <strong class="d-block mt-2">2. Format Per Kelompok (Satu Baris Per Kelompok):</strong>
                     <div class="font-weight-bold mt-1 text-monospace">
-                        [tempat_pkl] &nbsp;|&nbsp; [anggota] &nbsp;|&nbsp; [ketua_phone] &nbsp;|&nbsp; [pembimbing_phone]
+                        [tempat_pkl] &nbsp;|&nbsp; [anggota] &nbsp;|&nbsp; [ketua_phone] &nbsp;|&nbsp; [pembimbing_phone] &nbsp;|&nbsp; [instruktur_phone]
                     </div>
                     <span class="text-secondary small">Kolom <code>anggota</code> berisi nama-nama siswa dipisahkan koma. Contoh: <code>ADIN MI`ROJUL KANA, Aditya Putra Pratama</code>.</span>
                     
@@ -290,6 +333,7 @@
                                     <th>Anggota</th>
                                     <th>WA Ketua</th>
                                     <th>WA Pembimbing</th>
+                                    <th>WA Instruktur</th>
                                 </tr>
                             </thead>
                             <tbody id="groupPreviewBody"></tbody>
@@ -466,6 +510,26 @@
 <!-- Student Picker Script -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // === Table Search Logic ===
+    const searchInput = document.getElementById('tableSearch');
+    const tableBody = document.getElementById('groupTableBody');
+    if (searchInput && tableBody) {
+        searchInput.addEventListener('input', function() {
+            const filter = this.value.toLowerCase();
+            const rows = tableBody.getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                if (rows[i].cells.length === 1) continue; // Skip empty message row
+                const text = rows[i].textContent.toLowerCase();
+                if (text.includes(filter)) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        });
+    }
+
     // All students data from PHP
     const allStudents = <?= json_encode(array_map(fn($s) => ['name' => $s['name'], 'class' => $s['class'], 'phone' => $s['phone'], 'nis' => $s['nis'], 'role' => $s['role'] ?? 'siswa'], $students)) ?>;
 
@@ -797,6 +861,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 else if (cleanKey === 'anggota' || cleanKey === 'anggota kelompok' || cleanKey === 'member') anggota = val;
                                 else if (cleanKey === 'ketua_phone' || cleanKey === 'no wa ketua' || cleanKey === 'ketua whatsapp') ketuaPhone = val;
                                 else if (cleanKey === 'pembimbing_phone' || cleanKey === 'no wa pembimbing' || cleanKey === 'pembimbing whatsapp') pembimbingPhone = val;
+                                else if (cleanKey === 'instruktur_phone' || cleanKey === 'no wa instruktur' || cleanKey === 'instruktur whatsapp') instrukturPhone = val;
                             });
 
                             if (tempatPkl && anggota) {
@@ -804,7 +869,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                     tempat_pkl: tempatPkl,
                                     anggota: anggota,
                                     ketua_phone: ketuaPhone,
-                                    pembimbing_phone: pembimbingPhone
+                                    pembimbing_phone: pembimbingPhone,
+                                    instruktur_phone: instrukturPhone
                                 });
                             }
                         });
@@ -826,6 +892,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 else if (cleanKey === 'tempat_pkl' || cleanKey === 'tempat pkl' || cleanKey === 'du/di' || cleanKey === 'perusahaan') tempatPkl = val;
                                 else if (cleanKey === 'ketua_phone' || cleanKey === 'no wa ketua' || cleanKey === 'ketua whatsapp' || cleanKey === 'wa ketua') ketuaPhone = val;
                                 else if (cleanKey === 'pembimbing_phone' || cleanKey === 'no wa pembimbing' || cleanKey === 'pembimbing whatsapp' || cleanKey === 'wa pembimbing') pembimbingPhone = val;
+                                else if (cleanKey === 'instruktur_phone' || cleanKey === 'no wa instruktur' || cleanKey === 'instruktur whatsapp' || cleanKey === 'wa instruktur') instrukturPhone = val;
                             });
 
                             if (nama && tempatPkl) {
@@ -835,7 +902,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                         tempat_pkl: tempatPkl,
                                         anggota: [],
                                         ketua_phone: '',
-                                        pembimbing_phone: ''
+                                        pembimbing_phone: '',
+                                        instruktur_phone: ''
                                     };
                                 }
                                 groupsMap[key].anggota.push(nama);
@@ -846,6 +914,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 if (pembimbingPhone && !groupsMap[key].pembimbing_phone) {
                                     groupsMap[key].pembimbing_phone = pembimbingPhone;
                                 }
+                                if (instrukturPhone && !groupsMap[key].instruktur_phone) {
+                                    groupsMap[key].instruktur_phone = instrukturPhone;
+                                }
                             }
                         });
 
@@ -855,7 +926,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 tempat_pkl: g.tempat_pkl,
                                 anggota: g.anggota.join(', '),
                                 ketua_phone: g.ketua_phone,
-                                pembimbing_phone: g.pembimbing_phone
+                                pembimbing_phone: g.pembimbing_phone,
+                                instruktur_phone: g.instruktur_phone
                             });
                         });
                     }
@@ -869,6 +941,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <td>${escHtml(g.anggota)}</td>
                                 <td>${escHtml(g.ketua_phone || '-')}</td>
                                 <td>${escHtml(g.pembimbing_phone || '-')}</td>
+                                <td>${escHtml(g.instruktur_phone || '-')}</td>
                             `;
                             groupPreviewBody.appendChild(tr);
                         }
@@ -903,7 +976,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const csrfToken = document.querySelector('meta[name="csrf-hash"]').getAttribute('content');
 
-            fetch('<?= base_url('/pkl/groups/import') ?>', {
+            fetch('/pkl/groups/import', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

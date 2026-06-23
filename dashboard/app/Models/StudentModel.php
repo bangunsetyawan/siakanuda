@@ -10,7 +10,7 @@ class StudentModel extends Model
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
-    protected $allowedFields    = ['name', 'class', 'nis', 'gender', 'phone', 'role', 'created_at', 'password_hash', 'first_login', 'is_active'];
+    protected $allowedFields    = ['name', 'class', 'nis', 'gender', 'phone', 'orang_tua_phone', 'role', 'created_at', 'password_hash', 'first_login', 'is_active'];
     protected $validationRules = [
         'name'   => 'required|min_length[2]|max_length[100]',
         'class'  => 'required|max_length[20]',

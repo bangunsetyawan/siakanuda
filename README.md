@@ -4,7 +4,7 @@
 
 <div align="center">
 
-**SIAKANUDA** adalah sistem informasi akademik sekolah berbasis **Web + WhatsApp Bot + APK Android**.
+**SIAKANUDA** adalah sistem informasi akademik sekolah berbasis **Web + WhatsApp Bot + PWA (Progressive Web App)**.
 Dibangun khusus untuk SMK NU Darussalam dengan arsitektur **offline-first** dan **self-hosted** di server lokal sekolah.
 
 [📱 Live Demo](https://siakanuda.qzz.io) · [📋 Roadmap](ROADMAP.md) · [📖 Dokumentasi](docs/) · [📊 Status Fitur](STATUS_FITUR.md)
@@ -28,8 +28,13 @@ Dibangun khusus untuk SMK NU Darussalam dengan arsitektur **offline-first** dan 
 - Laporan harian & mingguan (PDF otomatis)
 - Rekap 5 bulan per siswa & per kelompok
 - Riwayat lengkap dengan foto dokumentasi
+- **PKL Takeover (Laporan Susulan)**: Hak akses khusus Admin/Guru Pembimbing untuk mengisikan absensi mundur (bypass batas 7 hari) bagi siswa yang tertinggal.
 
 ### 🤖 WhatsApp Bot
+> [!CAUTION]
+> **ATURAN KETAT UJI COBA BOT WA (ANTI-BANNED):**
+> Jangan pernah menggunakan **1 nomor WA yang sama** untuk semua peran (Orang Tua, Pembimbing, Instruktur, dll) saat melakukan uji coba pengiriman broadcast masif. WhatsApp akan mendeteksi pengiriman pesan template bertubi-tubi ke nomor yang sama sebagai **SPAM**, yang berakibat pada pembatasan akun sementara hingga **pemblokiran permanen**. Selalu gunakan nomor tujuan yang berbeda-beda saat testing.
+
 - Notifikasi otomatis absensi ke guru & wali kelas
 - Broadcast ke grup sekolah & grup PKL
 - Dashboard pengaturan WA (scan QR, kelola grup, template pesan)
@@ -57,7 +62,7 @@ Dibangun khusus untuk SMK NU Darussalam dengan arsitektur **offline-first** dan 
 |----------|-----|------------|
 | Web Browser | `https://siakanuda.qzz.io` | Semua fitur |
 | LAN Sekolah | `http://server-ip:8080` | Akses lokal tanpa internet |
-| APK Android | WebView wrapper | Install di HP siswa |
+| PWA (Mobile) | Install via Chrome / Browser | Add to Home Screen di HP siswa |
 
 ---
 
@@ -66,7 +71,7 @@ Dibangun khusus untuk SMK NU Darussalam dengan arsitektur **offline-first** dan 
 ```
 ┌─────────────────────────────────────────────────┐
 │              AKSES USER                          │
-│  Browser / APK → Cloudflare Tunnel → Nginx:80  │
+│  Browser / PWA → Cloudflare Tunnel → Nginx:80  │
 │  LAN Sekolah  → langsung ke PHP Spark:8080     │
 └────────────────────┬────────────────────────────┘
                      │
@@ -175,7 +180,7 @@ siakanuda/
 ├── data/               # Template statis (Excel, jadwal)
 ├── database/           # Skrip migrasi
 ├── tests/              # Playwright E2E tests
-└── public/             # APK & BKK portal
+└── public/             # PWA assets & BKK portal
 ```
 
 ---
@@ -191,8 +196,8 @@ Panduan lengkap: [docs/DEPLOY_NOTES.md](docs/DEPLOY_NOTES.md)
 |-------|-----|------------|
 | **Internet (Publik)** | [https://siakanuda.qzz.io](https://siakanuda.qzz.io) | Via Cloudflare Tunnel |
 | **Shortlink** | [https://s.id/siakanuda](https://s.id/siakanuda) | Redirect ke URL di atas |
-| **LAN Sekolah** | `http://<server-ip>:8080` | Akses langsung tanpa internet |
-| **SSH (Tailscale VPN)** | `ssh user@<tailscale-ip>` | Administrasi server |
+| **LAN Sekolah** | `http://10.10.11.37:8080` | Akses langsung tanpa internet |
+| **SSH (Tailscale VPN)** | `ssh smknuda@100.110.83.48` | Administrasi server |
 
 ### 🔒 Cloudflare Tunnel
 

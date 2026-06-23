@@ -10,6 +10,9 @@ class AttendancePklModel extends Model
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
+    protected $useTimestamps    = true;
+    protected $createdField     = 'created_at';
+    protected $updatedField     = 'updated_at';
     protected $allowedFields    = ['date', 'tempat_pkl', 'ketua_phone', 'status_libur', 'libur_reason', 'location_data', 'attendance_data', 'photo_url', 'jurnal_kegiatan', 'is_takeover', 'tahun_pelajaran_id'];
     protected $validationRules = [
         'date'        => 'required|valid_date[Y-m-d]',

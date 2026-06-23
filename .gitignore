@@ -65,3 +65,14 @@ siakanuda-apk/
 # Testing artifacts
 playwright-report/
 test-results/
+
+# MS Excel Temp files
+~$*
+
+# MS Office Temp Files
+~$*
+~$*.xlsx
+~$*.docx
+
+# Temp SSH
+temp_ssh/

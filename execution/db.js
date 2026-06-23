@@ -15,20 +15,19 @@ const DB_PATH = process.env.DB_PATH
   ? path.resolve(process.env.DB_PATH)
   : path.join(__dirname, '..', 'siakanuda.db');
 
-export const useSupabase = !!(process.env.SUPABASE_URL && process.env.SUPABASE_KEY);
+export const useSupabase = false; // Force SQLite to match CodeIgniter
 
 let db = null;
 export let supabase = null;
 
-if (useSupabase) {
-  console.log('[DB] Mode: Supabase Cloud Database');
+if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY) {
+  console.log('[DB] Supabase client initialized (only for Storage sync)');
   supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-} else {
+}
   console.log('[DB] Mode: Local SQLite Database');
   db = new Database(DB_PATH);
   db.pragma('journal_mode = DELETE');
   db.pragma('foreign_keys = ON');
-}
 
 // Helper to wrap SQLite sync functions in Promise
 export const runAsync = (fn) => {
@@ -67,6 +66,7 @@ export async function initSchema() {
         password_hash TEXT,
         first_login   INTEGER DEFAULT 1,
         is_active     INTEGER DEFAULT 1,
+        orang_tua_phone TEXT,
         created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
       );
 
@@ -158,7 +158,8 @@ export async function initSchema() {
         tempat_pkl       TEXT NOT NULL,
         ketua_phone      TEXT NOT NULL,
         anggota          TEXT NOT NULL,
-        pembimbing_phone TEXT
+        pembimbing_phone TEXT,
+        instruktur_phone TEXT
       );
 
       CREATE TABLE IF NOT EXISTS attendance_pkl (
@@ -197,6 +198,7 @@ export async function initSchema() {
 
       CREATE TABLE IF NOT EXISTS bot_templates (
         key         TEXT PRIMARY KEY,
+        name        TEXT DEFAULT '',
         body        TEXT NOT NULL,
         variables   TEXT NOT NULL,
         description TEXT NOT NULL,
@@ -210,6 +212,7 @@ export async function initSchema() {
         is_active       INTEGER NOT NULL DEFAULT 1,
         description     TEXT NOT NULL,
         action          TEXT,
+        payload         TEXT DEFAULT '{}',
         updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP
       );
 
@@ -243,8 +246,11 @@ export async function initSchema() {
     try { db.exec(`ALTER TABLE students ADD COLUMN password_hash TEXT`); } catch (_) {}
     try { db.exec(`ALTER TABLE students ADD COLUMN first_login INTEGER DEFAULT 1`); } catch (_) {}
     try { db.exec(`ALTER TABLE students ADD COLUMN is_active INTEGER DEFAULT 1`); } catch (_) {}
+    try { db.exec(`ALTER TABLE students ADD COLUMN orang_tua_phone TEXT`); } catch (_) {}
     try { db.exec(`ALTER TABLE violations ADD COLUMN proof_url TEXT`); } catch (_) {}
     try { db.exec(`ALTER TABLE violations ADD COLUMN follow_up TEXT`); } catch (_) {}
+    try { db.exec("ALTER TABLE kelompok_pkl ADD COLUMN instruktur_phone TEXT"); } catch (_) {}
+    try { db.exec("ALTER TABLE cron_configs ADD COLUMN payload TEXT DEFAULT '{}'"); } catch (_) {}
 
     // Migrasi v1.6.0 — tambah kolom tahun_pelajaran_id ke 8 tabel transaksional
     try { db.exec(`ALTER TABLE attendance ADD COLUMN tahun_pelajaran_id INTEGER DEFAULT 1`); } catch (_) {}
@@ -259,9 +265,21 @@ export async function initSchema() {
     // Seed default Tahun Pelajaran jika tabel kosong
     const tpCount = db.prepare('SELECT COUNT(*) as c FROM tahun_pelajaran').get().c;
     if (tpCount === 0) {
-      db.prepare(`INSERT INTO tahun_pelajaran (nama, semester, tanggal_mulai, tanggal_selesai, is_active) VALUES (?, ?, ?, ?, ?)`)
-        .run('2025/2026', 'Genap', '2026-01-06', '2026-06-21', 1);
-      console.log('[DB] Seeded default Tahun Pelajaran: 2025/2026 Genap (active)');
+      const stmt = db.prepare(`INSERT INTO tahun_pelajaran (nama, semester, tanggal_mulai, tanggal_selesai, is_active) VALUES (?, ?, ?, ?, ?)`);
+      stmt.run('2024/2025', 'Ganjil', '2024-07-15', '2024-12-20', 1);
+      console.log('[DB] Seeded default Tahun Pelajaran: 2024/2025 Ganjil (active)');
+    }
+
+    // Seed default system_settings for PKL broadcast targets
+    const defaultSettings = [
+      { key: 'broadcast_pkl_group', value: '1' },
+      { key: 'broadcast_pkl_pembimbing', value: '1' },
+      { key: 'broadcast_pkl_orangtua', value: '0' },
+      { key: 'broadcast_pkl_instruktur', value: '0' },
+      { key: 'broadcast_pkl_anggota', value: '0' }
+    ];
+    for (const s of defaultSettings) {
+      db.prepare(`INSERT OR IGNORE INTO system_settings (key, value) VALUES (?, ?)`).run(s.key, s.value);
     }
 
     // Seed default bot templates jika empty/missing
@@ -308,6 +326,61 @@ export async function initSchema() {
     } catch (e) {
       console.error('[DB] Gagal seeding template KBM consolidated:', e.message);
     }
+
+      // Migration: Add name column to bot_templates
+      try {
+        db.prepare("ALTER TABLE bot_templates ADD COLUMN name TEXT DEFAULT ''").run();
+        console.log('[DB] Added name column to bot_templates');
+      } catch (err) {
+        // Ignore if column already exists
+      }
+
+      // Backfill missing names for old templates
+      try {
+        db.prepare("UPDATE bot_templates SET name = 'Peringatan Absensi Kelas KBM' WHERE key = 'class_attendance_warning' AND name = ''").run();
+        db.prepare("UPDATE bot_templates SET name = 'Broadcast Laporan Absensi KBM' WHERE key = 'kbm_attendance_broadcast' AND name = ''").run();
+        db.prepare("UPDATE bot_templates SET name = 'Rekapitulasi Absensi KBM' WHERE key = 'kbm_consolidated_recap' AND name = ''").run();
+        db.prepare("UPDATE bot_templates SET name = 'Pengingat Laporan PKL' WHERE key = 'pkl_report_reminder' AND name = ''").run();
+        db.prepare("UPDATE bot_templates SET name = 'Peringatan Eskalasi PKL' WHERE key = 'pkl_escalation_warning' AND name = ''").run();
+        db.prepare("UPDATE bot_templates SET name = 'Pengingat Libur PKL (Lama)' WHERE key = 'pkl_libur_broadcast' AND name = ''").run();
+        db.prepare("UPDATE bot_templates SET name = 'Laporan Masuk PKL (Lama)' WHERE key = 'pkl_masuk_broadcast' AND name = ''").run();
+      } catch (err) {
+        console.error('[DB] Gagal backfill nama template lama:', err.message);
+      }
+
+      // Seed 10 PKL templates
+      const pklTemplates = [
+        // PKL Masuk
+        { key: 'pkl_masuk_grup', name: 'PKL Masuk (Grup Sekolah)', body: 'Halo, laporan PKL masuk untuk grup sekolah.\nTanggal: {tanggal}\nTempat: {tempat_pkl}\nDetail: {url}' },
+        { key: 'pkl_masuk_pembimbing', name: 'PKL Masuk (Guru Pembimbing)', body: 'Yth. Bapak/Ibu {pembimbing}, laporan PKL baru saja masuk.\nTanggal: {tanggal}\nTempat: {tempat_pkl}\nDetail: {url}' },
+        { key: 'pkl_masuk_ortu', name: 'PKL Masuk (Orang Tua)', body: 'Bapak/Ibu Orang Tua, anak Anda telah melaporkan kegiatan PKL hari ini.\nTanggal: {tanggal}\nTempat: {tempat_pkl}\nDetail: {url}' },
+        { key: 'pkl_masuk_instruktur', name: 'PKL Masuk (Instruktur)', body: 'Yth. Instruktur DU/DI, laporan kegiatan harian siswa di tempat {tempat_pkl} telah disubmit.\nTanggal: {tanggal}\nDetail: {url}' },
+        { key: 'pkl_masuk_siswa', name: 'PKL Masuk (Siswa/Ketua)', body: 'Halo {ketua}, laporan PKL kelompokmu di {tempat_pkl} sudah masuk ke sistem.\nTanggal: {tanggal}\nDetail: {url}' },
+        // PKL Libur
+        { key: 'pkl_libur_grup', name: 'PKL Libur (Grup Sekolah)', body: 'Info: Kelompok PKL di {tempat_pkl} melaporkan libur pada hari ini ({tanggal}).\nAlasan: {jurnal_lines}' },
+        { key: 'pkl_libur_pembimbing', name: 'PKL Libur (Guru Pembimbing)', body: 'Yth. {pembimbing}, kelompok bimbingan Anda di {tempat_pkl} melaporkan libur hari ini.\nAlasan: {jurnal_lines}' },
+        { key: 'pkl_libur_ortu', name: 'PKL Libur (Orang Tua)', body: 'Bapak/Ibu Orang Tua, anak Anda melaporkan bahwa tempat PKL sedang libur hari ini.\nAlasan: {jurnal_lines}' },
+        { key: 'pkl_libur_instruktur', name: 'PKL Libur (Instruktur)', body: 'Yth. Instruktur DU/DI, kelompok di {tempat_pkl} menginput laporan libur hari ini.\nAlasan: {jurnal_lines}' },
+        { key: 'pkl_libur_siswa', name: 'PKL Libur (Siswa/Ketua)', body: 'Halo {ketua}, laporan bahwa tempat PKL kalian ({tempat_pkl}) libur hari ini telah tercatat.' }
+      ];
+
+      for (const t of pklTemplates) {
+        try {
+          const c = db.prepare("SELECT COUNT(*) as c FROM bot_templates WHERE key = ?").get(t.key).c;
+          if (c === 0) {
+            db.prepare(`
+              INSERT INTO bot_templates (key, name, body, variables, description)
+              VALUES (?, ?, ?, ?, ?)
+            `).run(t.key, t.name, t.body, 'tanggal, waktu, tempat_pkl, pembimbing, ketua, kehadiran, absen_list, jurnal_lines, url', 'Template spesifik per target');
+            console.log(`[DB] Seeded PKL template: ${t.key}`);
+          } else {
+            // Update the name if it was empty
+            db.prepare("UPDATE bot_templates SET name = ? WHERE key = ? AND name = ''").run(t.name, t.key);
+          }
+        } catch (e) {
+          console.error(`[DB] Gagal seeding PKL template ${t.key}:`, e.message);
+        }
+      }
 
     console.log('[DB] Local SQLite schema initialized');
   });
@@ -361,14 +434,14 @@ export async function getStudentsByClass(cls) {
   return runAsync(() => db.prepare('SELECT * FROM students WHERE class = ? ORDER BY name').all(cls));
 }
 
-export async function addStudent({ name, studentClass, nis, gender, phone }) {
+export async function addStudent({ name, studentClass, nis, gender, phone, orangTuaPhone }) {
   if (useSupabase) {
-    const { data, error } = await supabase.from('students').insert({ name, class: studentClass, nis: nis || null, gender: gender || null, phone: phone || null }).select().single();
+    const { data, error } = await supabase.from('students').insert({ name, class: studentClass, nis: nis || null, gender: gender || null, phone: phone || null, orang_tua_phone: orangTuaPhone || null }).select().single();
     if (error) throw error;
     return data;
   }
   return runAsync(() => {
-    const result = db.prepare('INSERT INTO students (name, class, nis, gender, phone) VALUES (?,?,?,?,?)').run(name, studentClass, nis || null, gender || null, phone || null);
+    const result = db.prepare('INSERT INTO students (name, class, nis, gender, phone, orang_tua_phone) VALUES (?,?,?,?,?,?)').run(name, studentClass, nis || null, gender || null, phone || null, orangTuaPhone || null);
     return db.prepare('SELECT * FROM students WHERE id = ?').get(result.lastInsertRowid);
   });
 }
@@ -389,7 +462,7 @@ export async function updateStudent(id, fields) {
     return true;
   }
   return runAsync(() => {
-    const allowedColumns = ['name', 'class', 'nis', 'gender', 'phone', 'role', 'password_hash', 'first_login'];
+    const allowedColumns = ['name', 'class', 'nis', 'gender', 'phone', 'orang_tua_phone', 'role', 'password_hash', 'first_login'];
     const safeFields = {};
     for (const [k, v] of Object.entries(fields)) {
       if (allowedColumns.includes(k)) safeFields[k] = v;
@@ -1187,7 +1260,7 @@ export async function getKelompokPklByKetua(ketuaPhone) {
   return runAsync(() => db.prepare('SELECT * FROM kelompok_pkl WHERE ketua_phone = ?').get(ketuaPhone));
 }
 
-export async function addKelompokPkl({ tempatPkl, ketuaPhone, anggota, pembimbingPhone, tahun_pelajaran_id }) {
+export async function addKelompokPkl({ tempatPkl, ketuaPhone, anggota, pembimbingPhone, instrukturPhone, tahun_pelajaran_id }) {
   let tpId = tahun_pelajaran_id;
   if (!tpId) {
     const activeTP = await getActiveTahunPelajaran();
@@ -1195,14 +1268,14 @@ export async function addKelompokPkl({ tempatPkl, ketuaPhone, anggota, pembimbin
   }
   if (useSupabase) {
     const { data, error } = await supabase.from('kelompok_pkl').insert({
-      tempat_pkl: tempatPkl, ketua_phone: ketuaPhone, anggota, pembimbing_phone: pembimbingPhone || null, tahun_pelajaran_id: tpId
+      tempat_pkl: tempatPkl, ketua_phone: ketuaPhone, anggota, pembimbing_phone: pembimbingPhone || null, instruktur_phone: instrukturPhone || null, tahun_pelajaran_id: tpId
     }).select().single();
     if (error) throw error;
     return data;
   }
   return runAsync(() => {
-    const result = db.prepare('INSERT INTO kelompok_pkl (tempat_pkl, ketua_phone, anggota, pembimbing_phone, tahun_pelajaran_id) VALUES (?,?,?,?,?)')
-      .run(tempatPkl, ketuaPhone, anggota, pembimbingPhone || null, tpId);
+    const result = db.prepare('INSERT INTO kelompok_pkl (tempat_pkl, ketua_phone, anggota, pembimbing_phone, instruktur_phone, tahun_pelajaran_id) VALUES (?,?,?,?,?,?)')
+      .run(tempatPkl, ketuaPhone, anggota, pembimbingPhone || null, instrukturPhone || null, tpId);
     return db.prepare('SELECT * FROM kelompok_pkl WHERE id = ?').get(result.lastInsertRowid);
   });
 }
@@ -1222,6 +1295,7 @@ export async function updateKelompokPkl(id, fields) {
   if (fields.ketuaPhone !== undefined) supabaseFields.ketua_phone = fields.ketuaPhone;
   if (fields.anggota !== undefined) supabaseFields.anggota = fields.anggota;
   if (fields.pembimbingPhone !== undefined) supabaseFields.pembimbing_phone = fields.pembimbingPhone;
+  if (fields.instrukturPhone !== undefined) supabaseFields.instruktur_phone = fields.instrukturPhone;
 
   if (useSupabase) {
     const { error } = await supabase.from('kelompok_pkl').update(supabaseFields).eq('id', id);
@@ -1229,7 +1303,7 @@ export async function updateKelompokPkl(id, fields) {
     return true;
   }
   return runAsync(() => {
-    const allowedColumns = ['tempat_pkl', 'ketua_phone', 'anggota', 'pembimbing_phone'];
+    const allowedColumns = ['tempat_pkl', 'ketua_phone', 'anggota', 'pembimbing_phone', 'instruktur_phone'];
     const safeFields = {};
     for (const [k, v] of Object.entries(supabaseFields)) {
       if (allowedColumns.includes(k)) safeFields[k] = v;
@@ -1418,21 +1492,34 @@ export async function getCronConfig(key) {
   return runAsync(() => db.prepare('SELECT * FROM cron_configs WHERE key = ?').get(key));
 }
 
-export async function updateCronConfig(key, cronExpression, isActive) {
+export async function updateCronConfig(key, cronExpression, isActive, action = null, payload = null) {
   if (useSupabase) {
-    const { error } = await supabase.from('cron_configs').update({ 
+    const updateData = { 
       cron_expression: cronExpression, 
       is_active: isActive === true || isActive === 1 ? 1 : 0, 
       updated_at: new Date().toISOString() 
-    }).eq('key', key);
+    };
+    if (action !== null) updateData.action = action;
+    if (payload !== null) updateData.payload = payload;
+
+    const { error } = await supabase.from('cron_configs').update(updateData).eq('key', key);
     if (error) throw error;
     return true;
   }
-  return runAsync(() => db.prepare('UPDATE cron_configs SET cron_expression = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE key = ?')
-    .run(cronExpression, isActive === true || isActive === 1 ? 1 : 0, key));
+
+  let query = 'UPDATE cron_configs SET cron_expression = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP';
+  const params = [cronExpression, isActive === true || isActive === 1 ? 1 : 0];
+  
+  if (action !== null) { query += ', action = ?'; params.push(action); }
+  if (payload !== null) { query += ', payload = ?'; params.push(payload); }
+  
+  query += ' WHERE key = ?';
+  params.push(key);
+  
+  return runAsync(() => db.prepare(query).run(...params));
 }
 
-export async function addCronConfig({ key, name, cronExpression, isActive, description, action }) {
+export async function addCronConfig({ key, name, cronExpression, isActive, description, action, payload = '{}' }) {
   if (useSupabase) {
     const { error } = await supabase.from('cron_configs').upsert({
       key,
@@ -1441,14 +1528,15 @@ export async function addCronConfig({ key, name, cronExpression, isActive, descr
       is_active: isActive === true || isActive === 1 ? 1 : 0,
       description: description || '',
       action: action || key,
+      payload: payload,
       updated_at: new Date().toISOString()
     });
     if (error) throw error;
     return true;
   }
   return runAsync(() => db.prepare(
-    'INSERT OR REPLACE INTO cron_configs (key, name, cron_expression, is_active, description, action, updated_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)'
-  ).run(key, name, cronExpression, isActive === true || isActive === 1 ? 1 : 0, description || '', action || key));
+    'INSERT OR REPLACE INTO cron_configs (key, name, cron_expression, is_active, description, action, payload, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)'
+  ).run(key, name, cronExpression, isActive === true || isActive === 1 ? 1 : 0, description || '', action || key, payload));
 }
 
 export async function deleteCronConfig(key) {

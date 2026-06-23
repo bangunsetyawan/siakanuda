@@ -3,6 +3,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="theme-color" content="#1a5632">
+    <link rel="icon" type="image/png" href="/logo-smk.png">
+    <link rel="apple-touch-icon" href="/logo-smk.png">
+    <link rel="manifest" href="/manifest.json">
     <title>Login | SIAKANUDA</title>
 
     <!-- Google Fonts -->
@@ -499,6 +503,12 @@
             
             <button type="submit" class="btn-login">Login Masuk</button>
         </form>
+
+        <div style="text-align: center; margin-top: 15px;">
+            <a href="/bantuan" style="font-size: 0.8125rem; font-weight: 600; color: var(--primary); text-decoration: none;">
+                <i class="fas fa-book-open"></i> Bingung cara pakai? Baca Buku Panduan
+            </a>
+        </div>
 
         <div class="divider">
             <span>Atau</span>

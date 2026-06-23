@@ -139,37 +139,26 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 20px 10px;
+        padding: 15px 10px;
         background: #ffffff;
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        border-radius: 18px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 16px;
         text-decoration: none !important;
         height: 100%;
     }
-    .shortcut-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
-        border-color: rgba(0, 0, 0, 0.08);
-    }
     .shortcut-card.shortcut-primary {
         border: 2px solid rgba(22, 163, 74, 0.3);
-        background: linear-gradient(135deg, rgba(22, 163, 74, 0.06), #ffffff);
+        background-color: rgba(22, 163, 74, 0.04);
     }
     .shortcut-icon-wrapper {
-        width: 56px;
-        height: 56px;
-        border-radius: 16px;
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 12px;
-        font-size: 22px;
-        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .shortcut-card:hover .shortcut-icon-wrapper {
-        transform: scale(1.12) rotate(3deg);
+        margin-bottom: 10px;
+        font-size: 20px;
     }
     .shortcut-title {
         font-size: 13px;
@@ -291,7 +280,7 @@ if ($role === 'admin') {
                         <div class="shortcut-icon-wrapper <?= $shortcut['bg'] ?> <?= $shortcut['text'] ?>">
                             <i class="<?= $shortcut['icon'] ?>"></i>
                         </div>
-                        <p class="shortcut-title text-center text-truncate w-100" title="<?= $shortcut['title'] ?>"><?= $shortcut['title'] ?></p>
+                        <p class="shortcut-title text-center" style="word-break: break-word; line-height: 1.2;"><?= $shortcut['title'] ?></p>
                     </a>
                 </div>
             <?php endforeach; ?>
@@ -307,8 +296,8 @@ if ($role === 'admin') {
     <div class="col-12">
         <a href="<?= base_url('/pkl') ?>" class="text-decoration-none card-attendance-link" style="display: block;">
             <?php if (isset($pklActive) && $pklActive !== '1'): ?>
-            <div class="card border-0 shadow-sm status-card-pkl" 
-                 style="border-radius: 20px; overflow: hidden; background: linear-gradient(135deg, #3b82f6, #1d4ed8); padding: 24px; position: relative;">
+            <div class="card border-0 shadow-sm" 
+                 style="border-radius: 20px; overflow: hidden; background: #2563eb; padding: 24px; position: relative;">
                 <div class="position-absolute" style="right: 20px; bottom: -10px; font-size: 100px; opacity: 0.12; color: #fff; pointer-events: none;">
                     <i class="fas fa-clipboard-list"></i>
                 </div>
@@ -334,8 +323,8 @@ if ($role === 'admin') {
                 </div>
             </div>
             <?php else: ?>
-            <div class="card border-0 shadow-sm status-card-pkl" 
-                 style="border-radius: 20px; overflow: hidden; background: <?= !empty($pklTodayReport) ? ($pklTodayReport['status_libur'] ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'linear-gradient(135deg, #16a34a, #15803d)') : 'linear-gradient(135deg, #ef4444, #dc2626)' ?>; padding: 24px; position: relative;">
+            <div class="card border-0 shadow-sm" 
+                 style="border-radius: 20px; overflow: hidden; background: <?= !empty($pklTodayReport) ? ($pklTodayReport['status_libur'] ? '#f59e0b' : '#16a34a') : '#ef4444' ?>; padding: 24px; position: relative;">
                 
                 <!-- Background pattern/icon for depth -->
                 <div class="position-absolute" style="right: 20px; bottom: -10px; font-size: 100px; opacity: 0.12; color: #fff; pointer-events: none;">
@@ -371,7 +360,7 @@ if ($role === 'admin') {
                                 </div>
                             <?php endif; ?>
                         <?php else: ?>
-                            <div class="px-4 py-2 font-weight-bold rounded-pill text-center pulse-animation"
+                            <div class="px-4 py-2 font-weight-bold rounded-pill text-center"
                                  style="background: #fff; color: #ef4444; border: 1px solid #fff; font-size: 13px; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);">
                                 <i class="fas fa-exclamation-circle mr-1"></i> BELUM MENGISI ABSENSI
                             </div>
@@ -384,23 +373,7 @@ if ($role === 'admin') {
     </div>
 </div>
 
-<style>
-    .status-card-pkl {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .card-attendance-link:hover .status-card-pkl {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 20px rgba(0,0,0,0.1) !important;
-    }
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.03); }
-        100% { transform: scale(1); }
-    }
-    .pulse-animation {
-        animation: pulse 2s infinite ease-in-out;
-    }
-</style>
+
 <?php endif; ?>
 
 <?php /* Siswa biasa — tampilkan status PKL hari ini jika punya grup */ ?>
@@ -450,57 +423,67 @@ if ($role === 'admin') {
 <!-- GURU/ADMIN: Rekap Global -->
 <div class="row justify-content-center">
     <div class="col-xl-2.4 col-lg-3 col-md-4 col-6">
-        <div class="small-box bg-white p-3 card mb-3" style="border-radius: 14px; position: relative; overflow: hidden; min-height: 110px;">
-            <div class="inner">
-                <h3 class="font-weight-bold text-dark" style="font-size: 24px;"><?= $totalStudents ?></h3>
-                <p class="text-secondary mb-0" style="font-size: 11.5px; font-weight: 500; line-height: 1.3;">Siswa Terdaftar</p>
-            </div>
-            <div class="icon text-primary position-absolute" style="right: 15px; top: 15px; font-size: 32px; opacity: 0.12;">
-                <i class="fas fa-users"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-2.4 col-lg-3 col-md-4 col-6">
-        <div class="small-box bg-white p-3 card mb-3" style="border-radius: 14px; position: relative; overflow: hidden; min-height: 110px;">
-            <div class="inner">
-                <h3 class="font-weight-bold text-success" style="font-size: 24px;"><?= $attendanceToday['hadir'] ?></h3>
-                <p class="text-secondary mb-0" style="font-size: 11.5px; font-weight: 500; line-height: 1.3;">Siswa KBM Hadir</p>
-            </div>
-            <div class="icon text-success position-absolute" style="right: 15px; top: 15px; font-size: 32px; opacity: 0.12;">
-                <i class="fas fa-user-check"></i>
+        <div class="card mb-3 border-0 shadow-sm" style="border-radius: 14px;">
+            <div class="card-body p-3 d-flex align-items-center" style="gap: 12px;">
+                <div class="text-primary d-flex align-items-center justify-content-center flex-shrink-0" style="font-size: 24px; width: 44px; height: 44px; background: rgba(2, 132, 199, 0.1); border-radius: 10px;">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="overflow-hidden">
+                    <h3 class="font-weight-bold text-dark mb-0" style="font-size: 20px; line-height: 1;"><?= $totalStudents ?></h3>
+                    <p class="text-secondary mb-0 mt-1 text-truncate" style="font-size: 11px; font-weight: 600; line-height: 1.2;">Siswa Terdaftar</p>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-xl-2.4 col-lg-3 col-md-4 col-6">
-        <div class="small-box bg-white p-3 card mb-3" style="border-radius: 14px; position: relative; overflow: hidden; min-height: 110px;">
-            <div class="inner">
-                <h3 class="font-weight-bold text-teal" style="font-size: 24px; color: #0d9488 !important;"><?= $totalPklSiswaHadirToday ?></h3>
-                <p class="text-secondary mb-0" style="font-size: 11.5px; font-weight: 500; line-height: 1.3;">Siswa PKL Hadir</p>
-            </div>
-            <div class="icon text-teal position-absolute" style="right: 15px; top: 15px; font-size: 32px; opacity: 0.12; color: #0d9488 !important;">
-                <i class="fas fa-user-shield"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-2.4 col-lg-3 col-md-4 col-6">
-        <div class="small-box bg-white p-3 card mb-3" style="border-radius: 14px; position: relative; overflow: hidden; min-height: 110px;">
-            <div class="inner">
-                <h3 class="font-weight-bold text-info" style="font-size: 24px;"><?= $totalPklToday ?></h3>
-                <p class="text-secondary mb-0" style="font-size: 11.5px; font-weight: 500; line-height: 1.3;">Laporan PKL Diterima</p>
-            </div>
-            <div class="icon text-info position-absolute" style="right: 15px; top: 15px; font-size: 32px; opacity: 0.12;">
-                <i class="fas fa-briefcase"></i>
+        <div class="card mb-3 border-0 shadow-sm" style="border-radius: 14px;">
+            <div class="card-body p-3 d-flex align-items-center" style="gap: 12px;">
+                <div class="text-success d-flex align-items-center justify-content-center flex-shrink-0" style="font-size: 24px; width: 44px; height: 44px; background: rgba(40, 167, 69, 0.1); border-radius: 10px;">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="overflow-hidden">
+                    <h3 class="font-weight-bold text-success mb-0" style="font-size: 20px; line-height: 1;"><?= $attendanceToday['hadir'] ?></h3>
+                    <p class="text-secondary mb-0 mt-1 text-truncate" style="font-size: 11px; font-weight: 600; line-height: 1.2;">KBM Hadir</p>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-xl-2.4 col-lg-3 col-md-4 col-6">
-        <div class="small-box bg-white p-3 card mb-3" style="border-radius: 14px; position: relative; overflow: hidden; min-height: 110px;">
-            <div class="inner">
-                <h3 class="font-weight-bold text-danger" style="font-size: 24px;"><?= $totalViolationsToday ?></h3>
-                <p class="text-secondary mb-0" style="font-size: 11.5px; font-weight: 500; line-height: 1.3;">Pelanggaran Hari Ini</p>
+        <div class="card mb-3 border-0 shadow-sm" style="border-radius: 14px;">
+            <div class="card-body p-3 d-flex align-items-center" style="gap: 12px;">
+                <div class="text-teal d-flex align-items-center justify-content-center flex-shrink-0" style="font-size: 24px; width: 44px; height: 44px; background: rgba(32, 201, 151, 0.1); border-radius: 10px; color: #0d9488;">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="overflow-hidden">
+                    <h3 class="font-weight-bold text-teal mb-0" style="font-size: 20px; line-height: 1; color: #0d9488 !important;"><?= $totalPklSiswaHadirToday ?></h3>
+                    <p class="text-secondary mb-0 mt-1 text-truncate" style="font-size: 11px; font-weight: 600; line-height: 1.2;">PKL Hadir</p>
+                </div>
             </div>
-            <div class="icon text-danger position-absolute" style="right: 15px; top: 15px; font-size: 32px; opacity: 0.12;">
-                <i class="fas fa-exclamation-circle"></i>
+        </div>
+    </div>
+    <div class="col-xl-2.4 col-lg-3 col-md-4 col-6">
+        <div class="card mb-3 border-0 shadow-sm" style="border-radius: 14px;">
+            <div class="card-body p-3 d-flex align-items-center" style="gap: 12px;">
+                <div class="text-info d-flex align-items-center justify-content-center flex-shrink-0" style="font-size: 24px; width: 44px; height: 44px; background: rgba(23, 162, 184, 0.1); border-radius: 10px;">
+                    <i class="fas fa-briefcase"></i>
+                </div>
+                <div class="overflow-hidden">
+                    <h3 class="font-weight-bold text-info mb-0" style="font-size: 20px; line-height: 1;"><?= $totalPklToday ?></h3>
+                    <p class="text-secondary mb-0 mt-1 text-truncate" style="font-size: 11px; font-weight: 600; line-height: 1.2;">Laporan PKL</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2.4 col-lg-3 col-md-4 col-6">
+        <div class="card mb-3 border-0 shadow-sm" style="border-radius: 14px;">
+            <div class="card-body p-3 d-flex align-items-center" style="gap: 12px;">
+                <div class="text-danger d-flex align-items-center justify-content-center flex-shrink-0" style="font-size: 24px; width: 44px; height: 44px; background: rgba(220, 53, 69, 0.1); border-radius: 10px;">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <div class="overflow-hidden">
+                    <h3 class="font-weight-bold text-danger mb-0" style="font-size: 20px; line-height: 1;"><?= $totalViolationsToday ?></h3>
+                    <p class="text-secondary mb-0 mt-1 text-truncate" style="font-size: 11px; font-weight: 600; line-height: 1.2;">Pelanggaran</p>
+                </div>
             </div>
         </div>
     </div>

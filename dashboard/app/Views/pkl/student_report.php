@@ -33,39 +33,41 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
             <?php if ($todayReport): ?>
                 <!-- Card Tampilan Laporan Terkirim (Read-Only) -->
                 <div class="card card-outline card-success shadow-sm border-0 rounded-lg mb-4" id="today-report-preview-card">
-                    <div class="card-header border-bottom d-flex justify-content-between align-items-center flex-wrap">
-                        <div>
-                            <h3 class="card-title font-weight-bold text-dark mb-0">
-                                <i class="fas fa-check-circle text-success mr-2"></i> Laporan Terkirim
-                            </h3>
-                            <br>
-                            <small class="text-secondary font-weight-bold">🏭 DU/DI: <?= htmlspecialchars($group['tempat_pkl']) ?></small>
-                        </div>
-                        <?php if (isset($isTakeover) && $isTakeover): ?>
-                            <div class="d-flex align-items-center bg-light rounded-pill p-1 border shadow-sm">
-                                <div class="bg-warning text-dark rounded-pill px-3 py-1 font-weight-bold text-sm" title="Mode Override Admin">
-                                    <i class="fas fa-user-shield mr-1"></i> Takeover
-                                </div>
-                                <input type="date" class="form-control form-control-sm border-0 bg-transparent font-weight-bold text-dark mx-2" 
-                                       style="cursor: pointer; max-width: 140px; outline: none; box-shadow: none;" 
-                                       max="<?= date('Y-m-d') ?>" 
-                                       value="<?= htmlspecialchars($selectedDate) ?>" 
-                                       onchange="window.location.href='?date=' + this.value + '<?= $groupIdParam ?>'">
-                            </div>
-                        <?php else: ?>
-                            <div class="d-flex align-items-center bg-light rounded-pill p-1 border shadow-sm">
-                                <div class="bg-success text-white rounded-pill px-3 py-1 font-weight-bold text-sm">
-                                    <i class="fas fa-calendar-alt mr-1"></i> Laporan
-                                </div>
-                                <select class="form-control form-control-sm border-0 bg-transparent font-weight-bold text-dark mx-2" 
-                                        style="cursor: pointer; min-width: 180px; outline: none; box-shadow: none;" 
-                                        onchange="window.location.href='?date=' + this.value">
-                                    <?= $dropdownOptions ?>
-                                </select>
-                            </div>
-                        <?php endif; ?>
+                    <div class="card-header border-bottom text-center">
+                        <h3 class="card-title font-weight-bold text-dark mb-1 float-none">
+                            <i class="fas fa-check-circle text-success mr-2"></i> Laporan Terkirim
+                        </h3>
+                        <div class="text-secondary font-weight-bold">🏭 DU/DI: <?= htmlspecialchars($group['tempat_pkl']) ?></div>
                     </div>
                     <div class="card-body">
+                        <!-- Pilihan Tanggal Laporan -->
+                        <div class="mb-4 p-3 border rounded bg-white shadow-sm" style="border-left: 4px solid #28a745 !important;">
+                            <label class="font-weight-bold text-dark mb-1" style="font-size: 14.5px;">📅 Pilihan Tanggal Absen</label>
+                            <p class="text-sm text-secondary mb-3">Laporan untuk tanggal ini sudah terkirim. Anda bisa melihat laporan hari lain dengan memilih tanggal di bawah ini.</p>
+                            
+                            <?php if (isset($isTakeover) && $isTakeover): ?>
+                                <div class="d-flex align-items-center bg-light rounded p-2 border border-warning">
+                                    <div class="bg-warning text-dark rounded px-3 py-1 font-weight-bold text-sm mr-2" title="Mode Override Admin">
+                                        <i class="fas fa-user-shield mr-1"></i> Mode Takeover Admin
+                                    </div>
+                                    <input type="date" class="form-control font-weight-bold flex-grow-1" 
+                                           max="<?= date('Y-m-d') ?>" 
+                                           value="<?= htmlspecialchars($selectedDate) ?>" 
+                                           onchange="window.location.href='?date=' + this.value + '<?= $groupIdParam ?>'">
+                                </div>
+                            <?php else: ?>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-success text-white border-success font-weight-bold"><i class="fas fa-calendar-alt"></i></span>
+                                    </div>
+                                    <select class="form-control font-weight-bold border-success text-dark" 
+                                            style="cursor: pointer; height: 44px; font-size: 15px;" 
+                                            onchange="window.location.href='?date=' + this.value">
+                                        <?= $dropdownOptions ?>
+                                    </select>
+                                </div>
+                            <?php endif; ?>
+                        </div>
                         <?php if ($todayReport['status_libur'] == 1): ?>
                             <div class="alert alert-warning text-center border-0 rounded-lg p-3 mb-0">
                                 <h6 class="font-weight-bold mb-1"><i class="fas fa-store-alt-slash mr-2"></i>DU/DI Sedang Libur</h6>
@@ -131,12 +133,12 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
                     <p class="text-secondary text-sm mb-0">Silakan hubungi Admin atau Guru Pembimbing jika ada kendala dan perlu bantuan pengisian susulan.</p>
                 </div>
                 <div class="text-center mb-4">
-                    <div class="d-inline-flex align-items-center bg-white rounded-pill p-1 border border-danger shadow-sm">
-                        <div class="bg-danger text-white rounded-pill px-3 py-1 font-weight-bold text-sm">
-                            <i class="fas fa-lock mr-1"></i> Terkunci
+                    <div class="input-group" style="max-width: 300px; margin: 0 auto;">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text bg-danger text-white border-danger font-weight-bold"><i class="fas fa-lock"></i></span>
                         </div>
-                        <select class="form-control form-control-sm border-0 bg-transparent font-weight-bold text-dark mx-2" 
-                                style="cursor: pointer; min-width: 180px; outline: none; box-shadow: none;" 
+                        <select class="form-control font-weight-bold border-danger text-dark" 
+                                style="cursor: pointer; height: 38px; font-size: 14px;" 
                                 onchange="window.location.href='?date=' + this.value">
                             <?= $dropdownOptions ?>
                         </select>
@@ -148,46 +150,20 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
                     <p class="text-dark mb-0">Mohon maaf, pengisian laporan harian PKL saat ini sedang ditutup/dinonaktifkan oleh Admin Sekolah. Silakan hubungi Admin atau pembimbing PKL Anda jika ada pertanyaan.</p>
                 </div>
             <?php else: ?>
-                <div class="card card-outline card-success shadow-sm border-0 rounded-lg" id="report-form-card" style="display: <?= $todayReport ? 'none' : 'block' ?>;">
-                <div class="card-header border-bottom d-flex justify-content-between align-items-center flex-wrap">
-                    <div>
-                        <h3 class="card-title font-weight-bold text-dark mb-0">
-                            <?php
-                            $formTitle = 'Form Laporan Hari Ini';
-                            if (isset($isTakeover) && $isTakeover) {
-                                $formTitle = 'Laporan Susulan (Takeover)';
-                            } elseif ($selectedDate !== $today) {
-                                $formTitle = 'Form Laporan Harian (Susulan)';
-                            }
-                            ?>
-                            <i class="fas fa-edit text-success mr-2"></i> <?= $todayReport ? 'Ubah Laporan' : $formTitle ?>
-                        </h3>
-                        <br>
-                        <small class="text-secondary font-weight-bold">🏭 DU/DI: <?= htmlspecialchars($group['tempat_pkl']) ?></small>
-                    </div>
-                    <?php if (isset($isTakeover) && $isTakeover): ?>
-                        <div class="d-flex align-items-center bg-white rounded-pill p-1 border border-warning shadow-sm">
-                            <div class="bg-warning text-dark rounded-pill px-3 py-1 font-weight-bold text-sm" title="Mode Override Admin">
-                                <i class="fas fa-user-shield mr-1"></i> Takeover
-                            </div>
-                            <input type="date" class="form-control form-control-sm border-0 bg-transparent font-weight-bold text-dark mx-2" 
-                                   style="cursor: pointer; max-width: 140px; outline: none; box-shadow: none;" 
-                                   max="<?= date('Y-m-d') ?>" 
-                                   value="<?= htmlspecialchars($selectedDate) ?>" 
-                                   onchange="window.location.href='?date=' + this.value + '<?= $groupIdParam ?>'">
-                        </div>
-                    <?php else: ?>
-                        <div class="d-flex align-items-center bg-white rounded-pill p-1 border border-success shadow-sm">
-                            <div class="bg-success text-white rounded-pill px-3 py-1 font-weight-bold text-sm">
-                                <i class="fas fa-calendar-alt mr-1"></i> Laporan
-                            </div>
-                            <select class="form-control form-control-sm border-0 bg-transparent font-weight-bold text-dark mx-2" 
-                                    style="cursor: pointer; min-width: 180px; outline: none; box-shadow: none;" 
-                                    onchange="window.location.href='?date=' + this.value">
-                                <?= $dropdownOptions ?>
-                            </select>
-                        </div>
-                    <?php endif; ?>
+                <div class="card card-outline <?= $todayReport ? 'card-warning border-warning' : 'card-success border-0' ?> shadow-sm rounded-lg" id="report-form-card" style="display: <?= $todayReport ? 'none' : 'block' ?>; <?= $todayReport ? 'border: 2px solid #ffc107 !important;' : '' ?>">
+                <div class="card-header border-bottom text-center <?= $todayReport ? 'bg-warning' : '' ?>">
+                    <h3 class="card-title font-weight-bold text-dark mb-1 float-none">
+                        <?php
+                        $formTitle = 'Form Laporan Hari Ini';
+                        if (isset($isTakeover) && $isTakeover) {
+                            $formTitle = 'Laporan Susulan (Takeover)';
+                        } elseif ($selectedDate !== $today) {
+                            $formTitle = 'Form Laporan Harian (Susulan)';
+                        }
+                        ?>
+                        <i class="fas fa-edit <?= $todayReport ? 'text-dark' : 'text-success' ?> mr-2"></i> <?= $todayReport ? 'Mode Perbarui Laporan' : $formTitle ?>
+                    </h3>
+                    <div class="<?= $todayReport ? 'text-dark' : 'text-secondary' ?> font-weight-bold">🏭 DU/DI: <?= htmlspecialchars($group['tempat_pkl']) ?></div>
                 </div>
                 <!-- /.card-header -->
                 <form action="<?= base_url('/pkl/submit') ?>" method="post" enctype="multipart/form-data" id="studentReportForm" onsubmit="return submitFormWithCompression(event)">
@@ -198,52 +174,96 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
                         <input type="hidden" name="ketua_phone" value="<?= htmlspecialchars($group['ketua_phone']) ?>">
                     <?php endif; ?>
                     <div class="card-body">
+                        <?php if ($todayReport): ?>
+                            <div class="alert alert-warning border-0 shadow-sm rounded mb-4" style="background-color: #fff3cd; color: #856404; border-left: 5px solid #ffeeba !important;">
+                                <h5 class="font-weight-bold mb-1"><i class="fas fa-exclamation-triangle mr-2"></i> PERHATIAN: Mode Edit Laporan</h5>
+                                <p class="mb-0 text-sm">Anda sedang memperbaiki laporan yang sudah terkirim. Silakan sesuaikan data absensi atau jurnal di bawah ini, lalu jangan lupa tekan tombol <strong>"Simpan Perubahan"</strong> di paling bawah form.</p>
+                            </div>
+                        <?php endif; ?>
+                        <!-- Pilihan Tanggal Laporan -->
+                        <div class="mb-4 p-3 border rounded bg-white shadow-sm" style="border-left: 4px solid #28a745 !important;">
+                            <label class="font-weight-bold text-dark mb-1" style="font-size: 14.5px;">📅 Tanggal Laporan</label>
+                            <p class="text-sm text-secondary mb-3">Ingin mengisi laporan di hari yang terlewat? Silakan pilih tanggal 7 hari ke belakang melalui menu di bawah ini.</p>
+                            
+                            <?php if (isset($isTakeover) && $isTakeover): ?>
+                                <div class="d-flex align-items-center bg-light rounded p-2 border border-warning">
+                                    <div class="bg-warning text-dark rounded px-3 py-1 font-weight-bold text-sm mr-2" title="Mode Override Admin">
+                                        <i class="fas fa-user-shield mr-1"></i> Mode Takeover Admin
+                                    </div>
+                                    <input type="date" class="form-control font-weight-bold flex-grow-1" 
+                                           max="<?= date('Y-m-d') ?>" 
+                                           value="<?= htmlspecialchars($selectedDate) ?>" 
+                                           onchange="window.location.href='?date=' + this.value + '<?= $groupIdParam ?>'">
+                                </div>
+                            <?php else: ?>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-success text-white border-success font-weight-bold"><i class="fas fa-calendar-alt"></i></span>
+                                    </div>
+                                    <select class="form-control font-weight-bold border-success text-dark" 
+                                            style="cursor: pointer; height: 44px; font-size: 15px;" 
+                                            onchange="window.location.href='?date=' + this.value">
+                                        <?= $dropdownOptions ?>
+                                    </select>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
                         <!-- Status DU/DI Hari Ini -->
                         <?php 
-                        $isLibur = (isset($todayReport) && $todayReport['status_libur'] == 1);
+                        $statusLiburValue = isset($todayReport) ? $todayReport['status_libur'] : '';
                         ?>
                         <div class="mb-4 p-3 border rounded-lg bg-light">
                             <label class="font-weight-bold text-dark d-block mb-2" style="font-size: 14.5px;">🏢 Status DU/DI Hari Ini</label>
-                            <div class="d-flex w-100 mb-2" style="gap: 12px; display: flex;">
-                                <button type="button" class="btn font-weight-bold py-2 transition-all" 
-                                        style="flex: 1; border-radius: 12px; transition: all 0.25s ease; <?= !$isLibur ? 'background: linear-gradient(135deg, #16a34a, #15803d); color: white; border: none; box-shadow: 0 4px 10px rgba(22, 163, 74, 0.25);' : 'background: transparent; color: #16a34a; border: 2px solid #16a34a;' ?>" 
+                            <div class="d-flex w-100 mb-2" style="gap: 8px; display: flex;">
+                                <button type="button" class="btn font-weight-bold py-2" 
+                                        style="flex: 1; border-radius: 4px; <?= ($statusLiburValue === '0' || $statusLiburValue === 0) ? 'background: #28a745; color: white; border: none;' : 'background: white; color: #28a745; border: 2px solid #28a745;' ?>" 
                                         id="btn-status-masuk" onclick="setStatusLibur(0)">
                                     💼 Masuk PKL
                                 </button>
-                                <button type="button" class="btn font-weight-bold py-2 transition-all" 
-                                        style="flex: 1; border-radius: 12px; transition: all 0.25s ease; <?= $isLibur ? 'background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; border: none; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25);' : 'background: transparent; color: #ef4444; border: 2px solid #ef4444;' ?>" 
+                                <button type="button" class="btn font-weight-bold py-2" 
+                                        style="flex: 1; border-radius: 4px; <?= ($statusLiburValue === '1' || $statusLiburValue === 1) ? 'background: #dc3545; color: white; border: none;' : 'background: white; color: #dc3545; border: 2px solid #dc3545;' ?>" 
                                         id="btn-status-libur" onclick="setStatusLibur(1)">
                                     🏢 Libur / Tutup
                                 </button>
                             </div>
-                            <input type="hidden" name="status_libur" id="status_libur" value="<?= $isLibur ? '1' : '0' ?>">
-                            
-                            <!-- Alasan Libur -->
-                            <div id="libur-reason-section" class="mt-3" style="display: <?= $isLibur ? 'block' : 'none' ?>;">
-                                <label class="font-weight-bold text-secondary mb-1" style="font-size: 12px;">📝 Alasan Tempat PKL Libur/Tutup (Wajib Diisi):</label>
-                                <textarea name="libur_reason" id="libur_reason" class="form-control mb-3" rows="2" placeholder="Contoh: Hari Minggu / Toko sedang renovasi / Instansi tutup nasional..."><?= htmlspecialchars($todayReport['libur_reason'] ?? '') ?></textarea>
-                                
-                                <!-- Tombol Simpan Cepat saat Libur -->
-                                <div class="d-flex justify-content-end mb-2">
-                                    <?php if ($todayReport): ?>
-                                        <button type="button" class="btn btn-secondary btn-sm mr-2 px-3 py-2 font-weight-bold rounded-lg" onclick="hideEditForm()">
-                                            <i class="fas fa-times mr-1"></i> Batal
-                                        </button>
-                                    <?php endif; ?>
-                                    <button type="submit" class="btn btn-warning btn-sm px-4 py-2 font-weight-bold rounded-lg text-dark shadow-sm">
-                                        <i class="fas fa-save mr-1"></i> <?= $todayReport ? 'Simpan Perubahan' : 'Kirim Laporan Libur' ?>
-                                    </button>
-                                </div>
-                            </div>
+                            <input type="hidden" name="status_libur" id="status_libur" value="<?= htmlspecialchars($statusLiburValue) ?>">
+                        </div>
 
-                            <!-- Tempat Melakukan Presensi -->
-                            <div id="presensi-location-section" class="mt-3" style="display: <?= !$isLibur ? 'block' : 'none' ?>;">
+                        <!-- Main Form Content (Hidden until status is selected) -->
+                        <div id="main-form-content" style="display: <?= $statusLiburValue === '' ? 'none' : 'block' ?>;">
+
+                            <!-- Tempat Melakukan Presensi (Always shown when active) -->
+                            <div id="presensi-location-section" class="mb-4">
                                 <label class="font-weight-bold text-dark mb-1" style="font-size: 13.5px;">📍 Lokasi Melakukan Absensi PKL (Wajib di isi)</label>
                                 <div class="alert alert-warning border-0 rounded-lg p-2 mb-2 text-xs d-flex align-items-center" style="background-color: #fffbeb; color: #b45309; border: 1px solid #fde68a !important;">
                                     <i class="fas fa-exclamation-triangle mr-2" style="font-size: 14px;"></i>
-                                    <span>Contoh: Bengkel Mobil Cak Bagong, Kantor PT. Abadi Jaya, dll.</span>
+                                    <span>Wajib melampirkan lokasi aktual saat Anda absen. Pastikan GPS menyala!</span>
                                 </div>
-                                <input type="text" name="location_data" id="location_data" class="form-control" placeholder="Contoh: Bengkel Mobil Cak Bagong, Kantor PT. Abadi Jaya, dll." value="<?= htmlspecialchars($todayReport['location_data'] ?? '') ?>" oninput="checkLocationFilled()">
+                                
+                                <div class="d-flex" style="gap: 8px;">
+                                    <button class="btn <?= !empty($todayReport['location_data']) ? 'btn-success' : 'btn-primary' ?> font-weight-bold py-2 flex-grow-1" type="button" id="btn-get-gps" onclick="getGPSLocation()" <?= !empty($todayReport['location_data']) ? 'disabled' : '' ?>>
+                                        <?= !empty($todayReport['location_data']) ? '<i class="fas fa-check-circle mr-1"></i> Lokasi Tersimpan' : '<i class="fas fa-map-marker-alt mr-1"></i> Kirim Lokasi Saya' ?>
+                                    </button>
+                                    <button class="btn btn-primary font-weight-bold py-2 px-3" type="button" id="btn-refresh-gps" onclick="getGPSLocation()" style="<?= empty($todayReport['location_data']) ? 'display: none;' : '' ?>" title="Cari Ulang Lokasi">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
+                                <div id="gps-status" class="text-xs font-weight-bold text-secondary mb-2" style="<?= empty($todayReport['location_data']) ? 'display: none;' : 'display: block;' ?>">
+                                    <?php if (!empty($todayReport['location_data'])): ?>
+                                        <i class="fas fa-check-circle text-success mr-1"></i> 
+                                        <?php 
+                                            $locVal = $todayReport['location_data'];
+                                            if (strpos($locVal, '| GPS:') !== false) {
+                                                $gpsRaw = trim(explode('| GPS:', $locVal)[1]);
+                                                echo 'Lokasi saat ini: <a href="https://maps.google.com/?q='.$gpsRaw.'" target="_blank" class="text-success"><u>Lihat di Peta</u></a>';
+                                            } else {
+                                                echo htmlspecialchars($locVal);
+                                            }
+                                        ?>
+                                    <?php endif; ?>
+                                </div>
+                                <input type="hidden" name="location_data" id="location_data" value="<?= htmlspecialchars($todayReport['location_data'] ?? '') ?>">
                                 
                                 <div class="mt-3 form-group p-2 rounded" style="background: #f8fafc; border: 1px dashed #cbd5e1;">
                                     <label class="font-weight-bold text-dark mb-1" style="font-size: 12px;">
@@ -264,17 +284,22 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Alert Silakan Isi Lokasi Terlebih Dahulu -->
-                        <div id="location-warning-message" class="alert alert-danger border-0 rounded-lg p-3 mb-3" style="display: none; background-color: #fef2f2; color: #991b1b; border: 1px solid #fee2e2 !important;">
-                            <h6 class="font-weight-bold mb-1"><i class="fas fa-lock mr-2"></i>Pengisian Jurnal &amp; Absensi Dikunci</h6>
-                            <p class="mb-0 text-sm">Silakan isi <strong>📍 Lokasi Melakukan Absensi PKL (Wajib di isi)</strong> terlebih dahulu di atas untuk membuka pengisian jurnal &amp; absensi anggota.</p>
-                        </div>
+                            <!-- Alasan Libur -->
+                            <div id="libur-reason-section" class="mb-4" style="display: <?= ($statusLiburValue === '1' || $statusLiburValue === 1) ? 'block' : 'none' ?>;">
+                                <label class="font-weight-bold text-danger mb-1" style="font-size: 13px;">📝 Alasan Tempat PKL Libur/Tutup (Wajib Diisi):</label>
+                                <textarea name="libur_reason" id="libur_reason" class="form-control" rows="2" placeholder="Contoh: Hari Minggu / Toko sedang renovasi / Instansi tutup nasional..."><?= htmlspecialchars($todayReport['libur_reason'] ?? '') ?></textarea>
+                            </div>
 
-                        <!-- Bagian Laporan Harian (Presensi & Jurnal) -->
-                        <div id="attendance-section">
-                            <h5 class="font-weight-bold text-dark mb-3"><i class="fas fa-users text-primary mr-1"></i> Kehadiran & Jurnal Harian Anggota</h5>
+                            <!-- Alert Silakan Isi Lokasi Terlebih Dahulu -->
+                            <div id="location-warning-message" class="alert alert-danger border-0 rounded-lg p-3 mb-3" style="display: none; background-color: #fef2f2; color: #991b1b; border: 1px solid #fee2e2 !important;">
+                                <h6 class="font-weight-bold mb-1"><i class="fas fa-lock mr-2"></i>Pengisian Formulir Dikunci</h6>
+                                <p class="mb-0 text-sm">Silakan isi <strong>📍 Lokasi Melakukan Absensi PKL</strong> terlebih dahulu di atas untuk membuka bagian pengisian.</p>
+                            </div>
+
+                            <!-- Bagian Laporan Harian (Presensi & Jurnal) -->
+                            <div id="attendance-section" style="display: <?= ($statusLiburValue === '0' || $statusLiburValue === 0) ? 'block' : 'none' ?>;">
+                                <h5 class="font-weight-bold text-dark mb-3"><i class="fas fa-users text-primary mr-1"></i> Kehadiran & Jurnal Harian Anggota</h5>
                             
                             <?php foreach ($members as $index => $name): ?>
                                 <?php 
@@ -407,15 +432,16 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
                                     </div>
                                 </div>
                             <?php endforeach; ?>
-                        </div>
+                            </div>
+                        </div> <!-- End of main-form-content -->
                     </div>
-                    <div class="card-footer bg-white border-top text-right">
+                    <div class="card-footer bg-white border-top text-right" id="main-form-footer" style="display: <?= $statusLiburValue === '' ? 'none' : 'block' ?>;">
                         <?php if ($todayReport): ?>
-                            <button type="button" class="btn btn-secondary mr-2 px-4 py-2 font-weight-bold rounded-lg" onclick="hideEditForm()">
+                            <button type="button" class="btn btn-secondary mr-2 px-4 py-2 font-weight-bold rounded" onclick="hideEditForm()">
                                 <i class="fas fa-times mr-2"></i> Batal
                             </button>
                         <?php endif; ?>
-                        <button type="submit" class="btn btn-success px-4 py-2 font-weight-bold rounded-lg">
+                        <button type="submit" class="btn btn-success px-4 py-2 font-weight-bold rounded">
                             <i class="fas fa-paper-plane mr-2"></i> <?= $todayReport ? 'Simpan Perubahan' : 'Kirim Laporan PKL' ?>
                         </button>
                     </div>
@@ -427,26 +453,28 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
         <!-- Read-Only View for Anggota PKL -->
         <div class="col-lg-8 mb-4">
             <div class="card shadow-sm border-0 rounded-lg bg-white">
-                <div class="card-header border-bottom d-flex justify-content-between align-items-center flex-wrap">
-                    <div>
-                        <h3 class="card-title font-weight-bold text-dark mb-0">
-                            <i class="fas fa-briefcase text-info mr-2"></i> Laporan PKL (Hanya Lihat)
-                        </h3>
-                        <br>
-                        <small class="text-secondary font-weight-bold">🏭 DU/DI: <?= htmlspecialchars($group['tempat_pkl']) ?></small>
-                    </div>
-                    <div class="d-flex align-items-center bg-light rounded-pill p-1 border border-info shadow-sm">
-                        <div class="bg-info text-white rounded-pill px-3 py-1 font-weight-bold text-sm">
-                            <i class="fas fa-calendar-alt mr-1"></i> Laporan
-                        </div>
-                        <select class="form-control form-control-sm border-0 bg-transparent font-weight-bold text-dark mx-2" 
-                                style="cursor: pointer; min-width: 180px; outline: none; box-shadow: none;" 
-                                onchange="window.location.href='?date=' + this.value">
-                            <?= $dropdownOptions ?>
-                        </select>
-                    </div>
+                <div class="card-header border-bottom text-center">
+                    <h3 class="card-title font-weight-bold text-dark mb-1 float-none">
+                        <i class="fas fa-briefcase text-info mr-2"></i> Laporan PKL (Hanya Lihat)
+                    </h3>
+                    <div class="text-secondary font-weight-bold">🏭 DU/DI: <?= htmlspecialchars($group['tempat_pkl']) ?></div>
                 </div>
                 <div class="card-body">
+                    <!-- Pilihan Tanggal Laporan -->
+                    <div class="mb-4 p-3 border rounded bg-white shadow-sm" style="border-left: 4px solid #17a2b8 !important;">
+                        <label class="font-weight-bold text-dark mb-1" style="font-size: 14.5px;">📅 Tanggal Laporan</label>
+                        <p class="text-sm text-secondary mb-3">Pilih tanggal di bawah ini untuk melihat arsip laporan harian sebelumnya.</p>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-info text-white border-info font-weight-bold"><i class="fas fa-calendar-alt"></i></span>
+                            </div>
+                            <select class="form-control font-weight-bold border-info text-dark" 
+                                    style="cursor: pointer; height: 44px; font-size: 15px;" 
+                                    onchange="window.location.href='?date=' + this.value">
+                                <?= $dropdownOptions ?>
+                            </select>
+                        </div>
+                    </div>
                     <?php if (isset($todayReport) && $todayReport['status_libur'] == 1): ?>
                         <div class="alert alert-warning text-center border-0 rounded-lg p-4 mb-0">
                             <h5 class="font-weight-bold mb-1"><i class="fas fa-store-alt-slash mr-2"></i>DU/DI Sedang Libur</h5>
@@ -505,38 +533,29 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
 
     <!-- Riwayat Laporan Kelompok -->
     <div class="col-lg-4 mb-4">
-        <!-- Rekap Mingguan Card (HANYA untuk Ketua Kelompok) -->
-        <?php if ($isKetua): ?>
+        <!-- Fitur Riwayat (Untuk Semua Anggota) -->
         <div class="card shadow-sm border-0 rounded-lg bg-white mb-4">
             <div class="card-header border-bottom">
-                <h3 class="card-title font-weight-bold text-dark mb-0"><i class="fas fa-calendar-week text-success mr-2"></i> Rekap Mingguan</h3>
+                <h3 class="card-title font-weight-bold text-dark mb-0"><i class="fas fa-print text-primary mr-2"></i> Cetak & Riwayat Laporan</h3>
             </div>
             <div class="card-body">
-                <p class="text-secondary text-xs mb-3">Unduh atau preview gabungan laporan jurnal & absensi selama satu minggu penuh (Senin s.d Sabtu). Anggota hanya dapat melihat riwayat, tidak dapat mencetak PDF.</p>
-                <div class="form-group mb-3">
-                    <label class="font-weight-bold text-secondary text-xs" for="weekly_start_date">PILIH TANGGAL (Pilih hari apa saja di minggu tersebut):</label>
-                    <input type="date" id="weekly_start_date" class="form-control form-control-sm" value="<?= date('Y-m-d') ?>">
+                <p class="text-secondary text-xs mb-3">Klik tombol di bawah untuk melihat histori seluruh laporan yang sudah terkirim, atau mencetaknya dalam bentuk buku jurnal PDF.</p>
+                
+                <a href="<?= base_url('/pkl/riwayat/' . $group['ketua_phone']) ?>" class="btn btn-primary btn-block font-weight-bold mb-3 py-2">
+                    <i class="fas fa-history mr-2"></i> Lihat Riwayat Laporan Lengkap
+                </a>
+                
+                <hr>
+                <label class="font-weight-bold text-secondary text-sm mb-2 d-block">🖨️ Cetak Rekap Kehadiran Individu:</label>
+                <div class="d-flex w-100 flex-column" style="gap: 6px;">
+                    <?php foreach ($members as $member): ?>
+                    <a href="<?= base_url('/pkl/rekap-siswa/' . htmlspecialchars($group['ketua_phone']) . '?name=' . urlencode(trim($member))) ?>" target="_blank" class="btn btn-sm btn-outline-success font-weight-bold text-left" style="font-size: 12px; border-width: 2px;">
+                        <i class="fas fa-user mr-1"></i> <?= htmlspecialchars(trim($member)) ?>
+                    </a>
+                    <?php endforeach; ?>
                 </div>
-                <div class="d-flex w-100 mb-2" style="gap: 8px; display: flex;">
-                    <button type="button" class="btn btn-sm btn-info font-weight-bold flex-fill" onclick="previewWeeklyReport()">
-                        <i class="fas fa-eye mr-1"></i> Preview Data Mingguan
-                    </button>
-                </div>
-                    <div class="d-flex w-100 flex-column mt-2" style="gap: 6px;">
-                        <a href="<?= base_url('/pkl/riwayat/' . $group['ketua_phone']) ?>" class="btn btn-sm btn-primary font-weight-bold text-left">
-                            <i class="fas fa-history mr-2"></i> Riwayat Laporan
-                        </a>
-                        <hr class="my-1">
-                        <label class="font-weight-bold text-secondary text-xs mb-1">Cetak Rekap Absensi Individu:</label>
-                        <?php foreach ($members as $member): ?>
-                        <a href="<?= base_url('/pkl/rekap-siswa/' . htmlspecialchars($group['ketua_phone']) . '?name=' . urlencode(trim($member))) ?>" target="_blank" class="btn btn-sm btn-outline-success font-weight-bold text-left" style="font-size: 11px;">
-                            <i class="fas fa-print mr-2"></i> <?= htmlspecialchars(trim($member)) ?>
-                        </a>
-                        <?php endforeach; ?>
-                    </div>
             </div>
         </div>
-        <?php endif; ?>
 
         <div class="card shadow-sm border-0 rounded-lg bg-white">
             <div class="card-header border-bottom">
@@ -599,6 +618,7 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
         }
 
         const form = document.getElementById('studentReportForm');
+
         const submitBtn = form.querySelector('button[type="submit"]');
         const originalBtnText = submitBtn.innerHTML;
         
@@ -668,86 +688,71 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
         
         const btnMasuk = document.getElementById('btn-status-masuk');
         const btnLibur = document.getElementById('btn-status-libur');
-        
-        if (btnMasuk && btnLibur) {
-            if (isLibur) {
-                btnLibur.style.background = 'linear-gradient(135deg, #ef4444, #b91c1c)';
-                btnLibur.style.color = 'white';
-                btnLibur.style.border = 'none';
-                btnLibur.style.boxShadow = '0 4px 10px rgba(239, 68, 68, 0.25)';
-                
-                btnMasuk.style.background = 'transparent';
-                btnMasuk.style.color = '#16a34a';
-                btnMasuk.style.border = '2px solid #16a34a';
-                btnMasuk.style.boxShadow = 'none';
-            } else {
-                btnMasuk.style.background = 'linear-gradient(135deg, #16a34a, #15803d)';
-                btnMasuk.style.color = 'white';
-                btnMasuk.style.border = 'none';
-                btnMasuk.style.boxShadow = '0 4px 10px rgba(22, 163, 74, 0.25)';
-                
-                btnLibur.style.background = 'transparent';
-                btnLibur.style.color = '#ef4444';
-                btnLibur.style.border = '2px solid #ef4444';
-                btnLibur.style.boxShadow = 'none';
-            }
-        }
-        
-        // Show/hide sections
-        document.getElementById('libur-reason-section').style.display = isLibur ? 'block' : 'none';
-        
-        const locSection = document.getElementById('presensi-location-section');
-        if (locSection) {
-            locSection.style.display = isLibur ? 'none' : 'block';
-        }
-        
-        if (isLibur) {
-            toggleLiburState(true);
-            const warningBox = document.getElementById('location-warning-message');
-            if (warningBox) warningBox.style.display = 'none';
-        } else {
-            checkLocationFilled();
-        }
-    }
+        const liburSection = document.getElementById('libur-reason-section');
+        const attendanceSection = document.getElementById('attendance-section');
 
-    function toggleLiburState(isLibur) {
-        const section = document.getElementById('attendance-section');
-        if (section) {
-            section.style.opacity = isLibur ? '0.35' : '1';
-            section.style.pointerEvents = isLibur ? 'none' : 'auto';
+        const mainContent = document.getElementById('main-form-content');
+        if (mainContent) mainContent.style.display = 'block';
+        const mainFooter = document.getElementById('main-form-footer');
+        if (mainFooter) mainFooter.style.display = 'block';
+
+        if (isLibur) {
+            btnLibur.style.background = '#dc3545';
+            btnLibur.style.color = 'white';
+            btnLibur.style.border = 'none';
+            
+            btnMasuk.style.background = 'white';
+            btnMasuk.style.color = '#28a745';
+            btnMasuk.style.border = '2px solid #28a745';
+            
+            if (liburSection) liburSection.style.display = 'block';
+            if (attendanceSection) attendanceSection.style.display = 'none';
+        } else {
+            btnMasuk.style.background = '#28a745';
+            btnMasuk.style.color = 'white';
+            btnMasuk.style.border = 'none';
+            
+            btnLibur.style.background = 'white';
+            btnLibur.style.color = '#dc3545';
+            btnLibur.style.border = '2px solid #dc3545';
+            
+            if (liburSection) liburSection.style.display = 'none';
+            if (attendanceSection) attendanceSection.style.display = 'block';
         }
+        
+        checkLocationFilled();
     }
 
     function checkLocationFilled() {
         const locationInput = document.getElementById('location_data');
         const statusLiburVal = document.getElementById('status_libur').value;
+        if (statusLiburVal === '') return;
         const isLibur = (statusLiburVal === '1');
         
         const section = document.getElementById('attendance-section');
+        const liburSection = document.getElementById('libur-reason-section');
         const warningBox = document.getElementById('location-warning-message');
-        
-        if (!section) return;
-        
-        if (isLibur) {
-            if (warningBox) warningBox.style.display = 'none';
-            return;
-        }
-        
         const isFilled = locationInput && locationInput.value.trim().length > 0;
         
-        // Target all form controls inside attendance section
-        const inputs = section.querySelectorAll('input, textarea');
+        const targetSection = isLibur ? liburSection : section;
+        if (!targetSection) return;
+        
+        // Target all form controls inside active section
+        const inputs = targetSection.querySelectorAll('input, textarea, button');
         inputs.forEach(inp => {
+            if (inp.id !== 'libur_reason' && inp.type !== 'radio' && inp.type !== 'file' && !inp.name?.includes('jurnal')) {
+               // generic disable, wait, we want to disable everything inside
+            }
             inp.disabled = !isFilled;
         });
         
         if (isFilled) {
-            section.style.opacity = '1';
-            section.style.pointerEvents = 'auto';
+            targetSection.style.opacity = '1';
+            targetSection.style.pointerEvents = 'auto';
             if (warningBox) warningBox.style.display = 'none';
         } else {
-            section.style.opacity = '0.4';
-            section.style.pointerEvents = 'none';
+            targetSection.style.opacity = '0.4';
+            targetSection.style.pointerEvents = 'none';
             if (warningBox) warningBox.style.display = 'block';
         }
     }
@@ -812,8 +817,21 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
 
     function validateStudentReportForm(event) {
         const statusLiburVal = document.getElementById('status_libur').value;
+        if (statusLiburVal === '') {
+            alert('Wajib memilih Status DU/DI Hari Ini terlebih dahulu!');
+            event.preventDefault();
+            return false;
+        }
         const isLibur = (statusLiburVal === '1');
         
+        // Validate location_data is ALWAYS required now
+        const locationInput = document.getElementById('location_data');
+        if (locationInput && locationInput.value.trim().length === 0) {
+            alert('Wajib mengisi Lokasi Melakukan Absensi PKL!');
+            event.preventDefault();
+            return false;
+        }
+
         if (isLibur) {
             const reason = document.getElementById('libur_reason').value.trim();
             if (reason.length === 0) {
@@ -822,14 +840,6 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
                 return false;
             }
             return true;
-        }
-
-        // Validate location_data if PKL is active
-        const locationInput = document.getElementById('location_data');
-        if (locationInput && locationInput.value.trim().length === 0) {
-            alert('Wajib mengisi Lokasi Melakukan Absensi PKL!');
-            event.preventDefault();
-            return false;
         }
 
         // Validate photo_kelompok
@@ -927,7 +937,9 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
 
     document.addEventListener('DOMContentLoaded', function() {
         const statusLiburVal = document.getElementById('status_libur').value;
-        setStatusLibur(statusLiburVal === '1' ? 1 : 0);
+        if (statusLiburVal !== '') {
+            setStatusLibur(statusLiburVal === '1' ? 1 : 0);
+        }
         
         // Auto-adjust height for all textareas on load
         document.querySelectorAll('textarea[style*="resize: none"]').forEach(el => {
@@ -977,69 +989,7 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
         return [year, month, day].join('-');
     }
 
-    function previewWeeklyReport() {
-        const inputVal = document.getElementById('weekly_start_date').value;
-        if (!inputVal) {
-            alert('Silakan pilih tanggal terlebih dahulu!');
-            return;
-        }
-
-        const monday = getMonday(inputVal);
-        const dates = [];
-        for (let i = 0; i < 6; i++) {
-            const current = new Date(monday);
-            current.setDate(monday.getDate() + i);
-            dates.push(formatDateStr(current));
-        }
-
-        // Format label periode: Senin (Tanggal) - Sabtu (Tanggal)
-        const opt = { day: 'numeric', month: 'short', year: 'numeric' };
-        const labelPeriode = `${monday.toLocaleDateString('id-ID', opt)} - ${new Date(monday.getTime() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('id-ID', opt)}`;
-
-        document.getElementById('weeklyModalTitle').textContent = `Preview Rekap Mingguan (${labelPeriode})`;
-
-        let html = '';
-        dates.forEach((dateStr) => {
-            const report = groupReports.find(r => r.date === dateStr);
-            const formattedDayStr = new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-
-            html += `<div class="card card-body shadow-xs mb-3 border bg-light">`;
-            html += `<h6 class="font-weight-bold text-dark border-bottom pb-1 mb-2"><i class="far fa-calendar-alt text-primary mr-1"></i> ${formattedDayStr.toUpperCase()}</h6>`;
-
-            if (!report) {
-                html += `<div class="text-center py-3 text-secondary"><em>Laporan Hari Ini Belum Diisi / Belum Dikirim oleh Ketua Kelompok.</em></div>`;
-            } else if (report.status_libur == 1) {
-                html += `<div class="alert alert-warning text-center py-2 mb-0">🏢 <strong>TEMPAT PKL LIBUR / TUTUP</strong><br><small>Alasan: "${report.jurnal.keterangan || report.libur_reason || '-'}"</small></div>`;
-            } else {
-                html += `<div class="list-group">`;
-                groupMembers.forEach((name, idx) => {
-                    const status = report.attendance_data && report.attendance_data[name] ? report.attendance_data[name] : 'hadir';
-                    const jurnal = report.jurnal && report.jurnal[name] ? report.jurnal[name] : '—';
-                    const photo = report.photo_urls && report.photo_urls[name] ? report.photo_urls[name] : null;
-
-                    const statusClass = { hadir: 'success', sakit: 'warning text-dark', izin: 'info', alpha: 'danger' }[status.toLowerCase()] || 'secondary';
-
-                    html += `<div class="list-group-item p-2 mb-2 rounded bg-white border">`;
-                    html += `  <div class="d-flex justify-content-between align-items-center mb-1">`;
-                    html += `    <span class="font-weight-bold text-sm text-dark">${idx+1}. ${name}</span>`;
-                    html += `    <span class="badge badge-${statusClass} font-weight-bold text-xs">${status.toUpperCase()}</span>`;
-                    html += `  </div>`;
-                    html += `  <p class="text-xs text-secondary mb-1"><strong>Jurnal:</strong> ${jurnal}</p>`;
-                    if (photo) {
-                        html += `  <div class="mt-1">`;
-                        html += `    <a href="${photo}" target="_blank"><img src="${photo}" class="rounded border" style="width: 50px; height: 50px; object-fit: cover;"></a>`;
-                        html += `  </div>`;
-                    }
-                    html += `</div>`;
-                });
-                html += `</div>`;
-            }
-            html += `</div>`;
-        });
-
-        document.getElementById('weeklyModalBody').innerHTML = html;
-        $('#weeklyPreviewModal').modal('show');
-    }
+    // Fungsi getGPSLocation berada di bawah ini
 
     function printWeeklyAbsensi() {
         const inputVal = document.getElementById('weekly_start_date').value;
@@ -1051,25 +1001,65 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
         const mondayStr = formatDateStr(monday);
         window.open(`<?= base_url('/pkl/print-weekly-pdf/') ?>/${ketuaPhone}/${mondayStr}?type=absensi`, '_blank');
     }
+
+    function getGPSLocation() {
+        const btn = document.getElementById('btn-get-gps');
+        const btnRefresh = document.getElementById('btn-refresh-gps');
+        const status = document.getElementById('gps-status');
+
+        if (!navigator.geolocation) {
+            alert("Browser Anda tidak mendukung fitur lokasi GPS.");
+            return;
+        }
+
+        btn.disabled = true;
+        if (btnRefresh) btnRefresh.disabled = true;
+        
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Mencari...';
+        status.style.display = 'block';
+        status.className = 'text-xs font-weight-bold text-info mb-2 mt-2';
+        status.innerHTML = '<i class="fas fa-satellite-dish mr-1"></i> Mengunci satelit GPS... (Pastikan GPS menyala)';
+
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                const accuracy = position.coords.accuracy;
+                
+                document.getElementById('location_data').value = `Titik Koordinat Absensi | GPS: ${lat}, ${lng}`;
+                checkLocationFilled();
+                
+                btn.innerHTML = '<i class="fas fa-check-circle mr-1"></i> Lokasi Tersimpan';
+                btn.className = 'btn btn-success font-weight-bold py-2 flex-grow-1';
+                
+                if (btnRefresh) {
+                    btnRefresh.style.display = 'block';
+                    btnRefresh.disabled = false;
+                }
+                
+                status.className = 'text-xs font-weight-bold text-success mb-2 mt-2';
+                status.innerHTML = `<i class="fas fa-check-circle mr-1"></i> Lokasi terkunci! (Akurasi: ${Math.round(accuracy)} meter) <br><a href="https://maps.google.com/?q=${lat},${lng}" target="_blank" class="mt-1 d-inline-block text-success"><u>Lihat di Peta</u></a>`;
+            },
+            function(error) {
+                btn.disabled = false;
+                if (btnRefresh) btnRefresh.disabled = false;
+                btn.innerHTML = '<i class="fas fa-map-marker-alt mr-1"></i> Kirim Lokasi Saya';
+                
+                status.className = 'text-xs font-weight-bold text-danger mb-2 mt-2';
+                let errMsg = "Gagal mengambil lokasi.";
+                if (error.code == error.PERMISSION_DENIED) errMsg = "Akses lokasi ditolak. Izinkan browser (Chrome) mengakses lokasi.";
+                if (error.code == error.POSITION_UNAVAILABLE) errMsg = "Sinyal GPS lemah atau tidak tersedia.";
+                if (error.code == error.TIMEOUT) errMsg = "Waktu pencarian GPS habis.";
+                status.innerHTML = `<i class="fas fa-exclamation-triangle mr-1"></i> ${errMsg}`;
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
+            }
+        );
+    }
 </script>
 
-<!-- Modal Preview Mingguan -->
-<div class="modal fade" id="weeklyPreviewModal" tabindex="-1" role="dialog" aria-labelledby="weeklyModalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
-            <div class="modal-header bg-light border-bottom">
-                <h5 class="modal-title font-weight-bold text-dark" id="weeklyModalTitle">Preview Rekap Mingguan</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body p-4" style="max-height: 70vh; overflow-y: auto;" id="weeklyModalBody">
-                <!-- Content populated by JS -->
-            </div>
-            <div class="modal-footer bg-light border-top">
-                <button type="button" class="btn btn-secondary font-weight-bold rounded-lg px-4" data-dismiss="modal">Tutup</button>
-            </div>
-        </div>
-    </div>
 </div>
 <?= $this->endSection() ?>

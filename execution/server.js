@@ -30,10 +30,11 @@ import {
   getFeedbacks, addFeedback, deleteFeedback, hideFeedback,
   getKelompokPkl, addKelompokPkl, deleteKelompokPkl, updateKelompokPkl,
   getAttendancePklByDate, getAttendancePklToday, getKelompokPklByKetua, getAttendancePklByKetuaAndDate,
-  renderTemplate, getBotTemplates, updateBotTemplate, getCronConfigs, updateCronConfig, addCronConfig, deleteCronConfig
+  renderTemplate, getBotTemplates, updateBotTemplate, getCronConfigs, updateCronConfig, addCronConfig, deleteCronConfig,
+  runAsync, getDb
 } from './db.js';
 import { initAI } from './ai_processor.js';
-import { startBot, getBotStatus, sendMessage, setSocketIO, logoutSession } from './bot.js';
+import { startBot, getBotStatus, sendMessage, queueMessage, setSocketIO, logoutSession } from './bot.js';
 import { startCronJobs, runClassAttendanceCheck, runPklReportCheck, runPklEscalationCheck, runAutoAlphaJob, loadAndScheduleCronJobs } from './cron_jobs.js';
 import { syncLocalPhotosToSupabase } from './photo_sync.js';
 
@@ -468,13 +469,15 @@ app.post('/api/pkl/broadcast', async (req, res) => {
     // 1. Fetch Kelompok PKL
     const kelompok = await getKelompokPklByKetua(ketuaPhone);
     if (!kelompok) {
-      return res.status(404).json({ error: 'Kelompok PKL tidak ditemukan' });
+      console.log(`[BOT] [WEB-API] Broadcast PKL gagal: Kelompok tidak ditemukan untuk ketuaPhone = ${ketuaPhone}`);
+      return res.status(404).json({ error: 'Kelompok PKL tidak ditemukan: ' + ketuaPhone });
     }
 
     // 2. Fetch Report
     const report = await getAttendancePklByKetuaAndDate(ketuaPhone, date);
     if (!report) {
-      return res.status(404).json({ error: 'Laporan PKL tidak ditemukan untuk tanggal ' + date });
+      console.log(`[BOT] [WEB-API] Broadcast PKL gagal: Laporan tidak ditemukan untuk ketuaPhone = ${ketuaPhone}, date = ${date}`);
+      return res.status(404).json({ error: `Laporan PKL tidak ditemukan untuk tanggal ${date} dan ketua ${ketuaPhone}` });
     }
 
     // Parse JSON fields
@@ -510,145 +513,162 @@ app.post('/api/pkl/broadcast', async (req, res) => {
     const timeString = new Date().toLocaleTimeString('id-ID', timeOptions);
     const baseUrl = process.env.BASE_URL || 'http://localhost:8080';
 
-    let broadcastMsg = '';
+    const isLibur = report.status_libur ? true : false;
+    const anggotaStr = members.join(', ');
+    
+    // Active attendance message variables
+    const hadir  = members.filter(m => (attendanceData[m] || 'hadir') === 'hadir');
+    const sakit  = members.filter(m => attendanceData[m] === 'sakit');
+    const izin   = members.filter(m => attendanceData[m] === 'izin');
+    const alpha  = members.filter(m => attendanceData[m] === 'alpha');
 
-    if (report.status_libur) {
-      // Holiday message
-      const anggotaStr = members.join(', ');
-      const fallbackMsg =
-        `📢 *[SIAKANUDA] Laporan PKL Libur/Tutup*\n` +
-        `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n` +
-        `📅 *Tanggal:* ${todayFormatted} (Pukul ${timeString} WIB)\n` +
-        `🏭 *Tempat PKL:* ${kelompok.tempat_pkl}\n` +
-        `👨‍🏫 *Pembimbing:* ${pembimbingName}\n` +
-        `👨\u200d🎓 *Ketua:* ${senderNameWithClass}\n` +
-        `👥 *Anggota:* ${anggotaStr}\n` +
-        `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n` +
-        `ℹ️ *Status:* 🏢 LIBUR / TUTUP\n` +
-        `📝 *Alasan:* "${report.libur_reason || '-'}"\n` +
-        `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n` +
-        `🔗 Detail: ${baseUrl}/pkl`;
+    let absenList = '';
+    if (sakit.length) {
+      const sakitText = sakit.map(m => m + (jurnalKegiatan[m] ? ` (${jurnalKegiatan[m].replace(/^Sakit:\s*/i, '')})` : '')).join(', ');
+      absenList += `🤒 Sakit : ${sakitText}\n`;
+    }
+    if (izin.length) {
+      const izinText = izin.map(m => m + (jurnalKegiatan[m] ? ` (${jurnalKegiatan[m].replace(/^Izin:\s*/i, '')})` : '')).join(', ');
+      absenList += `📋 Izin  : ${izinText}\n`;
+    }
+    if (alpha.length) {
+      const alphaText = alpha.map(m => m + (jurnalKegiatan[m] ? ` (${jurnalKegiatan[m]})` : '')).join(', ');
+      absenList += `🔴 Alpha : ${alphaText}\n`;
+    }
 
-      broadcastMsg = await renderTemplate('pkl_libur_broadcast', {
-        tanggal: todayFormatted,
-        waktu: timeString,
-        tempat_pkl: kelompok.tempat_pkl,
-        pembimbing: pembimbingName,
-        ketua: senderNameWithClass,
-        anggota: anggotaStr,
-        alasan: report.libur_reason || '-',
-        url: `${baseUrl}/pkl`
-      }, fallbackMsg);
-    } else {
-      // Active attendance message
-      const hadir  = members.filter(m => (attendanceData[m] || 'hadir') === 'hadir');
-      const sakit  = members.filter(m => attendanceData[m] === 'sakit');
-      const izin   = members.filter(m => attendanceData[m] === 'izin');
-      const alpha  = members.filter(m => attendanceData[m] === 'alpha');
-
-      let absenList = '';
-      if (sakit.length) {
-        const sakitText = sakit.map(m => m + (jurnalKegiatan[m] ? ` (${jurnalKegiatan[m].replace(/^Sakit:\s*/i, '')})` : '')).join(', ');
-        absenList += `🏥 Sakit : ${sakitText}\n`;
-      }
-      if (izin.length) {
-        const izinText = izin.map(m => m + (jurnalKegiatan[m] ? ` (${jurnalKegiatan[m].replace(/^Izin:\s*/i, '')})` : '')).join(', ');
-        absenList += `📋 Izin  : ${izinText}\n`;
-      }
-      if (alpha.length) {
-        const alphaText = alpha.map(m => m + (jurnalKegiatan[m] ? ` (${jurnalKegiatan[m]})` : '')).join(', ');
-        absenList += `🔴 Alpha : ${alphaText}\n`;
-      }
-
-      let jurnalLines = members.map((m, i) => {
-        const status = (attendanceData[m] || 'hadir');
-        if (status === 'hadir') {
-          const jurnal = jurnalKegiatan[m] ? `_${jurnalKegiatan[m]}_` : '_(tidak diisi)_';
-          return `${i + 1}. *${m}*\n   📌 ${jurnal}`;
-        } else {
-          const statUpper = status.toUpperCase();
-          let note = jurnalKegiatan[m] || '';
-          if (note.toLowerCase().startsWith(status)) {
-              note = note.substring(status.length).replace(/^:\s*/, '');
-          }
-          return `${i + 1}. *${m}* [${statUpper}]\n   📌 _${note || '(tanpa keterangan)'}_`;
+    let jurnalLines = members.map((m, i) => {
+      const status = (attendanceData[m] || 'hadir');
+      if (status === 'hadir') {
+        const jurnal = jurnalKegiatan[m] ? `_${jurnalKegiatan[m]}_` : '_(tidak diisi)_';
+        return `${i + 1}. *${m}*\n   📌 ${jurnal}`;
+      } else {
+        const statUpper = status.toUpperCase();
+        let note = jurnalKegiatan[m] || '';
+        if (note.toLowerCase().startsWith(status)) {
+            note = note.substring(status.length).replace(/^:\s*/, '');
         }
-      }).join('\n');
-      if (!jurnalLines) {
-        jurnalLines = '_(tidak ada kegiatan / semua anggota absen)_';
+        return `${i + 1}. *${m}* [${statUpper}]\n   📌 _${note || '(tanpa keterangan)'}_`;
+      }
+    }).join('\n');
+    
+    if (!jurnalLines) {
+      jurnalLines = '_(tidak ada kegiatan / semua anggota absen)_';
+    }
+
+    const fallbackMsgLibur =
+      `📢 *[SIAKANUDA] Laporan PKL Libur/Tutup*\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📅 *Tanggal:* ${todayFormatted} (Pukul ${timeString} WIB)\n` +
+      `🏭 *Tempat PKL:* ${kelompok.tempat_pkl}\n` +
+      `👨‍🏫 *Pembimbing:* ${pembimbingName}\n` +
+      `👨‍🎓 *Ketua:* ${senderNameWithClass}\n` +
+      `👥 *Anggota:* ${anggotaStr}\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `ℹ️ *Status:* 🏢 LIBUR / TUTUP\n` +
+      `📝 *Alasan:* "${report.libur_reason || '-'}"\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `🔗 Detail: ${baseUrl}/pkl`;
+
+    const fallbackMsgMasuk =
+      `📋 *[SIAKANUDA] Laporan PKL Masuk*\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📅 *Tanggal:* ${todayFormatted} (Pukul ${timeString} WIB)\n` +
+      `🏭 *Tempat PKL:* ${kelompok.tempat_pkl}\n` +
+      `👨‍🏫 *Pembimbing:* ${pembimbingName}\n` +
+      `👨‍🎓 *Ketua:* ${senderNameWithClass}\n` +
+      `📊 *Kehadiran:* ${hadir.length} Hadir / ${members.length} Total | 📸 *Foto:* ${urlsArray.length}${report.location_data ? ` | 📍 *lokasi absensi:* ${report.location_data}` : ''}\n` +
+      absenList +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📝 *Jurnal Kegiatan:*\n${jurnalLines}\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `🔗 Detail: ${baseUrl}/pkl`;
+
+    const templateVars = {
+      tanggal: todayFormatted,
+      waktu: timeString,
+      tempat_pkl: kelompok.tempat_pkl,
+      pembimbing: pembimbingName,
+      ketua: senderNameWithClass,
+      kehadiran: `${hadir.length} Hadir / ${members.length} Total | 📸 *Foto:* ${urlsArray.length}${report.location_data ? ` | 📍 *lokasi absensi:* ${report.location_data}` : ''}`,
+      absen_list: absenList,
+      jurnal_lines: isLibur ? (report.libur_reason || '-') : jurnalLines,
+      url: `${baseUrl}/pkl`
+    };
+
+    const getTargetMessage = async (targetType) => {
+      const key = isLibur ? `pkl_libur_${targetType}` : `pkl_masuk_${targetType}`;
+      let msg = await renderTemplate(key, templateVars, isLibur ? fallbackMsgLibur : fallbackMsgMasuk);
+      
+      // Append photo links to broadcast message
+      if (urlsArray && urlsArray.length > 0) {
+        const photoLinksStr = urlsArray.map((url, i) => `${i + 1}. ${baseUrl}${url}`).join('\n');
+        msg += `\n\n📸 *Lampiran Foto:*\n${photoLinksStr}`;
       }
 
-      const fallbackMsg =
-        `📋 *[SIAKANUDA] Laporan PKL Masuk*\n` +
-        `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n` +
-        `📅 *Tanggal:* ${todayFormatted} (Pukul ${timeString} WIB)\n` +
-        `🏭 *Tempat PKL:* ${kelompok.tempat_pkl}\n` +
-        `👨‍🏫 *Pembimbing:* ${pembimbingName}\n` +
-        `👨\u200d🎓 *Ketua:* ${senderNameWithClass}\n` +
-        `📊 *Kehadiran:* ${hadir.length} Hadir / ${members.length} Total | 📸 *Foto:* ${urlsArray.length}${report.location_data ? ` | 📍 *lokasi absensi:* ${report.location_data}` : ''}\n` +
-        absenList +
-        `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n` +
-        `📝 *Jurnal Kegiatan:*\n${jurnalLines}\n` +
-        `\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n` +
-        `🔗 Detail: ${baseUrl}/pkl`;
-
-      broadcastMsg = await renderTemplate('pkl_masuk_broadcast', {
-        tanggal: todayFormatted,
-        waktu: timeString,
-        tempat_pkl: kelompok.tempat_pkl,
-        pembimbing: pembimbingName,
-        ketua: senderNameWithClass,
-        kehadiran: `${hadir.length} Hadir / ${members.length} Total | 📸 *Foto:* ${urlsArray.length}${report.location_data ? ` | 📍 *lokasi absensi:* ${report.location_data}` : ''}`,
-        absen_list: absenList,
-        jurnal_lines: jurnalLines,
-        url: `${baseUrl}/pkl`
-      }, fallbackMsg);
-    }
-
-    // Prepend update prefix if it is an update/re-send
-    if (isUpdate) {
-      broadcastMsg = `⚠️ *[#Perubahan Laporan]*\n\n` + broadcastMsg;
-    }
-
-    const TESTING_MODE = process.env.TESTING_MODE !== 'false';
-    const ADMIN_TEST_PHONE = '6285334354102';
-
-    const sendPromises = [];
-
-    // 1. Broadcast to Group (or fallback to SCHOOL_GROUP_JID)
-    const broadcastGroupJid = (process.env.BROADCAST_GROUP_JID || process.env.SCHOOL_GROUP_JID)?.trim();
-    if (broadcastGroupJid && sendMessage) {
-      sendPromises.push(
-        sendMessage(broadcastGroupJid, broadcastMsg)
-          .then(() => console.log(`[BOT] [WEB-API] 📤 Broadcast grup sukses: ${broadcastGroupJid}`))
-          .catch((err) => console.error('[BOT] [WEB-API] Gagal broadcast grup:', err.message))
-      );
-    }
-
-    // 2. Kirim ke Guru Pembimbing
-    const pembimbingPhone = kelompok.pembimbing_phone;
-    if (TESTING_MODE) {
-      if (ADMIN_TEST_PHONE && sendMessage) {
-        const previewMsg =
-          `🧪 *[TESTING MODE — Preview Notif Pembimbing (Web)]*\n` +
-          `_(Pesan ini hanya dikirim ke admin selama masa testing)_\n` +
-          `_Pembimbing asli: ${pembimbingPhone || 'belum diset'}_\n\n` +
-          broadcastMsg;
-        sendPromises.push(
-          sendMessage(`${ADMIN_TEST_PHONE}@s.whatsapp.net`, previewMsg)
-            .then(() => console.log(`[BOT] [WEB-API] 🧪 Testing mode preview dikirim ke admin: ${ADMIN_TEST_PHONE}`))
-            .catch((err) => console.error('[BOT] [WEB-API] Gagal kirim preview admin:', err.message))
-        );
+      // Prepend update prefix if it is an update/re-send
+      if (isUpdate) {
+        msg = `⚠️ *[#Perubahan Laporan]*\n\n` + msg;
       }
-    } else if (pembimbingPhone && sendMessage) {
-      sendPromises.push(
-        sendMessage(`${pembimbingPhone}@s.whatsapp.net`, broadcastMsg)
-          .then(() => console.log(`[BOT] [WEB-API] 📤 Notifikasi dikirim ke pembimbing: ${pembimbingPhone}`))
-          .catch((err) => console.error('[BOT] [WEB-API] Gagal kirim notif pembimbing:', err.message))
-      );
+
+      // Add unique Ref ID for WA Anti-Spam
+      const refId = Math.random().toString(36).substring(2, 8).toUpperCase();
+      msg += `\n\n[Ref: ${refId}]`;
+
+      return msg;
+    };
+
+    // Fetch system settings for broadcast targets
+    const db = getDb();
+    const settingsRows = await runAsync(() => db.prepare("SELECT key, value FROM system_settings WHERE key LIKE 'broadcast_pkl_%'").all());
+    const settings = {};
+    settingsRows.forEach(row => { settings[row.key] = row.value; });
+
+    // Helper to send message to queue
+    const sendToQueue = async (targetPhone, targetType, targetLabel) => {
+      if (queueMessage && targetPhone) {
+        const msg = await getTargetMessage(targetType);
+        queueMessage(targetPhone.includes('@') ? targetPhone : `${targetPhone}@s.whatsapp.net`, msg);
+        console.log(`[BOT] [WEB-API] 📤 Broadcast masuk antrean: ${targetPhone} (${targetLabel})`);
+      }
+    };
+
+    // 1. Group Broadcast
+    if (settings['broadcast_pkl_group'] !== '0') {
+      const broadcastGroupJid = (process.env.BROADCAST_GROUP_JID || process.env.SCHOOL_GROUP_JID)?.trim();
+      if (broadcastGroupJid) {
+        await sendToQueue(broadcastGroupJid, 'grup', 'Grup Sekolah');
+      }
     }
 
-    await Promise.allSettled(sendPromises);
+    // 2. Pembimbing Broadcast
+    if (settings['broadcast_pkl_pembimbing'] !== '0') {
+      if (kelompok.pembimbing_phone) await sendToQueue(kelompok.pembimbing_phone, 'pembimbing', 'Guru Pembimbing');
+    }
+
+    // 3. Instruktur Broadcast
+    if (settings['broadcast_pkl_instruktur'] === '1') {
+      if (kelompok.instruktur_phone) await sendToQueue(kelompok.instruktur_phone, 'instruktur', 'Instruktur DU/DI');
+    }
+
+    // 4. Orang Tua Broadcast
+    if (settings['broadcast_pkl_orangtua'] === '1') {
+      for (const member of members) {
+        const studentObj = students.find(s => s.name === member);
+        if (studentObj && studentObj.orang_tua_phone) {
+          await sendToQueue(studentObj.orang_tua_phone, 'ortu', `Orang Tua ${member}`);
+        }
+      }
+    }
+
+    // 5. Anggota PKL Broadcast
+    if (settings['broadcast_pkl_anggota'] === '1') {
+      for (const member of members) {
+        const studentObj = students.find(s => s.name === member);
+        if (studentObj && studentObj.phone) {
+          await sendToQueue(studentObj.phone, 'siswa', `Anggota PKL ${member}`);
+        }
+      }
+    }
 
     res.json({ ok: true });
   } catch (e) {
@@ -750,8 +770,12 @@ app.post('/api/attendance/broadcast', async (req, res) => {
       broadcastMsg = `⚠️ *[#Pembaruan Absensi]*\n\n` + broadcastMsg;
     }
 
-    const TESTING_MODE = process.env.TESTING_MODE !== 'false';
-    const ADMIN_TEST_PHONE = '6285334354102';
+    // Add unique Ref ID for WA Anti-Spam
+    const refId = Math.random().toString(36).substring(2, 8).toUpperCase();
+    broadcastMsg += `\n\n[Ref: ${refId}]`;
+
+    // 2. Kirim ke Wali Kelas (wali_phone)
+    const { wali_phone } = req.body;
 
     let sentToGroup = false;
     let targetGroupJid = null;
@@ -775,28 +799,12 @@ app.post('/api/attendance/broadcast', async (req, res) => {
           })
       );
     }
-
-    // 2. Kirim ke Wali Kelas (wali_phone)
-    const { wali_phone } = req.body;
     if (wali_phone && sendMessage) {
-      if (TESTING_MODE) {
-        const waliPreviewMsg = 
-          `🧪 *[TESTING MODE — Preview Notif Wali Kelas (KBM)]*\n` +
-          `_(Pesan ini hanya dikirim ke admin selama masa testing)_\n` +
-          `_Wali kelas asli: ${wali_phone}_\n\n` +
-          broadcastMsg;
-        kbmPromises.push(
-          sendMessage(`${ADMIN_TEST_PHONE}@s.whatsapp.net`, waliPreviewMsg)
-            .then(() => console.log(`[BOT] [WEB-API] 🧪 Testing mode preview KBM wali kelas dikirim ke admin: ${ADMIN_TEST_PHONE}`))
-            .catch((err) => console.error('[BOT] [WEB-API] Gagal kirim preview wali kelas ke admin:', err.message))
-        );
-      } else {
-        kbmPromises.push(
-          sendMessage(`${wali_phone}@s.whatsapp.net`, broadcastMsg)
-            .then(() => console.log(`[BOT] [WEB-API] 📤 Laporan KBM berhasil dikirim ke Wali Kelas: ${wali_phone}`))
-            .catch((err) => console.error(`[BOT] [WEB-API] Gagal kirim laporan KBM ke Wali Kelas ${wali_phone}:`, err.message))
-        );
-      }
+      kbmPromises.push(
+        sendMessage(`${wali_phone}@s.whatsapp.net`, broadcastMsg)
+          .then(() => console.log(`[BOT] [WEB-API] 📤 Laporan KBM berhasil dikirim ke Wali Kelas: ${wali_phone}`))
+          .catch((err) => console.error(`[BOT] [WEB-API] Gagal kirim laporan KBM ke Wali Kelas ${wali_phone}:`, err.message))
+      );
     }
 
     // Kirim response 200 OK langsung ke dashboard PHP agar tidak timeout
@@ -1051,7 +1059,7 @@ app.post('/api/settings/cron/delete/:key', requireAuth, onlyAdmin, async (req, r
 });
 
 /** GET /api/bot/groups — Get all participating groups */
-app.get('/api/bot/groups', requireAuth, onlyAdmin, async (req, res) => {
+app.get('/api/bot/groups', async (req, res) => {
   try {
     const { getBotStatus, getParticipatingGroups } = await import('./bot.js');
     const status = getBotStatus();

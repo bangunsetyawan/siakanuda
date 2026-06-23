@@ -61,6 +61,7 @@ class Student extends BaseController
             'nis' => $nis,
             'gender' => $this->request->getPost('gender'),
             'phone' => $this->request->getPost('phone'),
+            'orang_tua_phone' => $this->request->getPost('orang_tua_phone'),
             'role' => $this->request->getPost('role') ?: (str_starts_with(trim($this->request->getPost('class') ?: ''), 'XII') ? 'anggotapkl' : 'siswa'),
             'password_hash' => password_hash($nis, PASSWORD_BCRYPT),
             'first_login' => 0,
@@ -90,6 +91,7 @@ class Student extends BaseController
             'nis' => $this->request->getPost('nis'),
             'gender' => $this->request->getPost('gender'),
             'phone' => $this->request->getPost('phone'),
+            'orang_tua_phone' => $this->request->getPost('orang_tua_phone'),
             'role' => $this->request->getPost('role') ?: (str_starts_with(trim($this->request->getPost('class') ?: ''), 'XII') ? 'anggotapkl' : 'siswa')
         ];
 
@@ -197,6 +199,7 @@ class Student extends BaseController
             $class = isset($row['class']) ? trim($row['class']) : '';
             $gender = isset($row['gender']) ? strtoupper(trim($row['gender'])) : 'L';
             $phone = isset($row['phone']) ? trim($row['phone']) : null;
+            $orangTuaPhone = isset($row['orang_tua_phone']) ? trim($row['orang_tua_phone']) : null;
             $studentRole = isset($row['role']) && trim($row['role']) !== '' ? trim($row['role']) : (str_starts_with(trim($class), 'XII') ? 'anggotapkl' : 'siswa');
 
             if (empty($nis) || empty($name) || empty($class)) {
@@ -210,6 +213,12 @@ class Student extends BaseController
                 $phone = preg_replace('/[^\d]/', '', $phone);
                 if (str_starts_with($phone, '08')) {
                     $phone = '628' . substr($phone, 2);
+                }
+            }
+            if (!empty($orangTuaPhone)) {
+                $orangTuaPhone = preg_replace('/[^\d]/', '', $orangTuaPhone);
+                if (str_starts_with($orangTuaPhone, '08')) {
+                    $orangTuaPhone = '628' . substr($orangTuaPhone, 2);
                 }
             }
 
@@ -226,6 +235,7 @@ class Student extends BaseController
                     'class' => $class,
                     'gender' => ($gender === 'P' || $gender === 'PEREMPUAN' || str_starts_with($gender, 'P')) ? 'P' : 'L',
                     'phone' => $phone,
+                    'orang_tua_phone' => $orangTuaPhone,
                     'role' => $studentRole,
                     'is_active' => 1 // ensure they are active when re-imported
                 ];
@@ -238,6 +248,7 @@ class Student extends BaseController
                     'class' => $class,
                     'gender' => ($gender === 'P' || $gender === 'PEREMPUAN' || str_starts_with($gender, 'P')) ? 'P' : 'L',
                     'phone' => $phone,
+                    'orang_tua_phone' => $orangTuaPhone,
                     'role' => $studentRole,
                     'password_hash' => password_hash($nis, PASSWORD_BCRYPT),
                     'first_login' => 0,
@@ -299,6 +310,7 @@ class Student extends BaseController
                 'class' => $s['class'],
                 'gender' => $s['gender'],
                 'phone' => $s['phone'],
+                'orang_tua_phone' => $s['orang_tua_phone'],
                 'role' => $s['role']
             ];
         }

@@ -31,6 +31,59 @@ let sock = null;
 let io = null;
 let isConnected = false;
 
+// --- Message Queue System ---
+const messageQueue = [];
+let isProcessingQueue = false;
+
+async function processMessageQueue() {
+  if (isProcessingQueue || messageQueue.length === 0) return;
+  isProcessingQueue = true;
+
+  while (messageQueue.length > 0) {
+    const task = messageQueue[0];
+    
+    // Check if bot is connected
+    if (!sock || !isConnected) {
+      console.log(`[BOT] Cannot process queue, bot disconnected. Retrying in 10s...`);
+      break;
+    }
+
+    try {
+      await sendMessage(task.phone, task.text);
+      console.log(`[BOT] Queue processed for ${task.phone}`);
+    } catch (err) {
+      console.error(`[BOT] Failed to process queue message for ${task.phone}:`, err.message);
+    }
+
+    // Remove the processed task
+    messageQueue.shift();
+
+    // Delay between 12-20 seconds (anti-spam WA)
+    const delay = Math.floor(Math.random() * (20000 - 12000 + 1) + 12000);
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+
+  isProcessingQueue = false;
+}
+
+// Check queue periodically if it was paused due to disconnect
+setInterval(() => {
+  if (messageQueue.length > 0 && !isProcessingQueue && isConnected) {
+    processMessageQueue();
+  }
+}, 10000);
+
+export function queueMessage(phone, text) {
+  if (!phone || !text) return;
+  messageQueue.push({ phone, text });
+  console.log(`[BOT] Added message to queue for ${phone}. Queue length: ${messageQueue.length}`);
+  
+  if (!isProcessingQueue && isConnected) {
+    processMessageQueue();
+  }
+}
+
+
 // --- Message Retry Cache for E2E Group Decryption Fix ---
 if (!global.messageRetryCache) {
   global.messageRetryCache = new Map();
@@ -217,15 +270,30 @@ export async function startBot() {
 export async function sendMessage(phone, text) {
   if (!sock || !isConnected) throw new Error('Bot not connected');
   
-  // Filter out non-numeric phone numbers (like "superadmin", "admin", "siswa-test", etc.) unless they are JIDs
-  const isNumeric = /^\d+$/.test(phone);
-  const isJid = phone.includes('@');
-  if (!isNumeric && !isJid) {
+  // Format Indonesian phone numbers correctly (08... -> 628...)
+  let jid = phone;
+  const isGroup = phone.endsWith('@g.us');
+  
+  if (!isGroup) {
+    // Extract base number without domain
+    let baseNumber = phone.includes('@') ? phone.split('@')[0] : phone;
+    
+    // Replace leading '0' with '62' (Indonesia country code)
+    if (baseNumber.startsWith('0')) {
+      baseNumber = '62' + baseNumber.substring(1);
+    }
+    
+    // Ensure it has the correct domain
+    jid = `${baseNumber}@s.whatsapp.net`;
+  }
+
+  // Filter out non-numeric base phone numbers (like "superadmin", "admin", "siswa-test")
+  const baseCheck = jid.split('@')[0];
+  const isNumeric = /^\d+$/.test(baseCheck);
+  if (!isNumeric) {
     console.log(`[BOT] ⚠️ Skipping sendMessage to non-numeric phone: "${phone}"`);
     return;
   }
-
-  const jid = isJid ? phone : `${phone}@s.whatsapp.net`;
   const sentMsg = await sock.sendMessage(jid, { text });
   if (sentMsg && sentMsg.key && sentMsg.key.id) {
     cacheMessage(sentMsg.key.id, sentMsg.message);

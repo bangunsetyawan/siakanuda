@@ -1,0 +1,21 @@
+{
+  "name": "SIAKANUDA",
+  "short_name": "SIAKANUDA",
+  "description": "Sistem Informasi Akademik SMK NU Darussalam",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a5632",
+  "theme_color": "#1a5632",
+  "icons": [
+    {
+      "src": "/logo-smk.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-smk.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

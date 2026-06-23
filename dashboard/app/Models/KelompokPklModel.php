@@ -10,7 +10,7 @@ class KelompokPklModel extends Model
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
-    protected $allowedFields    = ['tempat_pkl', 'ketua_phone', 'anggota', 'pembimbing_phone', 'tahun_pelajaran_id'];
+    protected $allowedFields    = ['tempat_pkl', 'ketua_phone', 'anggota', 'pembimbing_phone', 'instruktur_phone', 'tahun_pelajaran_id'];
     protected $validationRules = [
         'tempat_pkl'  => 'required|min_length[3]|max_length[200]',
         'ketua_phone' => 'permit_empty|max_length[20]',

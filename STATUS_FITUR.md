@@ -1,5 +1,10 @@
 # 🗺️ SIAKANUDA — Peta Status Fitur & Pembaruan Git
-> **Versi:** v1.11.1 | **Tanggal:** 18 Juni 2026 | **Total Commit:** 191
+
+> [!CAUTION]
+> **PERINGATAN PENTING BOT WHATSAPP:**
+> Saat menguji coba (testing) fitur broadcast/antrean pesan, **WAJIB menggunakan nomor tujuan yang berbeda-beda** untuk setiap role target (Guru, Orang Tua, Instruktur, dll). Menggunakan satu nomor yang sama untuk semua target akan memicu pengiriman pesan bertubi-tubi dalam waktu singkat. Ini akan membuat nomor Bot terdeteksi sebagai SPAM oleh WhatsApp dan mengakibatkan akun dibatasi atau diblokir permanen.
+
+> **Versi:** v1.16.0 | **Tanggal:** 22 Juni 2026 | **Total Commit:** 212
 > **Untuk siapa:** Developer solo yang perlu re-orient cepat tanpa baca ulang ratusan baris.
 > **Cara pakai:** Scan checklist → cari bagian yang relevan → langsung kerja.
 
@@ -19,24 +24,24 @@
 
 | Metrik | Nilai |
 |--------|-------|
-| **Total Commit** | 191 |
+| **Total Commit** | 212 |
 | **Branch** | `master` (single branch) |
 | **Tags** | `v1.0.0`, `v1.1.0`, `v1.2.0`, `v1.4.6`, `v1.5.0`, `v1.5.1`, `v1.10.0`, `v1.11.0`, `v1.11.1` |
 | **Remote** | Tidak ada (lokal only) |
 | **Git User** | `SIAKANUDA Agent <siakanuda@smknudarussalam.sch.id>` |
 | **Commit Pertama** | v1.0.0 — Fondasi WhatsApp Bot + Web Dashboard |
-| **Commit Terakhir** | v1.11.1 — tambah README GitHub profesional + perbaiki .gitignore untuk public repo |
+| **Commit Terakhir** | v1.16.0 — Strict GPS Flow, Riwayat Gallery, and Anggota Access |
 | **Rentang Waktu** | ±15 hari pengembangan aktif (28 Mei – 15 Juni 2026) |
 
 ### Statistik Commit per Tipe
 | Tipe | Jumlah | Keterangan |
 |------|--------|------------|
 
-| `feat` | ~102 | Fitur baru |
-| `fix` | ~42 | Perbaikan bug |
-| `docs` | ~28 | Dokumentasi |
-| `chore` | ~12 | Maintenance |
-| `clean` / `refactor` | ~7 | Pembersihan & restrukturisasi |
+| `feat` | ~108 | Fitur baru |
+| `fix` | ~46 | Perbaikan bug |
+| `docs` | ~33 | Dokumentasi |
+| `chore` | ~16 | Maintenance |
+| `clean` / `refactor` | ~9 | Pembersihan & restrukturisasi |
 
 ### Konvensi Commit
 ```
@@ -114,11 +119,11 @@ siakanuda/                              ← Root (Node.js + SQLite)
 ├── docs/                               ← Dokumentasi
 │   └── archive/                        ← Arsip blueprint lama (10 file)
 ├── directives/                         ← SOP fitur (Markdown)
-├── public/                             ← Aset APK + BKK portal
+├── public/                             ← Aset PWA + BKK portal
 ├── backups/                            ← Backup database
 ├── uploads/                            ← Foto PKL (gitignored)
 ├── sessions/                           ← Sesi WA (gitignored)
-└── siakanuda-apk/                      ← Android APK (gitignored)
+
 ```
 
 ### View Files (33 file, 19 subdirektori)
@@ -382,9 +387,9 @@ siakanuda/                              ← Root (Node.js + SQLite)
 - [x] Cloudflare Tunnel (cloudflared) terhubung ke Nginx port 80 (v1.11.0)
 - [x] Domain kustom gratis DigitalPlat `https://siakanuda.qzz.io/` (v1.11.0)
 - [x] Shortlink custom `https://s.id/siakanuda` (v1.11.0)
-- [x] APK WebView → HTTPS Cloudflare (`BUILD-APK.bat` di-update)
+- [x] PWA (Progressive Web App) → Install via Chrome Add to Home Screen
 - [x] Dynamic baseURL — deteksi `HTTP_HOST` otomatis (v1.6.5)
-- [x] Tombol Kembali dinamis di navbar APK
+- [x] Tombol Kembali dinamis di navbar PWA Mobile
 - [ ] ~~CI/CD pipeline~~ ❌ Tidak direncanakan
 
 
@@ -407,9 +412,9 @@ siakanuda/                              ← Root (Node.js + SQLite)
 - [x] `PROMPT_TEMPLATE.md` — template instruksi AI
 - [x] `tests/` — E2E Testing dengan Playwright (Login, KBM, PKL) (v1.10.4)
 
-### 📱 S. APK Android & BKK Portal
-- [x] WebView wrapper → port 8080
-- [x] `BUILD-APK.bat` + `GANTI-IP.bat`
+### 📱 S. PWA Mobile & BKK Portal
+- [x] PWA Manifest & Service Worker
+- [x] ~~WebView APK~~ ❌ Dihapus (Ganti PWA penuh)
 - [x] BKK Portal di `public/bkk/` — workspace lokal, deploy terpisah ke github.io
 
 ---
@@ -471,7 +476,7 @@ siakanuda/                              ← Root (Node.js + SQLite)
 | Versi | Tanggal* | Commit | Highlight |
 |-------|----------|--------|-----------|
 | **v1.0.0** | 28 Mei | 1 | Fondasi WA Bot + Dashboard Vanilla JS |
-| **v1.1.0** | 29 Mei | 1 | PWA + APK Android + Mobile-First |
+| **v1.1.0** | 29 Mei | 1 | PWA + Mobile-First |
 | **v1.2.0–v1.2.10** | 30 Mei | ~12 | CI4 Dashboard, CRUD, PKL inline, role sidebar |
 | **v1.3.0** | 30 Mei | ~4 | 7 Role system, login redesign, mobile UI |
 | **v1.4.0–v1.4.5** | 30 Mei | ~7 | Kalender, prestasi, kotak suara, PKL foto |
@@ -494,31 +499,31 @@ siakanuda/                              ← Root (Node.js + SQLite)
 
 | # | Hash | Tanggal | Pesan Commit |
 |---|------|---------|-------------|
-| 1 | `a13f97e` | 18 Jun | docs(v1.11.1): tambah README GitHub profesional + perbaiki .gitignore untuk public repo |
-| 2 | `88f18d8` | 18 Jun | docs(v1.11.1): tambah SOP deploy, troubleshooting guide, dan health-check script |
-| 3 | `8bc05fc` | 18 Jun | fix(v1.11.1): Socket.io & API frontend auto-detect origin untuk production Nginx proxy |
-| 4 | `05c5493` | 18 Jun | fix(v1.11.1): perbaiki Supabase auth state (createClient) & banner versi dinamis |
-| 5 | `810c947` | 18 Jun | chore(v1.11.1): sinkronisasi versi & dokumentasi + perbaikan akses role guru |
-| 6 | `d5bda89` | 15 Jun | feat(v1.11.1): revisi cetak rekap absensi individu (PDF 5 Bulan gabung), perbaiki bug startYear, dan sinkronisasi nama ketua dengan nomor HP |
-| 7 | `bdd17e6` | 15 Jun | feat(v1.9.1): Penambahan halaman web darurat offline Cloudflare Pages dan revisi panduan deployment SSH di AGENTS.md |
-| 8 | `4f65507` | 15 Jun | chore(v1.11.0): finalisasi Cloudflare Tunnel, domain DigitalPlat, shortlink s.id, reorganize archives, clean git tree |
-| 9 | `94b40f2` | 14 Jun | chore: deploy success, reorganize archives, update docs, clean git tree |
-| 10 | `2dcf46b` | 14 Jun | docs(v1.10.4): integrasi skenario E2E Playwright dan update STATUS_FITUR |
-| 11 | `3521466` | 14 Jun | feat(v1.10.3): tambah link Profil & Ganti Password di navbar dan sidebar untuk semua role |
-| 12 | `9037de7` | 13 Jun | chore: reorganisasi arsip - simpan legacy PDF script (rename detection) |
-| 13 | `afcaac7` | 13 Jun | feat(v1.10.2): pisahkan data KBM dan PKL pada dashboard analytics & ubah grafik tren harian PKL |
-| 14 | `a370c0b` | 13 Jun | feat(v1.10.1): perluas tracker rekapitulasi KBM menjadi 30 hari |
-| 15 | `64bf44d` | 13 Jun | feat(v1.10.1): tambah tracker rekapitulasi 7 hari absensi kelas KBM |
-| 16 | `8ed2cef` | 13 Jun | docs(v1.10.0): centang tugas ubah foto PKL menjadi per kelompok |
-| 17 | `c56100a` | 13 Jun | chore(v1.10.0): remove legacy pdf-lib and pdfkit dependencies |
-| 18 | `6ff5ed0` | 13 Jun | feat(v1.10.0): hapus PDF realtime PKL & migrasi cetak absensi KBM ke Web View HTML |
-| 19 | `b810b04` | 12 Jun | feat(pkl): migrasi arsitektur PDF ke HTML & update UI foto kelompok (v1.10.0) |
-| 20 | `53adfa4` | 12 Jun | chore(v1.9.2): restrukturisasi arsip & sinkronisasi dokumentasi |
-| 21 | `5702619` | 12 Jun | feat(pkl): replace daily PDF with weekly recap buttons in admin view and grant Guru access |
-| 22 | `79c981d` | 11 Jun | fix(pkl): hardcode absensi table to always start from July |
-| 23 | `53ae318` | 11 Jun | style(pkl): fix PDF absensi alignment, widen TTD column, show real class and teacher name |
-| 24 | `521cc03` | 11 Jun | feat(pkl): implement dynamic PDF generation for Rekap Absensi using GAS client |
-| 25 | `461aff5` | 11 Jun | feat(v1.9.2): implementasi fitur laporan susulan PKL (H-7) dan mode takeover Admin/Guru beserta perbaikan UI Date Picker |
+| 1 | `511f68c` | 22 Jun | Update v1.16.0: Strict GPS Flow, Riwayat Gallery, and Anggota Access |
+| 2 | `4aaeb5b` | 20 Jun | refactor: optimasi UI dashboard mobile ringan dan responsif (tanpa animasi) |
+| 3 | `5f9d35c` | 20 Jun | chore: hapus opsi APK dan ganti ke PWA secara penuh |
+| 4 | `b1cd12c` | 20 Jun | docs: tambahkan peringatan ketat anti-spam bot WA |
+| 5 | `15d4bf8` | 20 Jun | docs: clarify test note regarding anti-spam issue |
+| 6 | `8d5f8af` | 20 Jun | docs: update DEPLOY_LOG with v1.14.4 details |
+| 7 | `64384f8` | 20 Jun | feat: WhatsApp PKL multi-target broadcast, templates, and anti-spam handling |
+| 8 | `196aa49` | 19 Jun | fix(v1.13.1): display instruktur_phone column in PKL groups list |
+| 9 | `133f60c` | 19 Jun | feat(v1.13.0): support custom scheduled broadcast messages via dashboard |
+| 10 | `9378899` | 19 Jun | fix(v1.12.1): update backend bulk import for PKL groups and UI mapping for students |
+| 11 | `c200048` | 19 Jun | feat(v1.12.0): add target broadcast PKL config and message queue system |
+| 12 | `5369379` | 19 Jun | chore(v1.11.3): remove sharp dependency to fix SIGILL crashes on older CPUs |
+| 13 | `b071c0d` | 19 Jun | docs: update PROMPT_TEMPLATE universal + tambah template kelompok PKL Excel |
+| 14 | `8a711ee` | 19 Jun | feat(v1.11.2): tambah tombol Reset Semua Password Ketua PKL ke default NISN |
+| 15 | `8f528be` | 19 Jun | chore(v1.11.2): refactor PKL NISN identifier, append photo links to WA broadcast, remove testing mode, clean dummy data, and ignore temp files |
+| 16 | `40a6f98` | 19 Jun | chore: pembaruan dokumentasi, arsip, dan ignore temp files |
+| 17 | `5fed973` | 19 Jun | fix: atasi tampilan guru pembimbing kosong dan label ketua salah pada cetak laporan |
+| 18 | `8e5f03c` | 18 Jun | fix: atasi error Mixed Content HTTPS pada fetch JS import Excel |
+| 19 | `97c906e` | 18 Jun | feat: tambahkan halaman Pusat Bantuan (Mobile WebView) & SOP Patch Update |
+| 20 | `b44aca9` | 18 Jun | docs, UI, & PWA (v1.11.1): update deployment info, hamburger menu label, and manifest sizes |
+| 21 | `a0f208a` | 18 Jun | feat(v1.11.1): tambah favicon, web manifest, dan PWA meta tags — icon muncul di Home Screen HP |
+| 22 | `ef9a10f` | 18 Jun | docs(v1.11.1): tambah README GitHub profesional + perbaiki .gitignore untuk public repo |
+| 23 | `88f18d8` | 18 Jun | docs(v1.11.1): tambah SOP deploy, troubleshooting guide, dan health-check script |
+| 24 | `8bc05fc` | 18 Jun | fix(v1.11.1): Socket.io & API frontend auto-detect origin untuk production Nginx proxy |
+| 25 | `05c5493` | 18 Jun | fix(v1.11.1): perbaiki Supabase auth state (createClient) & banner versi dinamis |
 
 <!-- AUTO_CHANGELOG_END -->
 
@@ -571,8 +576,9 @@ siakanuda/                              ← Root (Node.js + SQLite)
 | Backup DB | `backups/*.db` | Besar |
 | Binary | `*.exe` | Download ulang |
 | Log | `*.log`, `dashboard/writable/` | Otomatis |
-| APK | `siakanuda-apk/` | Repo terpisah |
+
 | IDE | `.vscode/`, `.idea/` | Personal |
+| Office Temp | `~$*` | File Excel/Word Sementara |
 
 ---
 
@@ -613,4 +619,4 @@ siakanuda/                              ← Root (Node.js + SQLite)
 ---
 
 > 📌 **Dokumen ini di-update setiap ada rilis versi baru.**
-> Terakhir diperbarui: **18 Juni 2026** oleh Antigravity Agent.
+> Terakhir diperbarui: **22 Juni 2026** oleh Antigravity Agent.

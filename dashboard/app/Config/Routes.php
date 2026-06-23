@@ -15,6 +15,8 @@ $routes->set404Override();
 $routes->get('login', 'Auth::login');
 $routes->post('login', 'Auth::attemptLogin');
 $routes->get('logout', 'Auth::logout');
+$routes->get('bantuan', 'Bantuan::index');
+
 
 // Protected routes (Admin / BK / Guru / Siswa via AuthFilter)
 $routes->group('', ['filter' => 'auth'], function ($routes) {
@@ -71,6 +73,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->post('whatsapp-settings/update-templates', 'WhatsappSettings::updateTemplates');
     $routes->post('whatsapp-settings/update-cron', 'WhatsappSettings::updateCron');
     $routes->post('whatsapp-settings/update-groups', 'WhatsappSettings::updateGroups');
+    $routes->post('whatsapp-settings/update-targets', 'WhatsappSettings::updateBroadcastTargets');
     $routes->post('whatsapp-settings/create-cron', 'WhatsappSettings::createCron');
     $routes->post('whatsapp-settings/delete-cron/(:segment)', 'WhatsappSettings::deleteCron/$1');
     $routes->post('whatsapp-settings/join-group', 'WhatsappSettings::joinGroup');
@@ -85,6 +88,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
 
     // PKL
     $routes->get('pkl', 'Pkl::index');
+    $routes->get('pkl/takeover', 'Pkl::takeoverReport');
     $routes->post('pkl/submit', 'Pkl::submitReport');
     $routes->get('pkl/groups', 'Pkl::groups');
     $routes->post('pkl/groups/create', 'Pkl::createGroup');
@@ -97,6 +101,9 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('pkl/rekap-siswa/(:any)', 'Pkl::rekapSiswa/$1');
     $routes->get('pkl/print-weekly-pdf/(:any)/(:any)', 'Pkl::printWeeklyPdf/$1/$2');
     $routes->post('pkl/update-settings', 'Pkl::updateSettings');
+    $routes->post('pkl/resend-broadcast', 'Pkl::resendBroadcast');
+    $routes->post('pkl/delete-all-reports', 'Pkl::deleteAllReports');
+    $routes->post('pkl/reset-all-ketua-passwords', 'Pkl::resetAllKetuaPasswords');
 
     // Violations (Poin Pelanggaran)
     $routes->get('violations', 'Violation::index');

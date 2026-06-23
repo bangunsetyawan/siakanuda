@@ -137,11 +137,46 @@ class Pkl extends BaseController
         }
 
         // Administrative View (Staff / Admin / Kepsek)
+        // DB Migration: Ensure created_at and updated_at exist in attendance_pkl
+        $db = \Config\Database::connect();
+        if (!$db->fieldExists('created_at', 'attendance_pkl')) {
+            $forge = \Config\Database::forge();
+            $forge->addColumn('attendance_pkl', [
+                'created_at' => [
+                    'type' => 'DATETIME',
+                    'null' => true,
+                ],
+                'updated_at' => [
+                    'type' => 'DATETIME',
+                    'null' => true,
+                ],
+            ]);
+            // Backfill existing rows with 00:00:00
+            $db->query("UPDATE attendance_pkl SET created_at = date || ' 00:00:00', updated_at = date || ' 00:00:00' WHERE created_at IS NULL");
+            
+            // Attempt to extract real timestamps from photo filenames for old rows
+            $builder = $db->table('attendance_pkl');
+            $oldReports = $builder->where("created_at LIKE '%00:00:00'")->get()->getResultArray();
+            foreach ($oldReports as $r) {
+                if (!empty($r['photo_url'])) {
+                    $photos = json_decode($r['photo_url'], true);
+                    if ($photos && is_array($photos)) {
+                        $firstUrl = reset($photos);
+                        if (preg_match('/\/uploads\/pkl\/(\d+)_/', $firstUrl, $matches)) {
+                            $timestamp = (int) $matches[1];
+                            $dt = date('Y-m-d H:i:s', $timestamp);
+                            $builder->where('id', $r['id'])->update(['created_at' => $dt, 'updated_at' => $dt]);
+                        }
+                    }
+                }
+            }
+        }
+
         $date = $this->request->getGet('date') ?: date('Y-m-d');
         
         $reports = $attendancePklModel->where('date', $date)
                                       ->where('tahun_pelajaran_id', $tpId)
-                                      ->orderBy('tempat_pkl', 'ASC')
+                                      ->orderBy('id', 'DESC') // Sort by report time
                                       ->findAll();
 
         $role = $session->get('role');
@@ -163,11 +198,15 @@ class Pkl extends BaseController
                 'photo_urls' => $urls,
                 'jurnal' => json_decode($r['jurnal_kegiatan'] ?: '{}', true) ?: [],
                 'attendance_data' => json_decode($r['attendance_data'] ?: '{}', true) ?: [],
-                'is_takeover' => $r['is_takeover']
+                'is_takeover' => $r['is_takeover'],
+                'created_at' => $r['created_at'] ?? null
             ];
         }
 
         $totalGroups = $kelompokPklModel->where('tahun_pelajaran_id', $tpId)->countAllResults();
+
+        $studentModel = new StudentModel();
+        $students = $studentModel->findAll();
 
         $data = [
             'title' => 'Laporan Harian PKL',
@@ -177,7 +216,8 @@ class Pkl extends BaseController
             'totalReported' => count($parsedReports),
             'userRole' => $role,
             'pklActive' => $pklActive,
-            'pklTimeLimit' => $pklTimeLimit
+            'pklTimeLimit' => $pklTimeLimit,
+            'students' => $students
         ];
 
         return view('pkl/index', $data);
@@ -300,6 +340,9 @@ class Pkl extends BaseController
                 return redirect()->to('/dashboard')->with('error', 'Akses ditolak.');
             }
             $phone = $session->get('phone');
+            if (str_starts_with($phone, '08')) {
+                $phone = '628' . substr($phone, 2);
+            }
         }
 
         $kelompokPklModel = new KelompokPklModel();
@@ -625,6 +668,7 @@ class Pkl extends BaseController
             'ketua_phone' => $this->request->getPost('ketua_phone') ?: '',
             'anggota' => $this->request->getPost('anggota'),
             'pembimbing_phone' => $this->request->getPost('pembimbing_phone') ?: null,
+            'instruktur_phone' => $this->request->getPost('instruktur_phone') ?: null,
             'tahun_pelajaran_id' => $this->getActiveTPId()
         ];
 
@@ -665,6 +709,7 @@ class Pkl extends BaseController
             $anggota = isset($row['anggota']) ? trim($row['anggota']) : '';
             $ketuaPhone = isset($row['ketua_phone']) ? trim($row['ketua_phone']) : '';
             $pembimbingPhone = isset($row['pembimbing_phone']) ? trim($row['pembimbing_phone']) : null;
+            $instrukturPhone = isset($row['instruktur_phone']) ? trim($row['instruktur_phone']) : null;
 
             if (empty($tempatPkl) || empty($anggota)) {
                 $skippedCount++;
@@ -691,6 +736,15 @@ class Pkl extends BaseController
                 $pembimbingPhone = null;
             }
 
+            if (!empty($instrukturPhone)) {
+                $instrukturPhone = preg_replace('/[^\d]/', '', $instrukturPhone);
+                if (str_starts_with($instrukturPhone, '08')) {
+                    $instrukturPhone = '628' . substr($instrukturPhone, 2);
+                }
+            } else {
+                $instrukturPhone = null;
+            }
+
             // Format anggota names to be comma-separated properly
             $membersArr = array_map('trim', explode(',', $anggota));
             $membersArr = array_filter($membersArr);
@@ -701,6 +755,7 @@ class Pkl extends BaseController
                 'ketua_phone' => $ketuaPhone,
                 'anggota' => $formattedAnggota,
                 'pembimbing_phone' => $pembimbingPhone,
+                'instruktur_phone' => $instrukturPhone,
                 'tahun_pelajaran_id' => $tpId
             ];
 
@@ -757,7 +812,8 @@ class Pkl extends BaseController
             'tempat_pkl' => $this->request->getPost('tempat_pkl'),
             'ketua_phone' => $this->request->getPost('ketua_phone') ?: '',
             'anggota' => $this->request->getPost('anggota'),
-            'pembimbing_phone' => $this->request->getPost('pembimbing_phone') ?: null
+            'pembimbing_phone' => $this->request->getPost('pembimbing_phone') ?: null,
+            'instruktur_phone' => $this->request->getPost('instruktur_phone') ?: null
         ];
 
         // For guru, keep the same pembimbing_phone (they cannot change the pembimbing)
@@ -836,11 +892,34 @@ class Pkl extends BaseController
         $kelompokPklModel = new KelompokPklModel();
         $groupInfo = $kelompokPklModel->where('ketua_phone', $ketuaPhone)->where('tahun_pelajaran_id', $this->getActiveTPId())->first();
 
+        // Get Ketua Name
+        $studentModel = new StudentModel();
+        $ketuaName = '-';
+        $ketua = $studentModel->where('phone', $ketuaPhone)->orWhere('nis', $ketuaPhone)->first();
+        if ($ketua) {
+            $ketuaName = $ketua['name'];
+        } else {
+            $anggota = explode(',', $groupInfo['anggota'] ?? '');
+            $ketuaName = trim($anggota[0] ?? '-');
+        }
+
+        // Get Guru Pembimbing Name
+        $allowedNumberModel = new \App\Models\AllowedNumberModel();
+        $pembimbingName = '-';
+        if (!empty($groupInfo['pembimbing_phone'])) {
+            $pembimbing = $allowedNumberModel->where('phone', $groupInfo['pembimbing_phone'])->first();
+            if ($pembimbing) {
+                $pembimbingName = $pembimbing['name'];
+            }
+        }
+
         $data = [
             'title' => 'Riwayat Laporan PKL',
             'reports' => $reports,
             'group' => $groupInfo,
             'ketuaPhone' => $ketuaPhone,
+            'ketuaName' => $ketuaName,
+            'pembimbingName' => $pembimbingName,
             'currentMonth' => $month
         ];
 
@@ -1112,6 +1191,148 @@ class Pkl extends BaseController
         ];
 
         return view('pkl/print_rekap_siswa', $data);
+    }
+
+    public function resendBroadcast()
+    {
+        $session = session();
+        if (!in_array($session->get('role'), ['admin', 'kepsek', 'guru', 'guru_mapel', 'guru_bk'])) {
+            return redirect()->back()->with('error', 'Akses ditolak.');
+        }
+
+        $date = $this->request->getPost('date');
+        $ketuaPhone = $this->request->getPost('ketua_phone');
+
+        try {
+            $client = \Config\Services::curlrequest();
+            $client->post('http://localhost:7860/api/pkl/broadcast', [
+                'json' => [
+                    'date' => $date,
+                    'ketuaPhone' => $ketuaPhone,
+                    'is_update' => true
+                ],
+                'timeout' => 5
+            ]);
+            return redirect()->back()->with('info', 'Permintaan kirim ulang notifikasi berhasil diteruskan ke bot WhatsApp.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal meneruskan permintaan notifikasi: ' . $e->getMessage());
+        }
+    }
+
+    public function deleteAllReports()
+    {
+        $session = session();
+        if ($session->get('role') !== 'admin') {
+            return redirect()->to('/pkl')->with('error', 'Akses ditolak. Hanya Admin yang dapat menghapus laporan.');
+        }
+
+        $date = $this->request->getPost('date');
+        if (empty($date)) {
+            return redirect()->to('/pkl')->with('error', 'Tanggal tidak valid.');
+        }
+
+        $tpId = $this->getActiveTPId();
+        $attendancePklModel = new AttendancePklModel();
+        $reports = $attendancePklModel->where('date', $date)
+                                      ->where('tahun_pelajaran_id', $tpId)
+                                      ->findAll();
+
+        if (empty($reports)) {
+            return redirect()->to('/pkl?date=' . $date)->with('info', 'Tidak ada laporan untuk tanggal tersebut.');
+        }
+
+        $kelompokPklModel = new KelompokPklModel();
+        $studentModel = new StudentModel();
+        $attendanceModel = new AttendanceModel();
+
+        foreach ($reports as $report) {
+            $ketuaPhone = $report['ketua_phone'];
+            
+            // Delete associated KBM attendance entries
+            $group = $kelompokPklModel->where('ketua_phone', $ketuaPhone)
+                                      ->where('tahun_pelajaran_id', $tpId)
+                                      ->first();
+            if ($group) {
+                $members = explode(',', $group['anggota']);
+                $members = array_map('trim', $members);
+                foreach ($members as $name) {
+                    $student = $studentModel->where('name', $name)->first();
+                    if ($student) {
+                        $attendanceModel->where('student_id', $student['id'])
+                                         ->where('date', $date)
+                                         ->where('tahun_pelajaran_id', $tpId)
+                                         ->delete();
+                    }
+                }
+            }
+
+            // Delete photo files
+            $photoUrls = json_decode($report['photo_url'] ?: '[]', true) ?: [];
+            $urlsArray = is_array($photoUrls) ? $photoUrls : [$photoUrls];
+            foreach ($urlsArray as $url) {
+                if (is_string($url) && str_starts_with($url, '/uploads/pkl/')) {
+                    $filePath = ROOTPATH . '../dashboard/public' . $url;
+                    if (is_file($filePath)) {
+                        @unlink($filePath);
+                    }
+                }
+            }
+
+            // Delete from table
+            $attendancePklModel->delete($report['id']);
+        }
+
+        return redirect()->to('/pkl?date=' . $date)->with('success', 'Semua laporan PKL pada tanggal ' . date('d M Y', strtotime($date)) . ' berhasil dihapus.');
+    }
+
+    /**
+     * Reset semua password ketua PKL ke default (NISN).
+     * Hanya admin/kepsek yang bisa mengakses.
+     */
+    public function resetAllKetuaPasswords()
+    {
+        $role = session()->get('role');
+        if (!in_array($role, ['admin', 'kepsek'])) {
+            return redirect()->to('/pkl/groups')->with('error', 'Akses ditolak.');
+        }
+
+        $kelompokPklModel = new KelompokPklModel();
+        $studentModel = new StudentModel();
+        $tpId = $this->getActiveTPId();
+
+        // Get all PKL groups for active tahun pelajaran
+        $groups = $kelompokPklModel->where('tahun_pelajaran_id', $tpId)->findAll();
+
+        $resetCount = 0;
+        $notFoundList = [];
+
+        foreach ($groups as $group) {
+            $ketuaPhone = $group['ketua_phone'];
+            if (empty($ketuaPhone)) continue;
+
+            // Find student by phone or NIS
+            $student = $studentModel->where('phone', $ketuaPhone)->first();
+            if (!$student) {
+                $student = $studentModel->where('nis', $ketuaPhone)->first();
+            }
+
+            if ($student) {
+                $studentModel->update($student['id'], [
+                    'password_hash' => password_hash($student['nis'], PASSWORD_BCRYPT),
+                    'first_login'   => 1
+                ]);
+                $resetCount++;
+            } else {
+                $notFoundList[] = $ketuaPhone . ' (' . $group['tempat_pkl'] . ')';
+            }
+        }
+
+        $message = "Password {$resetCount} ketua PKL berhasil direset ke default (NISN).";
+        if (!empty($notFoundList)) {
+            $message .= ' Tidak ditemukan: ' . implode(', ', $notFoundList);
+        }
+
+        return redirect()->to('/pkl/groups')->with('success', $message);
     }
 }
 

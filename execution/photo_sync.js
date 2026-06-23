@@ -71,19 +71,7 @@ export async function syncLocalPhotosToSupabase() {
               console.log(`[SYNC] Mengunggah cadangan foto ${filename} ke Supabase...`);
               const fileBuffer = fs.readFileSync(localFilePath);
               
-              // Compress dengan sharp: resize lebar max 640px, jpeg quality 50%
-              let uploadBuffer = fileBuffer;
-              try {
-                if (sharp) {
-                  uploadBuffer = await sharp(fileBuffer)
-                    .resize({ width: 640, withoutEnlargement: true })
-                    .jpeg({ quality: 50 })
-                    .toBuffer();
-                  console.log(`[SYNC] Kompresi berhasil untuk ${filename}. Ukuran: ${(uploadBuffer.length/1024).toFixed(1)} KB`);
-                }
-              } catch (compressErr) {
-                console.error(`[SYNC] Gagal kompres ${filename}, fallback ke file asli:`, compressErr.message);
-              }
+              const uploadBuffer = fileBuffer;
 
               // Upload ke Supabase
               const { error } = await supabase.storage
@@ -129,19 +117,7 @@ export async function syncLocalPhotosToSupabase() {
               console.log(`[SYNC] Mengunggah cadangan foto ${filename} ke Supabase...`);
               const fileBuffer = fs.readFileSync(localFilePath);
               
-              // Compress dengan sharp: resize lebar max 640px, jpeg quality 50%
-              let uploadBuffer = fileBuffer;
-              try {
-                if (sharp) {
-                  uploadBuffer = await sharp(fileBuffer)
-                    .resize({ width: 640, withoutEnlargement: true })
-                    .jpeg({ quality: 50 })
-                    .toBuffer();
-                  console.log(`[SYNC] Kompresi berhasil untuk ${filename}. Ukuran: ${(uploadBuffer.length/1024).toFixed(1)} KB`);
-                }
-              } catch (compressErr) {
-                console.error(`[SYNC] Gagal kompres ${filename}, fallback ke file asli:`, compressErr.message);
-              }
+              const uploadBuffer = fileBuffer;
 
               // Upload ke Supabase
               const { error } = await supabase.storage

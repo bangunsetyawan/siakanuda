@@ -66,6 +66,12 @@ class WhatsappSettings extends BaseController
         // 5. Fetch Active Group JIDs (Populated from Node.js status API)
         $broadcastGroupJid = $botStatus['broadcast_group_jid'] ?? '';
         $schoolGroupJid = $botStatus['school_group_jid'] ?? '';
+        // 6. Fetch Broadcast Targets Settings
+        $broadcastTargets = [];
+        $settings = $db->table('system_settings')->like('key', 'broadcast_pkl_')->get()->getResultArray();
+        foreach ($settings as $s) {
+            $broadcastTargets[$s['key']] = $s['value'];
+        }
 
         $data = [
             'title' => 'Pengaturan Bot WhatsApp',
@@ -75,7 +81,8 @@ class WhatsappSettings extends BaseController
             'waBotUrl' => $this->waBotUrl,
             'whitelist' => $whitelist,
             'broadcastGroupJid' => $broadcastGroupJid,
-            'schoolGroupJid' => $schoolGroupJid
+            'schoolGroupJid' => $schoolGroupJid,
+            'broadcastTargets' => $broadcastTargets
         ];
 
         return view('whatsapp_settings/index', $data);
@@ -207,6 +214,25 @@ class WhatsappSettings extends BaseController
         }
     }
 
+    public function updateBroadcastTargets()
+    {
+        $this->checkAdmin();
+        $db = \Config\Database::connect();
+        $db->transBegin();
+        try {
+            $targets = ['group', 'pembimbing', 'orangtua', 'instruktur', 'anggota'];
+            foreach ($targets as $target) {
+                $val = $this->request->getPost("broadcast_pkl_$target") ? '1' : '0';
+                $db->table('system_settings')->where('key', "broadcast_pkl_$target")->update(['value' => $val, 'updated_at' => date('Y-m-d H:i:s')]);
+            }
+            $db->transCommit();
+            return redirect()->to('/whatsapp-settings?tab=groups')->with('success', 'Target Broadcast Laporan PKL berhasil disimpan.');
+        } catch (\Exception $e) {
+            $db->transRollback();
+            return redirect()->to('/whatsapp-settings?tab=groups')->with('error', 'Gagal menyimpan pengaturan target: ' . $e->getMessage());
+        }
+    }
+
     public function createCron()
     {
         $this->checkAdmin();
@@ -218,6 +244,20 @@ class WhatsappSettings extends BaseController
         $action = $this->request->getPost('action');
         $description = $this->request->getPost('description') ?: '';
         $isActive = $this->request->getPost('is_active') ? 1 : 0;
+
+        $payloadTarget = $this->request->getPost('payload_target');
+        $payloadMessage = $this->request->getPost('payload_message');
+        $payloadJson = '{}';
+
+        if ($action === 'custom_message') {
+            if (empty($payloadTarget) || empty($payloadMessage)) {
+                return redirect()->to('/whatsapp-settings?tab=cron')->with('error', 'Target WA dan Isi Pesan wajib diisi untuk Pesan Kustom.');
+            }
+            $payloadJson = json_encode([
+                'target' => trim($payloadTarget),
+                'message' => trim($payloadMessage)
+            ]);
+        }
 
         if (empty($key) || empty($name) || empty($cronExpression) || empty($action)) {
             return redirect()->to('/whatsapp-settings?tab=cron')->with('error', 'Semua kolom wajib diisi.');
@@ -244,6 +284,7 @@ class WhatsappSettings extends BaseController
                 'is_active' => $isActive,
                 'description' => $description,
                 'action' => $action,
+                'payload' => $payloadJson,
                 'updated_at' => date('Y-m-d H:i:s')
             ]);
             $db->transCommit();
@@ -258,7 +299,8 @@ class WhatsappSettings extends BaseController
                         'cronExpression' => $cronExpression,
                         'isActive' => $isActive,
                         'description' => $description,
-                        'action' => $action
+                        'action' => $action,
+                        'payload' => $payloadJson
                     ],
                     'timeout' => 5,
                     'http_errors' => false

@@ -71,7 +71,7 @@
                                                     <i class="fas fa-file-alt"></i>
                                                 </div>
                                                 <div>
-                                                    <h5 class="mb-0 font-weight-bold text-dark" style="font-size: 15px;"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $tpl['key']))) ?></h5>
+                                                    <h5 class="mb-0 font-weight-bold text-dark" style="font-size: 15px;"><?= htmlspecialchars(!empty($tpl['name']) ? $tpl['name'] : ucwords(str_replace('_', ' ', $tpl['key']))) ?></h5>
                                                     <small class="text-muted"><?= htmlspecialchars($tpl['description']) ?></small>
                                                 </div>
                                             </div>
@@ -160,6 +160,13 @@
                                                     <span class="font-weight-bold text-dark"><?= htmlspecialchars($cron['name']) ?></span>
                                                     <small class="d-block text-muted">Key: <code><?= htmlspecialchars($cron['key']) ?></code></small>
                                                     <small class="d-block text-secondary mt-1" style="font-size: 12px;"><?= htmlspecialchars($cron['description']) ?></small>
+                                                    <?php if ($cron['action'] === 'custom_message' && !empty($cron['payload'])): ?>
+                                                        <?php $payload = json_decode($cron['payload'], true); ?>
+                                                        <div class="mt-2 p-2 bg-light border rounded" style="font-size: 11px;">
+                                                            <strong>Target:</strong> <?= htmlspecialchars($payload['target'] ?? '-') ?><br>
+                                                            <strong>Pesan:</strong> <span class="text-muted">"<?= htmlspecialchars(substr($payload['message'] ?? '', 0, 50)) ?>..."</span>
+                                                        </div>
+                                                    <?php endif; ?>
                                                 </td>
                                                 <td class="align-middle">
                                                     <input 
@@ -383,6 +390,42 @@
                             </div>
                         </form>
 
+                        <div class="border-top pt-4 mb-4">
+                            <form action="<?= base_url('whatsapp-settings/update-targets') ?>" method="post">
+                                <?= csrf_field() ?>
+                                <h6 class="font-weight-bold text-dark mb-3"><i class="fas fa-bullhorn mr-1 text-primary"></i> Target Broadcast Laporan PKL</h6>
+                                <p class="text-secondary small mb-3">Tentukan kepada siapa saja laporan jurnal harian PKL siswa akan diteruskan secara otomatis oleh bot WhatsApp.</p>
+                                
+                                <div class="row px-3">
+                                    <div class="col-md-4 mb-2 custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="target_group" name="broadcast_pkl_group" <?= ($broadcastTargets['broadcast_pkl_group'] ?? '1') == '1' ? 'checked' : '' ?>>
+                                        <label class="custom-control-label" for="target_group">Grup WA Sekolah</label>
+                                    </div>
+                                    <div class="col-md-4 mb-2 custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="target_pembimbing" name="broadcast_pkl_pembimbing" <?= ($broadcastTargets['broadcast_pkl_pembimbing'] ?? '1') == '1' ? 'checked' : '' ?>>
+                                        <label class="custom-control-label" for="target_pembimbing">Guru Pembimbing</label>
+                                    </div>
+                                    <div class="col-md-4 mb-2 custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="target_orangtua" name="broadcast_pkl_orangtua" <?= ($broadcastTargets['broadcast_pkl_orangtua'] ?? '0') == '1' ? 'checked' : '' ?>>
+                                        <label class="custom-control-label" for="target_orangtua">Orang Tua Siswa</label>
+                                    </div>
+                                    <div class="col-md-4 mb-2 custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="target_instruktur" name="broadcast_pkl_instruktur" <?= ($broadcastTargets['broadcast_pkl_instruktur'] ?? '0') == '1' ? 'checked' : '' ?>>
+                                        <label class="custom-control-label" for="target_instruktur">Instruktur DU/DI</label>
+                                    </div>
+                                    <div class="col-md-4 mb-2 custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="target_anggota" name="broadcast_pkl_anggota" <?= ($broadcastTargets['broadcast_pkl_anggota'] ?? '0') == '1' ? 'checked' : '' ?>>
+                                        <label class="custom-control-label" for="target_anggota">Siswa / Anggota PKL</label>
+                                    </div>
+                                </div>
+                                <div class="text-right mt-3">
+                                    <button type="submit" class="btn btn-success font-weight-bold">
+                                        <i class="fas fa-save mr-1"></i> Simpan Target Broadcast
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
                         <div class="border-top pt-4">
                             <!-- Link Group Join Form -->
                             <div class="card card-body bg-light mb-4 border shadow-none">
@@ -537,8 +580,22 @@
                             <option value="pkl_report_check">Pengingat Jurnal PKL Harian (Ketua Kelompok)</option>
                             <option value="pkl_escalation_check">Eskalasi Peringatan Laporan PKL (Guru Pembimbing)</option>
                             <option value="auto_alpha_job">Tutup Buku & Auto-Alpha Harian</option>
+                            <option value="custom_message">Kirim Pesan Kustom (Terjadwal)</option>
                         </select>
                         <small class="text-muted">Fungsi otomatisasi sistem yang akan dieksekusi berdasarkan jadwal kustom ini.</small>
+                    </div>
+                    
+                    <div id="custom-message-fields" style="display: none; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6; margin-bottom: 1rem;">
+                        <h6 class="font-weight-bold text-primary mb-2"><i class="fas fa-envelope mr-1"></i> Konfigurasi Pesan Kustom</h6>
+                        <div class="form-group mb-2">
+                            <label class="font-weight-bold text-secondary text-sm">Nomor Target (WA / JID)</label>
+                            <input type="text" name="payload_target" class="form-control form-control-sm" placeholder="Contoh: 628123456789">
+                            <small class="text-muted">Nomor WA diawali 62 atau format JID grup.</small>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label class="font-weight-bold text-secondary text-sm">Isi Pesan</label>
+                            <textarea name="payload_message" class="form-control form-control-sm" rows="3" placeholder="Halo, ini pesan otomatis..."></textarea>
+                        </div>
                     </div>
                     <div class="form-group mb-3">
                         <label class="font-weight-bold text-secondary">Deskripsi Tugas</label>
@@ -680,6 +737,17 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        // --- Custom Message Form Toggle ---
+        const actionSelect = document.querySelector('select[name="action"]');
+        const customFields = document.getElementById('custom-message-fields');
+        if (actionSelect && customFields) {
+            actionSelect.addEventListener('change', function() {
+                customFields.style.display = this.value === 'custom_message' ? 'block' : 'none';
+            });
+            // Initial check
+            customFields.style.display = actionSelect.value === 'custom_message' ? 'block' : 'none';
+        }
+
         // --- 1. WebSocket Live Connection Handler ---
         // Di production (via Nginx), gunakan origin sendiri agar Socket.io & API melewati proxy Nginx.
         // Di localhost, tetap langsung ke port 7860.

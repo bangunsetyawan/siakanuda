@@ -114,7 +114,7 @@
                                 <tr>
                                     <td style="vertical-align: top; border: none; padding: 2px;"><strong>Guru Pembimbing</strong></td>
                                     <td style="vertical-align: top; border: none; padding: 2px;">:</td>
-                                    <td style="vertical-align: top; border: none; padding: 2px;"><?= htmlspecialchars($group['guru_pembimbing'] ?? '-') ?></td>
+                                    <td style="vertical-align: top; border: none; padding: 2px;"><?= htmlspecialchars($pembimbingName ?? '-') ?></td>
                                 </tr>
                                 <tr>
                                     <td style="vertical-align: top; border: none; padding: 2px;"><strong>Kelompok</strong></td>
@@ -127,7 +127,7 @@
                                             <ol style="margin: 0; padding-left: 18px;">
                                                 <?php foreach ($membersList as $index => $member): ?>
                                                     <li>
-                                                        <?= htmlspecialchars($member) ?><?= ($index === 0) ? ' (Ketua)' : '' ?>
+                                                        <?= htmlspecialchars($member) ?><?= ($member === ($ketuaName ?? '')) ? ' (Ketua)' : '' ?>
                                                         <a href="<?= base_url('/pkl/rekap-siswa/' . htmlspecialchars($group['ketua_phone']) . '?name=' . urlencode($member)) ?>" target="_blank" class="no-print btn btn-xs btn-outline-primary ml-2" title="Cetak Rekap Kehadiran Siswa Ini" style="padding: 0 5px; font-size: 10px; vertical-align: text-top;">
                                                             <i class="fas fa-print"></i> Cetak Rekap Absensi Individu
                                                         </a>
@@ -173,6 +173,20 @@
                                         </h6>
                                         <?php if ($report['status_libur'] == 1): ?>
                                             <span class="badge badge-danger">LIBUR</span>
+                                        <?php else: ?>
+                                            <div class="text-right text-xs text-secondary no-print">
+                                                <?php
+                                                    $locText = $report['location_data'] ?? 'Lokasi tidak dicantumkan';
+                                                    if (strpos($locText, '| GPS:') !== false) {
+                                                        $parts = explode('| GPS:', $locText);
+                                                        $locName = trim($parts[0]);
+                                                        $gpsCoords = trim($parts[1]);
+                                                        echo htmlspecialchars($locName) . ' <a href="https://maps.google.com/?q=' . urlencode($gpsCoords) . '" target="_blank" class="ml-1 text-primary font-weight-bold"><i class="fas fa-map-marker-alt"></i> Peta</a>';
+                                                    } else {
+                                                        echo htmlspecialchars($locText);
+                                                    }
+                                                ?>
+                                            </div>
                                         <?php endif; ?>
                                     </div>
 
@@ -209,20 +223,22 @@
                                                     </tbody>
                                                 </table>
 
-                                                <?php
-                                                    // Ambil foto kelompok (foto pertama yang ada)
-                                                    $groupPhoto = null;
-                                                    if (!empty($photoUrls)) {
-                                                        $firstUrl = reset($photoUrls);
-                                                        $groupPhoto = get_photo_display_url($firstUrl);
-                                                    }
-                                                ?>
-                                                <?php if ($groupPhoto): ?>
-                                                    <div class="mt-3 text-center">
-                                                        <small class="text-secondary d-block mb-2"><i class="fas fa-camera mr-1"></i>Foto Dokumentasi Kelompok</small>
-                                                        <a href="<?= htmlspecialchars($groupPhoto) ?>" target="_blank">
-                                                            <img src="<?= htmlspecialchars($groupPhoto) ?>" class="rounded border shadow-sm" style="max-width: 100%; max-height: 300px; object-fit: contain;" title="Klik untuk perbesar">
-                                                        </a>
+                                                <?php if (!empty($photoUrls)): ?>
+                                                    <div class="mt-3">
+                                                        <small class="text-secondary d-block mb-2 font-weight-bold"><i class="fas fa-camera mr-1"></i>Lampiran Foto (<?= count($photoUrls) ?> foto):</small>
+                                                        <div class="d-flex flex-wrap" style="gap: 8px;">
+                                                            <?php foreach ($photoUrls as $key => $url): ?>
+                                                                <?php $dispUrl = get_photo_display_url($url); ?>
+                                                                <div class="text-center" style="width: 100px;">
+                                                                    <a href="<?= htmlspecialchars($dispUrl) ?>" target="_blank">
+                                                                        <img src="<?= htmlspecialchars($dispUrl) ?>" class="rounded border shadow-sm" style="width: 100px; height: 100px; object-fit: cover;" title="Klik untuk perbesar">
+                                                                    </a>
+                                                                    <small class="d-block mt-1 text-muted text-xs text-truncate" title="<?= htmlspecialchars($key) ?>">
+                                                                        <?= htmlspecialchars($key === 'kelompok' ? 'Kelompok' : 'Bukti ' . $key) ?>
+                                                                    </small>
+                                                                </div>
+                                                            <?php endforeach; ?>
+                                                        </div>
                                                     </div>
                                                 <?php endif; ?>
                                                 

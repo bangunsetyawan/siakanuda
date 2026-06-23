@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token-name" content="<?= csrf_token() ?>">
     <meta name="csrf-hash" content="<?= csrf_hash() ?>">
+    <meta name="theme-color" content="#1a5632">
+    <meta name="description" content="Sistem Informasi Akademik SMK NU Darussalam">
+    <link rel="icon" type="image/png" href="/logo-smk.png">
+    <link rel="apple-touch-icon" href="/logo-smk.png">
+    <link rel="manifest" href="/manifest.json">
     <title><?= $title ?? 'SIAKANUDA' ?> | SMK NU Darussalam</title>
 
     <!-- Google Font: Source Sans Pro -->
@@ -23,10 +28,9 @@
             font-family: 'Source Sans Pro', sans-serif;
         }
 
-        /* Glassmorphic Navbar */
+        /* Solid Navbar (Performance Optimized) */
         .main-header {
-            background: rgba(255, 255, 255, 0.85) !important;
-            backdrop-filter: blur(10px);
+            background-color: #ffffff !important;
             border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
         }
 
@@ -46,9 +50,8 @@
         }
         .nav-sidebar .nav-link {
             color: #475569 !important;
-            border-radius: 12px;
+            border-radius: 4px;
             margin-bottom: 4px;
-            transition: all 0.3s ease;
         }
         .nav-sidebar .nav-link:hover {
             background-color: #f1f5f9 !important;
@@ -61,16 +64,12 @@
             font-weight: 600;
         }
 
-        /* Card Polish */
+        /* Card Polish (Lighter) */
         .card {
-            border-radius: 16px;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
             background: #ffffff;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .card:hover {
-            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
         }
         .card-header {
             background-color: transparent !important;
@@ -78,29 +77,12 @@
             padding: 18px 24px;
         }
 
-        /* Buttons & Forms */
+        /* Buttons & Forms (Native AdminLTE/Bootstrap Layout Preserved) */
         .btn {
-            border-radius: 12px;
-            padding: 8px 16px;
+            border-radius: 4px;
             font-weight: 600;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-            text-align: center;
         }
         @media (max-width: 576px) {
-            .btn {
-                padding: 6px 12px;
-                font-size: 0.875rem;
-                white-space: normal;
-                line-height: 1.4;
-            }
-            .btn i {
-                margin-right: 0 !important; /* overrides font-awesome mr-1/mr-2 if gap is used */
-            }
-            
             /* Global Responsive Card Headers for Mobile */
             .card-header.d-flex {
                 flex-direction: column !important;
@@ -122,11 +104,6 @@
                 gap: 0.5rem;
                 width: 100%;
             }
-            .card-header.d-flex .btn {
-                margin-left: 0 !important;
-                margin-right: 0 !important;
-                flex: 1 1 auto; /* Make buttons grow to fill space nicely */
-            }
         }
         .btn-primary {
             background-color: #0284c7;
@@ -135,7 +112,6 @@
         .btn-primary:hover {
             background-color: #0369a1;
             border-color: #0369a1;
-            transform: translateY(-1px);
         }
         .form-control {
             border-radius: 10px;
@@ -192,7 +168,7 @@
         <!-- Left navbar links -->
         <ul class="navbar-nav">
             <li class="nav-item">
-                <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+                <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i> <span class="d-md-none">Menu</span></a>
             </li>
             <?php if (uri_string() !== 'dashboard' && uri_string() !== ''): ?>
                 <li class="nav-item">

@@ -28,6 +28,37 @@ sudo systemctl start bot.siswa.service siakadash.service
 sudo journalctl -u bot.siswa.service --no-pager -n 10 --since "10 sec ago"
 ```
 
+---
+
+## 🩹 SOP Deploy Minor (Patch Update)
+
+Gunakan metode ini jika Anda hanya mengubah **sebagian kecil file** (misal: hanya desain View atau Controller PHP) tanpa ada penambahan library baru (`npm install` / `composer`). Metode ini **sangat aman** karena tidak menghapus folder secara keseluruhan dan meminimalkan potensi *crash*.
+
+### Dari PC Lokal (Windows PowerShell):
+```powershell
+# 1. Masuk ke folder proyek
+cd F:\Antigravity\siakanuda
+
+# 2. Buat arsip patch HANYA untuk file yang berubah (spesifik sebutkan lokasinya)
+# Contoh:
+tar -czf F:\Antigravity\patch.tar.gz dashboard/app/Config/Routes.php dashboard/app/Views/auth/login.php dashboard/app/Controllers/Bantuan.php dashboard/app/Views/bantuan/index.php
+
+# 3. Upload file patch ke server
+scp F:\Antigravity\patch.tar.gz smknuda@100.110.83.48:~/
+```
+
+### Di SSH (Debian):
+```bash
+# 4. Ekstrak langsung menimpa file di dalam folder siakanuda
+tar -xzf ~/patch.tar.gz -C ~/siakanuda/ --overwrite
+
+# 5. Restart service web agar CodeIgniter membaca file baru di memori
+# (Catatan: Bot WA tidak perlu distop/direstart sehingga siswa tetap terlayani)
+sudo systemctl restart siakadash.service
+```
+
+---
+
 ### ⚠️ JANGAN sertakan dalam arsip:
 | File/Folder | Alasan |
 |-------------|--------|

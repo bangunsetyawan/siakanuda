@@ -218,11 +218,43 @@ export async function runAutoAlphaJob() {
   }
 }
 
+// -----------------------------------------------------------------------------
+// 6. Custom Scheduled Message Job
+// -----------------------------------------------------------------------------
+export async function runCustomMessageJob(config) {
+  console.log(`[CRON] Menjalankan custom message job: ${config.name}`);
+  try {
+    if (!config.payload) {
+      console.error(`[CRON] Gagal mengirim pesan kustom: Payload kosong pada job ${config.key}`);
+      return;
+    }
+    const payload = typeof config.payload === 'string' ? JSON.parse(config.payload) : config.payload;
+    if (!payload.target || !payload.message) {
+      console.error(`[CRON] Gagal mengirim pesan kustom: Target atau Message tidak lengkap pada job ${config.key}`);
+      return;
+    }
+
+    let target = payload.target.trim();
+    const message = payload.message.trim();
+
+    // Pastikan ID target formatnya benar (tambah @s.whatsapp.net jika nomor pribadi)
+    if (!target.includes('@g.us') && !target.includes('@s.whatsapp.net')) {
+      target = `${target}@s.whatsapp.net`;
+    }
+
+    queueMessage(target, message);
+    console.log(`[CRON] Pesan kustom dijadwalkan untuk dikirim ke ${target}`);
+  } catch (err) {
+    console.error(`[CRON] Kesalahan pada runCustomMessageJob (${config.key}):`, err.message);
+  }
+}
+
 const jobRunners = {
   class_attendance_check: runClassAttendanceCheck,
   pkl_report_check: runPklReportCheck,
   pkl_escalation_check: runPklEscalationCheck,
-  auto_alpha_job: runAutoAlphaJob
+  auto_alpha_job: runAutoAlphaJob,
+  custom_message: runCustomMessageJob
 };
 
 let scheduledJobs = {};
@@ -257,7 +289,7 @@ export async function loadAndScheduleCronJobs() {
       if (is_active === 1 || is_active === true) {
         console.log(`[CRON] Scheduling job: "${name}" (${key}) -> [${cron_expression}]`);
         try {
-          scheduledJobs[key] = cron.schedule(cron_expression, runner, { timezone: TZ_JAKARTA });
+          scheduledJobs[key] = cron.schedule(cron_expression, () => runner(config), { timezone: TZ_JAKARTA });
         } catch (err) {
           console.error(`[CRON] Gagal menjadwalkan job "${name}" dengan ekspresi [${cron_expression}]:`, err.message);
         }

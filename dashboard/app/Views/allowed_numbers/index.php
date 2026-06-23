@@ -368,7 +368,7 @@ document.addEventListener("DOMContentLoaded", function() {
         // Read CSRF token from meta tag (rendered by PHP)
         const csrfToken = document.querySelector('meta[name="csrf-hash"]').getAttribute('content');
 
-        fetch('<?= base_url('/allowed-numbers/import') ?>', {
+        fetch('/allowed-numbers/import', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

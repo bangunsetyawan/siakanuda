@@ -48,7 +48,8 @@
                         <th class="border-0">Nama Lengkap</th>
                         <th class="border-0">Kelas</th>
                         <th class="border-0">Gender</th>
-                        <th class="border-0">No. WhatsApp</th>
+                        <th class="border-0">WA Siswa</th>
+                        <th class="border-0">WA Ortu</th>
                         <th class="border-0">Peran</th>
                         <th class="border-0">Aksi</th>
                     </tr>
@@ -56,7 +57,7 @@
                 <tbody>
                     <?php if (empty($students)): ?>
                         <tr>
-                            <td colspan="7" class="text-center text-secondary py-5">
+                            <td colspan="9" class="text-center text-secondary py-5">
                                 <i class="fas fa-user-slash mb-2" style="font-size: 32px;"></i>
                                 <p class="mb-0">Belum ada data siswa ditemukan.</p>
                             </td>
@@ -75,6 +76,7 @@
                                 <td><span class="badge badge-light px-2 py-1 font-weight-bold text-secondary"><?= htmlspecialchars($student['class']) ?></span></td>
                                 <td><?= htmlspecialchars($student['gender'] == 'L' ? 'Laki-laki' : ($student['gender'] == 'P' ? 'Perempuan' : '-')) ?></td>
                                 <td><?= htmlspecialchars($student['phone'] ?: '-') ?></td>
+                                <td><?= htmlspecialchars($student['orang_tua_phone'] ?: '-') ?></td>
                                 <td>
                                     <?php if (($student['role'] ?? 'siswa') === 'ketua_pkl'): ?>
                                         <span class="badge badge-primary px-2 py-1">Ketua PKL</span>
@@ -152,8 +154,12 @@
                                                     </select>
                                                 </div>
                                                 <div class="form-group mb-3">
-                                                    <label class="font-weight-bold text-secondary">No. WhatsApp</label>
+                                                    <label class="font-weight-bold text-secondary">No. WhatsApp Siswa</label>
                                                     <input type="text" name="phone" class="form-control" value="<?= htmlspecialchars($student['phone']) ?>" placeholder="Contoh: 628xxxx">
+                                                </div>
+                                                <div class="form-group mb-3">
+                                                    <label class="font-weight-bold text-secondary">No. WhatsApp Orang Tua</label>
+                                                    <input type="text" name="orang_tua_phone" class="form-control" value="<?= htmlspecialchars($student['orang_tua_phone'] ?? '') ?>" placeholder="Contoh: 628xxxx">
                                                 </div>
                                                 <div class="form-group mb-3">
                                                     <label class="font-weight-bold text-secondary">Peran / Role</label>
@@ -213,8 +219,12 @@
                         </select>
                     </div>
                      <div class="form-group mb-3">
-                         <label class="font-weight-bold text-secondary">No. WhatsApp</label>
+                         <label class="font-weight-bold text-secondary">No. WhatsApp Siswa</label>
                          <input type="text" name="phone" class="form-control" placeholder="Contoh: 628xxxxx">
+                     </div>
+                     <div class="form-group mb-3">
+                         <label class="font-weight-bold text-secondary">No. WhatsApp Orang Tua</label>
+                         <input type="text" name="orang_tua_phone" class="form-control" placeholder="Contoh: 628xxxxx">
                      </div>
                      <div class="form-group mb-3">
                          <label class="font-weight-bold text-secondary">Peran / Role</label>
@@ -249,12 +259,13 @@
                     <h6 class="font-weight-bold mb-1"><i class="fas fa-info-circle mr-1"></i>Format Kolom Excel:</h6>
                     Pastikan file Excel Anda (`.xlsx`, `.xls`, atau `.csv`) memiliki baris header dengan nama kolom berikut (urutan bebas):
                     <div class="font-weight-bold mt-1 text-monospace">
-                        [nisn] &nbsp;|&nbsp; [nama] &nbsp;|&nbsp; [kelas] &nbsp;|&nbsp; [gender] &nbsp;|&nbsp; [whatsapp] &nbsp;|&nbsp; [role]
+                        [nisn] &nbsp;|&nbsp; [nama] &nbsp;|&nbsp; [kelas] &nbsp;|&nbsp; [gender] &nbsp;|&nbsp; [whatsapp] &nbsp;|&nbsp; [ortu_wa] &nbsp;|&nbsp; [role]
                     </div>
                     <ul class="mb-0 pl-3 mt-1">
                         <li><strong>gender</strong>: Isikan <code>L</code> untuk Laki-laki, <code>P</code> untuk Perempuan.</li>
                         <li><strong>role</strong>: Opsional. Isikan <code>siswa</code> atau <code>ketua_pkl</code>. Defaultnya adalah <code>siswa</code> jika kosong.</li>
                         <li><strong>whatsapp</strong>: Opsional (misal: <code>628123456789</code>).</li>
+                        <li><strong>ortu_wa</strong>: Opsional (No. WA Orang Tua).</li>
                     </ul>
                     <div class="mt-2 text-right">
                         <a href="<?= base_url('/templates/template_siswa.xlsx') ?>" class="btn btn-xs btn-success text-white font-weight-bold" download>
@@ -291,7 +302,8 @@
                                     <th>Nama</th>
                                     <th>Kelas</th>
                                     <th>Gender</th>
-                                    <th>WhatsApp</th>
+                                    <th>WA Siswa</th>
+                                    <th>WA Ortu</th>
                                     <th>Role</th>
                                 </tr>
                             </thead>
@@ -348,18 +360,15 @@ document.addEventListener("DOMContentLoaded", function() {
                     return;
                 }
 
+                
                 parsedStudents = [];
                 previewBody.innerHTML = '';
-
-                jsonData.forEach((row, index) => {
-                    // Map headers dynamically (case-insensitive & supports aliases)
-                    let nis = '';
-                    let name = '';
-                    let className = '';
-                    let gender = 'L';
-                    let phone = '';
-                    let role = 'siswa';
-
+                
+                const rawData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                
+                rawData.forEach(row => {
+                    let nis = '', name = '', className = '', gender = 'L', phone = '', orangTuaPhone = '', role = 'siswa';
+                    
                     Object.keys(row).forEach(key => {
                         const cleanKey = key.toLowerCase().trim();
                         const val = String(row[key] ?? '').trim();
@@ -369,11 +378,12 @@ document.addEventListener("DOMContentLoaded", function() {
                         else if (cleanKey === 'kelas' || cleanKey === 'class') className = val;
                         else if (cleanKey === 'gender' || cleanKey === 'jenis kelamin' || cleanKey === 'jk') gender = val;
                         else if (cleanKey === 'whatsapp' || cleanKey === 'phone' || cleanKey === 'no hp' || cleanKey === 'no. whatsapp') phone = val;
+                        else if (cleanKey === 'ortu_wa' || cleanKey === 'wa ortu' || cleanKey === 'orang_tua_phone') orangTuaPhone = val;
                         else if (cleanKey === 'role' || cleanKey === 'peran') role = val;
                     });
 
                     if (nis && name && className) {
-                        const studentObj = { nis, name, class: className, gender, phone, role };
+                        const studentObj = { nis, name, class: className, gender, phone, orang_tua_phone: orangTuaPhone, role };
                         parsedStudents.push(studentObj);
 
                         // Show preview for first 10 rows
@@ -385,6 +395,7 @@ document.addEventListener("DOMContentLoaded", function() {
                                 <td><span class="badge badge-light border text-secondary">${escapeHtml(className)}</span></td>
                                 <td>${escapeHtml(gender)}</td>
                                 <td>${escapeHtml(phone || '-')}</td>
+                                <td>${escapeHtml(orangTuaPhone || '-')}</td>
                                 <td><span class="badge badge-secondary">${escapeHtml(role)}</span></td>
                             `;
                             previewBody.appendChild(tr);
@@ -421,7 +432,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const csrfToken = document.querySelector('meta[name="csrf-hash"]').getAttribute('content');
         const deactivateMissing = document.getElementById('chkDeactivateMissing').checked;
 
-        fetch('<?= base_url('/students/import') ?>', {
+        fetch('/students/import', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -458,7 +469,7 @@ document.addEventListener("DOMContentLoaded", function() {
             btnExport.disabled = true;
             btnExport.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Downloading...';
             
-            fetch('<?= base_url('/students/export') ?>')
+            fetch('/students/export')
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 'error') {
@@ -473,6 +484,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         'kelas': s.class,
                         'gender': s.gender,
                         'whatsapp': s.phone || '',
+                        'ortu_wa': s.orang_tua_phone || '',
                         'role': s.role || 'siswa'
                     }));
                     

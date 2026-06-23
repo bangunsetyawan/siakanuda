@@ -14,11 +14,11 @@
 ## ⚡ TL;DR (Baca 30 detik, paham segalanya)
 
 **SIAKANUDA** = Sistem Informasi Akademik SMK NU Darussalam.
-Aplikasi sekolah berbasis **WhatsApp Bot + Web Dashboard + APK Android**.
+Aplikasi sekolah berbasis **WhatsApp Bot + Web Dashboard + PWA**.
 Working directory aktif: `siakanuda/` — root proyek (SSD portabel exFAT, drive letter bisa berubah).
 
 Arsitektur **v1.11.1**:
-1. **Satu pintu masuk**: Web Dashboard di **Port 8080** (CodeIgniter 4). Semua akses user (Admin, Guru, Siswa) dan APK WebView langsung menuju ke sini.
+1. **Satu pintu masuk**: Web Dashboard di **Port 8080** (CodeIgniter 4). Semua akses user (Admin, Guru, Siswa) dan PWA langsung menuju ke sini.
 2. **Background Service**: WhatsApp Bot + API di **Port 7860** (Node.js). Berjalan diam-diam di belakang layar untuk notifikasi/broadcast, pdf generator, sync Supabase, dan cron jobs. Panel ringan hanya untuk manajemen koneksi WA (QR code, kirim pesan, log, cron trigger).
 
 ---
@@ -27,13 +27,12 @@ Arsitektur **v1.11.1**:
 
 | Komponen | Teknologi | Port | Keterangan |
 |---|---|---|---|
-| Web Dashboard | CodeIgniter 4 (PHP) | **8080** | **Entry Point Utama** untuk semua user & APK WebView. |
+| Web Dashboard | CodeIgniter 4 (PHP) | **8080** | **Entry Point Utama** untuk semua user & PWA Mobile. |
 | Background Service | Node.js 18+ | **7860** | WhatsApp Bot (notifikasi saja), Cron Jobs, PDF Generator, Sync. |
 | Database utama | Supabase Cloud PostgreSQL | cloud | Cloud backend. |
 | Database lokal | SQLite (`siakanuda.db`) | lokal | SQLite lokal disinkronisasikan offline-first. |
 | WhatsApp Client | Baileys | — | Menghubungkan bot dengan nomor WA sekolah. |
 | AI Gateway | 9Router (OpenAI-Compatible) | 20128 | Auto-fallback AI parser (Gemini, Claude, dll) tanpa vendor lock-in. |
-| APK Android | Gradle + WebView wrapper | — | Di-build dengan target port 8080. |
 
 ---
 
@@ -46,7 +45,7 @@ Arsitektur **v1.11.1**:
 ├── .env                       ← Credentials (JANGAN expose!)
 ├── .env.example               ← Template .env (aman dibaca)
 ├── .gitignore
-├── package.json               ← version: 1.11.1, type: module
+├── package.json               ← version: 1.16.0, type: module
 ├── siakanuda.db               ← SQLite 16 tabel (data lokal)
 ├── bot.siswa.service          ← Systemd file untuk Debian
 │
@@ -72,9 +71,9 @@ Arsitektur **v1.11.1**:
 │   ├── spark                  ← CLI CI4
 │   └── app/
 │       ├── Config/            ← Konfigurasi CI4
-│       ├── Controllers/       ← 18 controller (Auth, Dashboard, Student, PKL, WA Panel, dll)
+│       ├── Controllers/       ← 19 controller (Auth, Dashboard, Student, PKL, WA Panel, dll)
 │       ├── Models/            ← Model SQLite 16 tabel
-│       └── Views/             ← Tampilan responsive (Bootstrap) untuk browser & APK
+│       └── Views/             ← Tampilan responsive (Bootstrap) untuk browser & PWA Mobile
 │
 ├── directives/                ← SOP OPERASIONAL
 │   ├── 00-prompt-templates.md
@@ -88,11 +87,6 @@ Arsitektur **v1.11.1**:
 ├── sessions/                  ← Auth WhatsApp Baileys (gitignored)
 ├── uploads/pkl/               ← Foto PKL lokal (gitignored)
 ├── backups/                   ← Backup database harian (gitignored)
-│
-├── siakanuda-apk/             ← ANDROID APK BUILDER
-│   ├── BUILD-APK.bat          ← Build otomatis
-│   ├── GANTI-IP.bat           ← Ganti URL server di APK ke port 8080
-│   └── app/src/main/          ← Source Java WebView
 │
 └── docs/                      ← DOKUMENTASI UTAMA
     └── archive/               ← FOLDER ARSIP (Diabaikan AI agar hemat token)
@@ -133,10 +127,10 @@ Arsitektur **v1.11.1**:
 
 | Role | Akses Dashboard (Port 8080) |
 |---|---|
-| `admin` | Full CRUD + Kelola WhatsApp Panel + Hapus Data (Full Access) |
-| `kepsek` | Full CRUD kecuali Hapus Pengguna (Guru/Staf & Siswa) |
-| `guru` | Absensi KBM (Write), Jadwal & Siswa (Read-only), Violations (Read-only/Search), PKL Pembimbing (Edit own guided groups) |
-| `guru_bk` | Akses Guru + CRUD Violations + CRUD Catatan BK |
+| `admin` | Full CRUD + Kelola WhatsApp Panel + Hapus Data (Full Access) + PKL Takeover |
+| `kepsek` | Full CRUD kecuali Hapus Pengguna (Guru/Staf & Siswa) + PKL Takeover |
+| `guru` | Absensi KBM (Write), Jadwal & Siswa (Read-only), Violations (Read-only/Search), PKL Pembimbing (Edit own guided groups + PKL Takeover) |
+| `guru_bk` | Akses Guru + CRUD Violations + CRUD Catatan BK + PKL Takeover |
 | `siswa` | Read-only personal recap, schedules, personal violations, Kotak Saran |
 | `ketua_pkl` | Akses Siswa + Absensi Kelompok PKL (Write) + Cetak Laporan PKL PDF |
 | `anggotapkl` | Akses Siswa + Laporan PKL (Read-only, no submit, no printing PDF) |
