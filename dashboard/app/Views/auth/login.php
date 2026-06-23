@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="utf-8">
@@ -514,7 +514,7 @@
             <span>Atau</span>
         </div>
 
-        <a href="/bkk/index.html" class="btn-bkk">
+        <a href="<?= base_url('bkk/dashboard') ?>" class="btn-bkk">
             <i class="fas fa-briefcase"></i>
             Masuk Portal BKK
         </a>
@@ -570,3 +570,4 @@
     </script>
 </body>
 </html>
+

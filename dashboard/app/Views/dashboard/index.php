@@ -200,7 +200,7 @@ if ($role === 'admin') {
         ['title' => 'Prestasi Siswa',    'url' => '/prestasi',        'icon' => 'fas fa-trophy',               'bg' => 'bg-green-soft',     'text' => 'text-green'],
         ['title' => 'Kotak Suara',       'url' => '/feedbacks',       'icon' => 'fas fa-comment-alt',         'bg' => 'bg-teal-soft',      'text' => 'text-teal'],
         ['title' => 'Log Audit WA',      'url' => '/logs',            'icon' => 'fab fa-whatsapp',            'bg' => 'bg-whatsapp-soft',  'text' => 'text-whatsapp'],
-        ['title' => 'Alumni & BKK',       'url' => 'https://smknudarussalam.sch.id/bkk', 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-indigo-soft', 'text' => 'text-indigo', 'external' => true],
+        ['title' => 'Alumni & BKK',       'url' => base_url('bkk/dashboard'), 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-indigo-soft', 'text' => 'text-indigo', 'external' => true],
     ];
 } elseif ($role === 'kepsek') {
     $shortcuts = [
@@ -212,7 +212,7 @@ if ($role === 'admin') {
         ['title' => 'Poin Pelanggaran', 'url' => '/violations',  'icon' => 'fas fa-exclamation-triangle',  'bg' => 'bg-danger-soft',    'text' => 'text-danger'],
         ['title' => 'Prestasi Siswa',    'url' => '/prestasi',    'icon' => 'fas fa-trophy',               'bg' => 'bg-green-soft',     'text' => 'text-green'],
         ['title' => 'Kotak Suara',       'url' => '/feedbacks',   'icon' => 'fas fa-comment-alt',          'bg' => 'bg-teal-soft',      'text' => 'text-teal'],
-        ['title' => 'Alumni & BKK',      'url' => 'https://smknudarussalam.sch.id/bkk', 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-indigo-soft', 'text' => 'text-indigo', 'external' => true],
+        ['title' => 'Alumni & BKK',      'url' => base_url('bkk/dashboard'), 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-indigo-soft', 'text' => 'text-indigo', 'external' => true],
     ];
 } elseif ($role === 'guru_bk') {
     $shortcuts = [
@@ -224,7 +224,7 @@ if ($role === 'admin') {
         ['title' => 'Laporan PKL',       'url' => '/pkl',         'icon' => 'fas fa-briefcase',            'bg' => 'bg-secondary-soft', 'text' => 'text-secondary'],
         ['title' => 'Kelompok PKL',      'url' => '/pkl/groups',  'icon' => 'fas fa-map-marked-alt',       'bg' => 'bg-dark-soft',    'text' => 'text-dark'],
         ['title' => 'Manajemen Siswa',   'url' => '/students',    'icon' => 'fas fa-users',                'bg' => 'bg-primary-soft',   'text' => 'text-primary'],
-        ['title' => 'Alumni & BKK',      'url' => 'https://smknudarussalam.sch.id/bkk', 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-indigo-soft', 'text' => 'text-indigo', 'external' => true],
+        ['title' => 'Alumni & BKK',      'url' => base_url('bkk/dashboard'), 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-indigo-soft', 'text' => 'text-indigo', 'external' => true],
     ];
 } elseif (in_array($role, ['guru', 'guru_mapel'])) {
     $shortcuts = [
@@ -235,7 +235,7 @@ if ($role === 'admin') {
         ['title' => 'Prestasi Siswa',    'url' => '/prestasi',    'icon' => 'fas fa-trophy',               'bg' => 'bg-green-soft',     'text' => 'text-green'],
         ['title' => 'Laporan PKL',       'url' => '/pkl',         'icon' => 'fas fa-briefcase',            'bg' => 'bg-secondary-soft', 'text' => 'text-secondary'],
         ['title' => 'Kelompok PKL',      'url' => '/pkl/groups',  'icon' => 'fas fa-map-marked-alt',       'bg' => 'bg-dark-soft',      'text' => 'text-dark'],
-        ['title' => 'Alumni & BKK',      'url' => 'https://smknudarussalam.sch.id/bkk', 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-indigo-soft', 'text' => 'text-indigo', 'external' => true],
+        ['title' => 'Alumni & BKK',      'url' => base_url('bkk/dashboard'), 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-indigo-soft', 'text' => 'text-indigo', 'external' => true],
     ];
 } elseif ($role === 'ketua_pkl') {
     $shortcuts = [
@@ -247,10 +247,10 @@ if ($role === 'admin') {
         ['title' => 'Prestasi Saya',     'url' => '/prestasi',   'icon' => 'fas fa-trophy',               'bg' => 'bg-green-soft',   'text' => 'text-green'],
         ['title' => 'Catatan BK',        'url' => '/counseling', 'icon' => 'fas fa-heart',                'bg' => 'bg-pink-soft',    'text' => 'text-pink'],
         ['title' => 'Kotak Suara',       'url' => '/feedbacks',  'icon' => 'fas fa-comment-alt',          'bg' => 'bg-teal-soft',    'text' => 'text-teal'],
-        ['title' => 'Alumni & BKK',      'url' => 'https://smknudarussalam.sch.id/bkk', 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-indigo-soft', 'text' => 'text-indigo', 'external' => true],
+        ['title' => 'Alumni & BKK',      'url' => base_url('bkk/dashboard'), 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-indigo-soft', 'text' => 'text-indigo', 'external' => true],
     ];
 } else {
-    // siswa & fallback — selaras dengan sidebar
+    // siswa & fallback â€” selaras dengan sidebar
     $shortcuts = [
         ['title' => 'Absensi KBM',       'url' => '/attendance',  'icon' => 'fas fa-calendar-check',       'bg' => 'bg-info-soft',      'text' => 'text-info'],
         ['title' => 'Kalender Akademik',  'url' => '/kalender-akademik', 'icon' => 'fas fa-calendar-week',  'bg' => 'bg-success-soft',   'text' => 'text-success'],
@@ -259,7 +259,7 @@ if ($role === 'admin') {
         ['title' => 'Prestasi Saya',     'url' => '/prestasi',   'icon' => 'fas fa-trophy',               'bg' => 'bg-green-soft',     'text' => 'text-green'],
         ['title' => 'Catatan BK',        'url' => '/counseling', 'icon' => 'fas fa-heart',                'bg' => 'bg-pink-soft',    'text' => 'text-pink'],
         ['title' => 'Kotak Suara',       'url' => '/feedbacks',  'icon' => 'fas fa-comment-alt',          'bg' => 'bg-teal-soft',      'text' => 'text-teal'],
-        ['title' => 'Alumni & BKK',      'url' => 'https://smknudarussalam.sch.id/bkk', 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-indigo-soft', 'text' => 'text-indigo', 'external' => true],
+        ['title' => 'Alumni & BKK',      'url' => base_url('bkk/dashboard'), 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-indigo-soft', 'text' => 'text-indigo', 'external' => true],
     ];
     // Tambahkan PKL hanya jika siswa adalah anggota/ketua PKL
     if (!empty($isPklMember)) {
@@ -289,7 +289,7 @@ if ($role === 'admin') {
 </div>
 
 <?php /* ================================================================
-   PKL ABSENSI WIDGET — hanya tampil untuk ketua_pkl yang punya grup PKL
+   PKL ABSENSI WIDGET â€” hanya tampil untuk ketua_pkl yang punya grup PKL
    ================================================================ */ ?>
 <?php if ($role === 'ketua_pkl' && !empty($pklGroupData)): ?>
 <div class="row mb-4">
@@ -310,7 +310,7 @@ if ($role === 'admin') {
                         <div>
                             <h4 class="font-weight-bold text-white mb-1" style="font-size: 18px; letter-spacing: 0.3px;">Info PKL</h4>
                             <p class="text-white mb-0" style="opacity: 0.9; font-size: 13.5px; font-weight: 500;">
-                                📍 <?= htmlspecialchars($pklGroupData['tempat_pkl']) ?>
+                                ðŸ“ <?= htmlspecialchars($pklGroupData['tempat_pkl']) ?>
                             </p>
                         </div>
                     </div>
@@ -340,8 +340,8 @@ if ($role === 'admin') {
                         <div>
                             <h4 class="font-weight-bold text-white mb-1" style="font-size: 18px; letter-spacing: 0.3px;">Absensi PKL Hari Ini</h4>
                             <p class="text-white mb-0" style="opacity: 0.9; font-size: 13.5px; font-weight: 500;">
-                                📍 <?= htmlspecialchars($pklGroupData['tempat_pkl']) ?> &nbsp;|&nbsp;
-                                📅 <?= date('l, d F Y') ?>
+                                ðŸ“ <?= htmlspecialchars($pklGroupData['tempat_pkl']) ?> &nbsp;|&nbsp;
+                                ðŸ“… <?= date('l, d F Y') ?>
                             </p>
                         </div>
                     </div>
@@ -351,7 +351,7 @@ if ($role === 'admin') {
                             <?php if ($pklTodayReport['status_libur']): ?>
                                 <div class="px-4 py-2 font-weight-bold rounded-pill text-center"
                                      style="background: rgba(255, 255, 255, 0.2); color: #fff; border: 1px solid rgba(255, 255, 255, 0.4); font-size: 13px; letter-spacing: 0.5px;">
-                                    🏢 DU/DI LIBUR HARI INI
+                                    ðŸ¢ DU/DI LIBUR HARI INI
                                 </div>
                             <?php else: ?>
                                 <div class="px-4 py-2 font-weight-bold rounded-pill text-center"
@@ -376,7 +376,7 @@ if ($role === 'admin') {
 
 <?php endif; ?>
 
-<?php /* Siswa biasa — tampilkan status PKL hari ini jika punya grup */ ?>
+<?php /* Siswa biasa â€” tampilkan status PKL hari ini jika punya grup */ ?>
 <?php if (in_array($role, ['siswa', 'anggotapkl']) && !empty($pklGroupData)): ?>
 <div class="card mb-4 border-0 shadow-sm" style="border-radius:16px;">
     <div class="card-body d-flex align-items-center" style="gap:16px;">
@@ -391,7 +391,7 @@ if ($role === 'admin') {
             <?php else: ?>
                 <?php if (!empty($pklTodayReport)): ?>
                     <?php if ($pklTodayReport['status_libur']): ?>
-                        <small class="text-warning font-weight-bold">🏢 DU/DI Libur: <?= htmlspecialchars($pklTodayReport['libur_reason'] ?? 'Tanpa alasan') ?></small>
+                        <small class="text-warning font-weight-bold">ðŸ¢ DU/DI Libur: <?= htmlspecialchars($pklTodayReport['libur_reason'] ?? 'Tanpa alasan') ?></small>
                     <?php else: ?>
                         <?php
                         $myName = session()->get('name');
@@ -418,7 +418,7 @@ if ($role === 'admin') {
 </div>
 <?php endif; ?>
 
-<!-- Widgets Row — stat cards (role-aware) -->
+<!-- Widgets Row â€” stat cards (role-aware) -->
 <?php if (in_array($role, ['admin', 'kepsek', 'guru_bk', 'guru_mapel'])): ?>
 <!-- GURU/ADMIN: Rekap Global -->
 <div class="row justify-content-center">
@@ -598,7 +598,7 @@ if ($role === 'admin') {
                 <?php if (!empty($kalender)): ?>
                 <div class="mt-3">
                     <h6 class="font-weight-bold text-dark mb-2" style="font-size: 0.8125rem;">
-                        <i class="fas fa-calendar-week text-success mr-1"></i> Kalender Akademik — TP <?= esc($activeTahunPelajaran['nama'] ?? '2025/2026') ?>
+                        <i class="fas fa-calendar-week text-success mr-1"></i> Kalender Akademik â€” TP <?= esc($activeTahunPelajaran['nama'] ?? '2025/2026') ?>
                     </h6>
                     <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
                         <table class="table table-sm table-bordered mb-0" style="font-size: 0.75rem;">
@@ -622,7 +622,7 @@ if ($role === 'admin') {
                                     <td style="padding: 0.375rem 0.5rem; text-align: center;"><?= $k['total_pekan'] ?></td>
                                     <td style="padding: 0.375rem 0.5rem; text-align: center; color: #16a34a; font-weight: 600;"><?= $k['pekan_efektif'] ?></td>
                                     <td style="padding: 0.375rem 0.5rem; text-align: center; color: #ef4444;"><?= $k['pekan_tidak_efektif'] ?></td>
-                                    <td style="padding: 0.375rem 0.5rem; color: #64748b;"><?= htmlspecialchars($k['keterangan']) ?: '—' ?></td>
+                                    <td style="padding: 0.375rem 0.5rem; color: #64748b;"><?= htmlspecialchars($k['keterangan']) ?: 'â€”' ?></td>
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -694,7 +694,7 @@ if ($role === 'admin') {
                                 <span class="badge badge-success rounded-pill font-weight-bold px-2 py-1" style="font-size: 10px;"><?= htmlspecialchars($ra['student_class']) ?></span>
                             </div>
                             <h6 class="font-weight-bold mb-1 text-success" style="font-size: 13px;"><?= htmlspecialchars($ra['title']) ?></h6>
-                            <small class="text-secondary" style="font-size: 10px;">📅 <?= date('d M Y', strtotime($ra['date'])) ?> &nbsp;|&nbsp; Kategori: <?= htmlspecialchars($ra['category']) ?></small>
+                            <small class="text-secondary" style="font-size: 10px;">ðŸ“… <?= date('d M Y', strtotime($ra['date'])) ?> &nbsp;|&nbsp; Kategori: <?= htmlspecialchars($ra['category']) ?></small>
                         </li>
                     <?php endforeach; ?>
                 </ul>
@@ -744,9 +744,9 @@ function updateDayLabel() {
         .then(data => {
             if (now.getDay() === 0 || data.is_holiday) {
                 const reason = data.is_holiday ? data.reason : 'Minggu';
-                el.innerHTML = `<span class="text-danger">🛌 Hari Libur: ${reason}</span>, ${dateNum} ${monthName} ${year}`;
+                el.innerHTML = `<span class="text-danger">ðŸ›Œ Hari Libur: ${reason}</span>, ${dateNum} ${monthName} ${year}`;
             } else {
-                el.innerHTML = `<span class="text-success">📚 Hari Aktif Sekolah</span>, ${dayName} ${dateNum} ${monthName} ${year}`;
+                el.innerHTML = `<span class="text-success">ðŸ“š Hari Aktif Sekolah</span>, ${dayName} ${dateNum} ${monthName} ${year}`;
             }
         })
         .catch(() => {
@@ -755,9 +755,9 @@ function updateDayLabel() {
             const holidayReason = holidayData ? holidayData.dataset.reason : '';
             if (now.getDay() === 0 || isHoliday) {
                 const reason = isHoliday ? holidayReason : 'Minggu';
-                el.innerHTML = `<span class="text-danger">🛌 Hari Libur: ${reason}</span>, ${dateNum} ${monthName} ${year}`;
+                el.innerHTML = `<span class="text-danger">ðŸ›Œ Hari Libur: ${reason}</span>, ${dateNum} ${monthName} ${year}`;
             } else {
-                el.innerHTML = `<span class="text-success">📚 Hari Aktif Sekolah</span>, ${dayName} ${dateNum} ${monthName} ${year}`;
+                el.innerHTML = `<span class="text-success">ðŸ“š Hari Aktif Sekolah</span>, ${dayName} ${dateNum} ${monthName} ${year}`;
             }
         });
 }
@@ -774,3 +774,6 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 <?= $this->endSection() ?>
 ```
+
+
+

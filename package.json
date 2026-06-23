@@ -1,7 +1,7 @@
 {
   "name": "siakanuda",
-  "version": "1.13.1",
-  "description": "SIAKANUDA — Sistem Informasi Akademik SMK NU Darussalam (WhatsApp Bot + Web Dashboard)",
+  "version": "1.17.0",
+  "description": "Sistem Akademik SMK NU Darussalam (WhatsApp Bot + Web Dashboard)",
   "main": "execution/server.js",
   "type": "module",
   "scripts": {

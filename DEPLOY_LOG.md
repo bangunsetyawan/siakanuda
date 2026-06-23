@@ -132,3 +132,28 @@
   - Merombak halaman Riwayat Laporan (`riwayat.php`) untuk menampilkan *Galeri Mini* yang memuat seluruh foto lampiran (foto kelompok + surat dokter/izin anggota), tidak lagi hanya 1 foto utama.
   - Menghapus fitur redundan "Preview Data Mingguan" (sisa dari versi *pdf server* lama) agar *dashboard* sisi kanan lebih lega dan *to the point*.
   - Membuka akses penuh halaman **Riwayat Laporan Lengkap** beserta fitur **Cetak Rekap Absensi Individu** untuk **Anggota PKL biasa** (sebelumnya hanya ketua kelompok yang bisa mencetak dan melihat galeri utuh). Peran anggota kini naik level menjadi pemantau penuh, hanya dibatasi pada pengisian/pengiriman absen.
+
+---
+
+### 23 Juni 2026 - v1.17.0 - patch_bkk_native.tar.gz & Sync Patches
+- **Tipe:** Pembaruan Mayor (Perombakan Arsitektur BKK)
+- **File:**
+  - dashboard/app/Config/Routes.php
+  - dashboard/app/Controllers/Bkk.php
+  - dashboard/app/Views/bkk/dashboard.php
+  - dashboard/app/Views/bkk/data_alumni.php
+  - dashboard/app/Views/bkk/mou_iduka.php
+  - dashboard/app/Views/bkk/kunjungan_industri.php
+  - dashboard/app/Views/bkk/mitra_industri.php
+  - dashboard/app/Models/BkkAlumniModel.php
+  - dashboard/app/Models/BkkMouModel.php
+  - dashboard/app/Models/BkkKunjunganModel.php
+  - database/schema_supabase_sync.sql
+  - migrate_supabase.php
+- **Fitur Baru & Perombakan:**
+  - **Penghapusan Ekosistem Supabase & JS Standalone:** Modul BKK yang sebelumnya mengandalkan Supabase API dan Javascript murni di-frontend telah dirombak total menjadi aplikasi Native CodeIgniter 4 yang terintegrasi 100% dengan ekosistem SIAKANUDA (menggunakan layouts/template).
+  - **Sinkronisasi Skema Database:** Nama tabel dan kolom BKK (Alumni, MOU, Kunjungan) telah disesuaikan 100% agar identik dengan struktur Supabase lama, memastikan migrasi data mulus tanpa kehilangan kolom.
+  - **Script Migrasi Otomatis:** Menyertakan migrate_supabase.php untuk memfasilitasi penarikan massal (download) data dari REST API Supabase langsung ke dalam database SQLite lokal secara otomatis.
+- **Perbaikan Bug (Hotfixes):**
+  - **PHP 7/8 Compatibility:** Menghapus sintaks *Arrow Functions* (n() =>) di controller Bkk.php yang menyebabkan *Parse Error (Error 500)* pada server Debian dengan PHP versi 7.3/7.4.
+  - **UTF-8 BOM Removal:** Membersihkan Byte Order Mark (BOM) tidak kasat mata dari file Models dan Views yang memicu *ErrorException: Namespace declaration statement has to be the very first statement*.

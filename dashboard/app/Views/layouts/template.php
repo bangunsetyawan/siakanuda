@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="utf-8">
@@ -332,7 +332,7 @@
                     </li>
                     <?php endif; ?>
 
-                    <?php /* PKL read-only for siswa/anggotapkl (non-ketua) — hanya tampil jika anggota PKL */ ?>
+                    <?php /* PKL read-only for siswa/anggotapkl (non-ketua) â€” hanya tampil jika anggota PKL */ ?>
                     <?php if (in_array($role, ['siswa', 'anggotapkl']) && session()->get('is_pkl_member')): ?>
                     <li class="nav-item">
                         <a href="<?= base_url('/pkl') ?>" class="nav-link <?= $curUri == 'pkl' ? 'active' : '' ?>">
@@ -347,6 +347,15 @@
                         <a href="<?= base_url('/violations') ?>" class="nav-link <?= $curUri == 'violations' ? 'active' : '' ?>">
                             <i class="nav-icon fas fa-exclamation-triangle"></i>
                             <p>Poin Pelanggaran</p>
+                        </a>
+                    </li>
+                    <?php endif; ?>
+
+                    <?php if (in_array($role, ['admin', 'kepsek', 'guru'])): ?>
+                    <li class="nav-item">
+                        <a href="<?= base_url('bkk/dashboard') ?>" class="nav-link <?= strpos($curUri, 'bkk') !== false ? 'active' : '' ?>">
+                            <i class="nav-icon fas fa-user-graduate"></i>
+                            <p>BKK & Tracer Study</p>
                         </a>
                     </li>
                     <?php endif; ?>
@@ -391,9 +400,9 @@
                     </li>
                     <?php endif; ?>
 
-                    <?php /* Portal Alumni & BKK — external link, all roles */ ?>
+                    <?php /* Portal Alumni & BKK â€” external link, all roles */ ?>
                     <li class="nav-item">
-                        <a href="https://smknudarussalam.sch.id/bkk" target="_blank" class="nav-link">
+                        <a href="<?= base_url('bkk/dashboard') ?>" target="_blank" class="nav-link">
                             <i class="nav-icon fas fa-graduation-cap"></i>
                             <p>Alumni & BKK <i class="fas fa-external-link-alt ml-1" style="font-size:10px;opacity:0.5;"></i></p>
                         </a>
@@ -479,3 +488,4 @@
 <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
 </body>
 </html>
+

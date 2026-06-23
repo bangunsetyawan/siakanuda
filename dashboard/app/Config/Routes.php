@@ -133,4 +133,23 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
 
     // API: Holiday status today (for JS dashboard label)
     $routes->get('api/holiday-status', 'KalenderAkademik::todayStatus');
+
+    // --- BKK & TRACER STUDY MODULE ---
+    $routes->group('bkk', function($routes) {
+        $routes->get('dashboard', 'Bkk::index');
+        $routes->get('data_alumni', 'Bkk::data_alumni');
+        $routes->get('mitra_industri', 'Bkk::mitra_industri');
+        $routes->get('mou_iduka', 'Bkk::mou_iduka');
+        $routes->get('kunjungan_industri', 'Bkk::kunjungan_industri');
+
+        // CRUD Routes (Form POST)
+        $routes->post('store_alumni', 'Bkk::store_alumni');
+        $routes->post('delete_alumni', 'Bkk::delete_alumni');
+
+        $routes->post('store_mou', 'Bkk::store_mou');
+        $routes->post('delete_mou', 'Bkk::delete_mou');
+
+        $routes->post('store_kunjungan', 'Bkk::store_kunjungan');
+        $routes->post('delete_kunjungan', 'Bkk::delete_kunjungan');
+    });
 });
