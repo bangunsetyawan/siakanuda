@@ -608,7 +608,7 @@ siakanuda/                              ← Root (Node.js + SQLite)
 - **Perangkat:** Lenovo Notebook (~2010), Intel Atom N455, 2GB RAM, 128GB SSD
 - **Sistem Operasi:** Debian 13 (Trixie) Minimal CLI Headless
 - **Service Manager:** Systemd (`bot.siswa.service` & `siakadash.service`)
-- **Jaringan:** IP Statis LAN Sekolah (`10.10.11.37`) + Tailscale VPN (`100.110.83.48`)
+- **Jaringan:** IP Statis LAN Sekolah (`ip-lan-lokal`) + Tailscale VPN (`100.110.83.48`)
 
 ### 2 Jalur Akses
 | Jalur | Via | URL | Fitur |
