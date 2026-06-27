@@ -25,12 +25,36 @@ Dari PowerShell Windows (menggunakan IP Tailscale/Lokal Debian):
 tar --exclude="node_modules" --exclude="dashboard/vendor" --exclude=".git" --exclude="sessions" -czf update.tar.gz -C F:\Antigravity siakanuda
 
 # 2. Kirim file arsip ke Debian
-scp update.tar.gz smknuda@100.110.83.48:~/
+scp update.tar.gz [SSH_USER]@[IP_SERVER_TAILSCALE]:~/
 
 # 3. Masuk ke SSH server Debian dan ekstrak
-ssh smknuda@100.110.83.48
+ssh [SSH_USER]@[IP_SERVER_TAILSCALE]
 tar -xzf update.tar.gz -C ~/
 ```
+
+## 🚀 Prosedur Deploy (Patch Update)
+
+Gunakan metode ini jika hanya mengubah sebagian kecil file (misalnya update Controller atau logic bot).
+
+### Langkah 1: Siapkan Patch di Lokal Windows
+1. Jalankan CLI/Terminal di folder project lokal Anda.
+2. Buat arsip update menggunakan perintah:
+   ```bash
+   tar -czvf update.tar.gz dashboard/app/Controllers/ nama_file_yang_diupdate.php
+   ```
+
+### Langkah 2: Transfer File ke Server Debian
+Gunakan SCP untuk memindahkan patch ke server:
+```bash
+scp update.tar.gz [SSH_USER]@[IP_SERVER_TAILSCALE]:~/
+```
+
+### Langkah 3: Ekstrak Patch di Server
+1. Masuk ke server menggunakan SSH:
+   ```bash
+   ssh [SSH_USER]@[IP_SERVER_TAILSCALE]
+   tar -xzf update.tar.gz -C ~/
+   ```
 
 ### Step 2: Install Dependency (Jika Diperlukan saja)
 Jika ada library baru yang dipasang selama development:
