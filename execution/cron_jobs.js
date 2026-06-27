@@ -1,7 +1,7 @@
 /**
  * execution/cron_jobs.js
  * SIAKANUDA v1.0.0 — Tier 3: Cron Jobs for Automation & Warning Escalation
- * Scheduled times: 08:30, 16:00, 19:00, 23:59 (Asia/Jakarta timezone)
+ * Scheduled times: 08:30, 14:00, 15:30, 23:59 (Asia/Jakarta timezone)
  */
 
 import cron from 'node-cron';
@@ -68,10 +68,10 @@ export async function runClassAttendanceCheck() {
   }
 }
 
-// 2. 16:00 WIB — Pengingat Laporan Jurnal PKL (Ketua Kelompok)
+// 2. 14:00 WIB — Pengingat Laporan Jurnal PKL (Ketua Kelompok)
 export async function runPklReportCheck() {
   try {
-    console.log('[CRON] Running 16:00 WIB PKL Report Check...');
+    console.log('[CRON] Running 14:00 WIB PKL Report Check...');
     const today = new Date().toISOString().split('T')[0];
     const activeTP = await db.getActiveTahunPelajaran();
     const tpId = activeTP ? activeTP.id : 1;
@@ -87,7 +87,7 @@ export async function runPklReportCheck() {
     const missingGroups = allGroups.filter(g => !reportedPhones.includes(g.ketua_phone));
 
     for (const group of missingGroups) {
-      const fallbackMsg = `⚠️ *PENGINGAT SIAKANUDA (PKL)*\n\nHalo Ketua Kelompok! Tim Anda di *${group.tempat_pkl}* terpantau belum melaporkan absensi dan jurnal kegiatan hari ini.\n\nSegera laporkan bukti foto dan jurnal kegiatan kelompok Anda via WhatsApp sebelum pukul *19:00 WIB* agar tidak tercatat alpa.\n\n_Ketik menu *4* untuk mulai pelaporan._`;
+      const fallbackMsg = `⚠️ *PENGINGAT SIAKANUDA (PKL)*\n\nHalo Ketua Kelompok! Tim Anda di *${group.tempat_pkl}* terpantau belum melaporkan absensi dan jurnal kegiatan hari ini.\n\nSegera laporkan bukti foto dan jurnal kegiatan kelompok Anda via WhatsApp sebelum pukul *15:30 WIB* agar tidak tercatat alpa.\n\n_Ketik menu *4* untuk mulai pelaporan._`;
       const msg = await db.renderTemplate('pkl_report_reminder', {
         tempat_pkl: group.tempat_pkl
       }, fallbackMsg);
@@ -96,15 +96,15 @@ export async function runPklReportCheck() {
     }
     return { ok: true, msg: `Selesai memeriksa, ${missingGroups.length} pengingat dikirim`, sentCount: missingGroups.length };
   } catch (err) {
-    console.error('[CRON] Error in 16:00 job:', err);
+    console.error('[CRON] Error in 14:00 job:', err);
     throw err;
   }
 }
 
-// 3. 19:00 WIB — Eskalasi Peringatan PKL (Guru Pembimbing)
+// 3. 15:30 WIB — Eskalasi Peringatan PKL (Guru Pembimbing)
 export async function runPklEscalationCheck() {
   try {
-    console.log('[CRON] Running 19:00 WIB PKL Escalation Check...');
+    console.log('[CRON] Running 15:30 WIB PKL Escalation Check...');
     const today = new Date().toISOString().split('T')[0];
     const activeTP = await db.getActiveTahunPelajaran();
     const tpId = activeTP ? activeTP.id : 1;
@@ -120,7 +120,7 @@ export async function runPklEscalationCheck() {
     let sentCount = 0;
     for (const group of missingGroups) {
       if (group.pembimbing_phone) {
-        const fallbackMsg = `⚠️ *ESKALASI PENGINGAT PKL — SIAKANUDA*\n\nBapak/Ibu Guru Pembimbing, mohon izin menginformasikan bahwa kelompok PKL di *${group.tempat_pkl}* (Ketua: ${group.ketua_phone}) *BELUM* mengirimkan laporan harian hingga pukul 19:00 WIB.\n\nSistem telah mengingatkan ketua kelompok pada pukul 16:00 WIB. Mohon berkenan untuk melakukan konfirmasi/kroscek dengan kelompok siswa bersangkutan.\n\nTerima kasih atas bantuan Bapak/Ibu.`;
+        const fallbackMsg = `⚠️ *ESKALASI PENGINGAT PKL — SIAKANUDA*\n\nBapak/Ibu Guru Pembimbing, mohon izin menginformasikan bahwa kelompok PKL di *${group.tempat_pkl}* (Ketua: ${group.ketua_phone}) *BELUM* mengirimkan laporan harian hingga pukul 15:30 WIB.\n\nSistem telah mengingatkan ketua kelompok pada pukul 14:00 WIB. Mohon berkenan untuk melakukan konfirmasi/kroscek dengan kelompok siswa bersangkutan.\n\nTerima kasih atas bantuan Bapak/Ibu.`;
         const msg = await db.renderTemplate('pkl_escalation_warning', {
           tempat_pkl: group.tempat_pkl,
           ketua_phone: group.ketua_phone
@@ -132,7 +132,7 @@ export async function runPklEscalationCheck() {
     }
     return { ok: true, msg: `Selesai memproses, ${sentCount} eskalasi dikirim`, sentCount };
   } catch (err) {
-    console.error('[CRON] Error in 19:00 job:', err);
+    console.error('[CRON] Error in 15:30 job:', err);
     throw err;
   }
 }

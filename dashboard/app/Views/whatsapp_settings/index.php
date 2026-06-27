@@ -203,8 +203,8 @@
                                 <h5><i class="icon fas fa-info"></i> Petunjuk Ekspresi Cron:</h5>
                                 <ul class="mb-0 pl-4">
                                     <li><code>30 8 * * *</code> = Dijalankan setiap hari pada pukul **08:30 WIB**</li>
-                                    <li><code>0 16 * * *</code> = Dijalankan setiap hari pada pukul **16:00 WIB**</li>
-                                    <li><code>0 19 * * *</code> = Dijalankan setiap hari pada pukul **19:00 WIB**</li>
+                                    <li><code>0 14 * * *</code> = Dijalankan setiap hari pada pukul **14:00 WIB**</li>
+                                    <li><code>30 15 * * *</code> = Dijalankan setiap hari pada pukul **15:30 WIB**</li>
                                     <li><code>*/15 * * * *</code> = Dijalankan setiap **15 menit sekali**</li>
                                 </ul>
                             </div>

@@ -63,6 +63,23 @@
 
 ---
 
+### 26 Juni 2026 — v1.16.2 — `patch_test_bot_20260626.tar.gz`
+- **Commit:** `caa0e70`
+- **File:**
+  - `dashboard/app/Views/whatsapp_settings/index.php`
+  - `dashboard/app/Controllers/WhatsappSettings.php`
+  - `execution/server.js`
+  - `dashboard/app/Config/Routes.php`
+- **Restart:** `bot.siswa.service` (Wajib direstart karena penambahan endpoint API Node.js)
+- **Catatan:**
+  - Penambahan fitur "Test Kirim Pesan" Bot WhatsApp langsung dari Dashboard.
+  - Perbaikan UI WebSocket Javascript yang sebelumnya *crash* akibat ID elemen lama terhapus saat redesign.
+  - Sistem validasi ketat pengecekan eksistensi nomor WA (`sock.onWhatsApp()`) di backend untuk mencegah *silent failure* (contoh: nomor kurang angka 8).
+  - Controller PHP kini mem-parsing JSON *error message* dari Node.js alih-alih menampilkan pesan *error* generik.
+  - Dukungan penuh pengujian kirim pesan ke **Grup WhatsApp** menggunakan Group JID (`@g.us`).
+
+---
+
 <!-- DEPLOY_LOG_END — Tambahkan entry baru di atas baris ini -->
 
 ### 20 Juni 2026, 00:06 WIB — v1.14.4 — `patch_v1144.tar.gz`
