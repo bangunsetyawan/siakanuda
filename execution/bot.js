@@ -1,6 +1,6 @@
 /**
  * execution/bot.js
- * SIAKANUDA v1.0.0 — Sistem Informasi Akademik SMK NU Darussalam
+ * SIAKANUDA v1.20.9 — Sistem Informasi Akademik SMK NU Darussalam
  * Tier 3 — Baileys WhatsApp bot handler (Notification Only).
  * Manages connection, QR generation, and sending notifications.
  */
@@ -195,44 +195,6 @@ export async function startBot() {
       const me = sock.user;
       if (io) io.emit('bot:status', { connected: true, phone: me?.id, name: me?.name });
 
-      // Cek dan hubungkan grup broadcast secara otomatis jika belum di-set
-      if (!process.env.BROADCAST_GROUP_JID) {
-        (async () => {
-          try {
-            const inviteCode = 'CWAXdVXIHeP7d7FkOv9ZF3';
-            console.log(`[BOT] BROADCAST_GROUP_JID belum diset. Mencoba melacak dari invite code: ${inviteCode}`);
-            const groupInfo = await sock.groupGetInviteInfo(inviteCode);
-            if (groupInfo && groupInfo.id) {
-              const groupJid = groupInfo.id;
-              console.log(`[BOT] JID Grup ditemukan: ${groupJid}`);
-              
-              // Cek/join grup
-              try {
-                await sock.groupAcceptInvite(inviteCode);
-                console.log(`[BOT] Berhasil bergabung ke grup: ${groupInfo.subject || groupJid}`);
-              } catch (joinErr) {
-                console.log(`[BOT] Catatan saat mencoba gabung grup: ${joinErr.message}`);
-              }
-
-              // Update ke file .env
-              const envPath = path.join(ROOT, '.env');
-              if (fs.existsSync(envPath)) {
-                let envContent = fs.readFileSync(envPath, 'utf8');
-                if (envContent.includes('BROADCAST_GROUP_JID=')) {
-                  envContent = envContent.replace(/BROADCAST_GROUP_JID=.*/, `BROADCAST_GROUP_JID=${groupJid}`);
-                } else {
-                  envContent += `\nBROADCAST_GROUP_JID=${groupJid}`;
-                }
-                fs.writeFileSync(envPath, envContent, 'utf8');
-                process.env.BROADCAST_GROUP_JID = groupJid;
-                console.log(`[BOT] Berhasil memperbarui .env dengan BROADCAST_GROUP_JID=${groupJid}`);
-              }
-            }
-          } catch (err) {
-            console.error('[BOT] Gagal mendapatkan info grup otomatis:', err.message);
-          }
-        })();
-      }
     }
   });
 

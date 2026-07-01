@@ -26,202 +26,409 @@
     </div>
 <?php endif; ?>
 
-<div class="row">
-    <!-- Kolom Atas: Pengaturan & Editor -->
-    <div class="col-lg-12 mb-4">
-        <!-- Card: Tab Navigasi -->
-        <div class="card card-outline card-success shadow-sm">
-            <div class="card-header p-2 border-bottom">
-                <ul class="nav nav-pills" id="settings-tab" role="tablist">
-                    <li class="nav-item">
-                        <a class="nav-link active font-weight-bold" id="templates-tab" data-toggle="pill" href="#tab-templates" role="tab" aria-selected="true">
-                            <i class="fas fa-envelope mr-1"></i> Template Pesan
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link font-weight-bold" id="cron-tab" data-toggle="pill" href="#tab-cron" role="tab" aria-selected="false">
-                            <i class="fas fa-clock mr-1"></i> Tugas Otomatis (Cron)
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link font-weight-bold" id="whitelist-tab" data-toggle="pill" href="#tab-whitelist" role="tab" aria-selected="false">
-                            <i class="fas fa-user-shield mr-1"></i> Whitelist Nomor WA
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link font-weight-bold" id="groups-tab" data-toggle="pill" href="#tab-groups" role="tab" aria-selected="false">
-                            <i class="fas fa-users-cog mr-1"></i> Grup WhatsApp
-                        </a>
-                    </li>
-                </ul>
-            </div>
+
+
+<style>
+.tab-trigger { transition: all 0.2s ease; border: 2px solid transparent; border-radius: 12px; overflow: hidden; background: #fff; cursor: pointer; }
+.tab-trigger:hover { transform: translateY(-4px); box-shadow: 0 8px 15px rgba(0,0,0,0.1) !important; }
+.tab-trigger.active-tab { border: 2px solid #28a745 !important; background-color: #f0fdf4 !important; transform: translateY(-4px); box-shadow: 0 8px 15px rgba(0,0,0,0.15) !important; }
+.tab-trigger .icon-box { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.tpl-textarea { border: 1px solid #ced4da; border-radius: 4px; padding: 10px; }
+.tpl-textarea:focus { border-color: #17a2b8; box-shadow: 0 0 0 0.2rem rgba(23,162,184,.25); }
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
+</style>
+
+<!-- KOTAK KOTAK MENU DASHBOARD -->
+<div class="dashboard-grid mb-4">
+    <!-- Kotak 1: Koneksi -->
+    <div id="wa-status-card" class="tab-trigger shadow-sm p-3 text-center <?= $botStatus['connected'] ? 'active-tab' : 'border-danger' ?>" data-target="#tab-koneksi">
+        <div id="wa-status-icon-box" class="icon-box text-white <?= $botStatus['connected'] ? 'bg-success' : 'bg-danger' ?>">
+            <i class="fab fa-whatsapp"></i>
+        </div>
+        <h6 class="font-weight-bold text-dark mb-1" style="font-size: 14px;">Koneksi Bot</h6>
+        <small id="wa-status-text-top" class="text-secondary font-weight-bold" style="font-size: 12px;"><?= $botStatus['connected'] ? 'TERHUBUNG' : 'TERPUTUS' ?></small>
+    </div>
+
+    <!-- Kotak 2: Template -->
+    <div class="tab-trigger shadow-sm p-3 text-center" data-target="#tab-templates">
+        <div class="icon-box bg-info text-white">
+            <i class="fas fa-envelope"></i>
+        </div>
+        <h6 class="font-weight-bold text-dark mb-1" style="font-size: 14px;">Template Pesan</h6>
+        <small class="text-secondary font-weight-bold" style="font-size: 12px;"><?= count($templates) ?> Teks Aktif</small>
+    </div>
+
+    <!-- Kotak 3: Grup & Target -->
+    <div class="tab-trigger shadow-sm p-3 text-center" data-target="#tab-groups">
+        <div class="icon-box bg-primary text-white">
+            <i class="fas fa-users-cog"></i>
+        </div>
+        <h6 class="font-weight-bold text-dark mb-1" style="font-size: 14px;">Grup & Target</h6>
+        <small class="text-secondary font-weight-bold" style="font-size: 12px;">Arah Notifikasi</small>
+    </div>
+
+    <!-- Kotak 4: Whitelist -->
+    <div class="tab-trigger shadow-sm p-3 text-center" data-target="#tab-whitelist">
+        <div class="icon-box bg-warning text-white">
+            <i class="fas fa-user-shield"></i>
+        </div>
+        <h6 class="font-weight-bold text-dark mb-1" style="font-size: 14px;">Whitelist Guru</h6>
+        <small class="text-secondary font-weight-bold" style="font-size: 12px;"><?= count($whitelist) ?> Terdaftar</small>
+    </div>
+
+    <!-- Kotak 5: Cron Jobs -->
+    <div class="tab-trigger shadow-sm p-3 text-center" data-target="#tab-cron">
+        <div class="icon-box bg-secondary text-white">
+            <i class="fas fa-clock"></i>
+        </div>
+        <h6 class="font-weight-bold text-dark mb-1" style="font-size: 14px;">Jadwal Otomatis</h6>
+        <small class="text-secondary font-weight-bold" style="font-size: 12px;"><?= count($cronConfigs) ?> Tugas Cron</small>
+    </div>
+</div>
+
+<!-- KONTEN MENU -->
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4 bg-white rounded">
+        <div class="tab-content" id="settings-tabContent">
             
-            <div class="card-body">
-                <div class="tab-content" id="settings-tabContent">
-                    <!-- TAB 1: Editor Template -->
-                    <div class="tab-pane fade show active" id="tab-templates" role="tabpanel">
-                        <form action="<?= base_url('whatsapp-settings/update-templates') ?>" method="post">
-                            <?= csrf_field() ?>
-                            <div class="accordion" id="accordionTemplates">
-                                <?php foreach ($templates as $index => $tpl): ?>
-                                    <div class="card mb-3 border rounded shadow-none">
-                                        <div class="card-header bg-light border-bottom p-2 d-flex justify-content-between align-items-center" id="heading-<?= $tpl['key'] ?>" style="cursor: pointer;" data-toggle="collapse" data-target="#collapse-<?= $tpl['key'] ?>" aria-expanded="<?= $index === 0 ? 'true' : 'false' ?>">
-                                            <div class="d-flex align-items-center">
-                                                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 32px; height: 32px; font-size: 14px;">
-                                                    <i class="fas fa-file-alt"></i>
-                                                </div>
-                                                <div>
-                                                    <h5 class="mb-0 font-weight-bold text-dark" style="font-size: 15px;"><?= htmlspecialchars(!empty($tpl['name']) ? $tpl['name'] : ucwords(str_replace('_', ' ', $tpl['key']))) ?></h5>
-                                                    <small class="text-muted"><?= htmlspecialchars($tpl['description']) ?></small>
-                                                </div>
+            <!-- TAB 1: KONEKSI BOT -->
+            <div class="tab-pane fade show active" id="tab-koneksi" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-8 mx-auto">
+                        <div class="text-center mb-4">
+                            <h4 class="font-weight-bold text-dark"><i class="fab fa-whatsapp text-success mr-2"></i> Koneksi Perangkat Bot</h4>
+                            <p class="text-secondary">Scan QR Code di bawah menggunakan aplikasi WhatsApp Anda untuk menghubungkan bot.</p>
+                        </div>
+                        
+                        <div class="d-flex flex-column align-items-center justify-content-center text-center">
+                            <div id="qr-container" class="border rounded p-3 bg-light shadow-inner mb-4 d-flex align-items-center justify-content-center" style="width: 250px; height: 250px; position: relative; transition: all 0.3s ease;">
+                                <?php if ($botStatus['connected']): ?>
+                                    <div class="text-success text-center">
+                                        <i class="fas fa-circle-check fa-4x mb-3 animate__animated animate__bounceIn"></i>
+                                        <p class="font-weight-bold mb-0">Bot Aktif</p>
+                                        <small class="text-muted">Siap menerima perintah</small>
+                                    </div>
+                                <?php else: ?>
+                                    <div id="qr-loading" class="text-secondary text-center">
+                                        <i class="fas fa-spinner fa-spin fa-3x mb-3"></i>
+                                        <p class="font-weight-bold mb-0" style="font-size: 14px;">Menghubungkan...</p>
+                                        <small class="text-muted" style="font-size: 12px;">Membuka sesi bot</small>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <div class="w-100 px-3 text-left mb-4" style="max-width: 400px;">
+                                <div class="d-flex justify-content-between border-bottom py-2">
+                                    <span class="text-secondary">Nama Perangkat</span>
+                                    <span class="font-weight-bold text-dark" id="wa-device-name"><?= htmlspecialchars($botStatus['name'] ?: '—') ?></span>
+                                </div>
+                                <div class="d-flex justify-content-between border-bottom py-2">
+                                    <span class="text-secondary">Nomor WhatsApp</span>
+                                    <span class="font-weight-bold text-dark" id="wa-device-phone"><?= $botStatus['phone'] ? '+' . explode(':', $botStatus['phone'])[0] : '—' ?></span>
+                                </div>
+                                <div class="d-flex justify-content-between py-2">
+                                    <span class="text-secondary">Versi Layanan</span>
+                                    <span class="font-weight-bold text-dark"><?= htmlspecialchars($botStatus['version']) ?></span>
+                                </div>
+                            </div>
+
+                            <?php if ($botStatus['connected']): ?>
+                                <div class="w-100 mb-4 p-3 rounded" style="background: #f8f9fa; max-width: 400px; border: 1px dashed #dee2e6;">
+                                    <h6 class="font-weight-bold text-dark text-left mb-2"><i class="fas fa-paper-plane text-primary mr-1"></i> Pengujian Bot (Test Message)</h6>
+                                    <form action="<?= base_url('whatsapp-settings/test-bot') ?>" method="post">
+                                        <?= csrf_field() ?>
+                                        <div class="input-group input-group-sm mb-2">
+                                            <input type="text" name="target_number" class="form-control font-weight-bold" value="6285334354102" placeholder="Nomor WA (628...) atau Group JID (...@g.us)" required>
+                                            <div class="input-group-append">
+                                                <button type="submit" class="btn btn-primary font-weight-bold shadow-sm">
+                                                    Kirim Pesan
+                                                </button>
                                             </div>
-                                            <i class="fas fa-chevron-down text-secondary transition-all"></i>
                                         </div>
+                                        <small class="text-muted d-block text-left" style="font-size: 11px;">Bot akan mengirim sapaan otomatis ke nomor/grup di atas untuk mengecek status.</small>
+                                    </form>
+                                </div>
 
-                                        <div id="collapse-<?= $tpl['key'] ?>" class="collapse <?= $index === 0 ? 'show' : '' ?>" data-parent="#accordionTemplates">
-                                            <div class="card-body bg-white border-top">
-                                                <div class="form-group mb-3">
-                                                    <label class="font-weight-bold text-secondary mb-1">Isi Template Pesan:</label>
-                                                    <textarea 
-                                                        name="templates[<?= $tpl['key'] ?>]" 
-                                                        class="form-control font-mono text-secondary tpl-textarea" 
-                                                        rows="8" 
-                                                        data-key="<?= $tpl['key'] ?>"
-                                                        style="font-family: 'Courier New', Courier, monospace; font-size: 13px; line-height: 1.5;"
-                                                        required
-                                                    ><?= htmlspecialchars($tpl['body']) ?></textarea>
-                                                    
-                                                    <!-- Character Counter -->
-                                                    <div class="text-right">
-                                                        <small class="text-muted" id="counter-<?= $tpl['key'] ?>">0 karakter</small>
-                                                    </div>
-                                                </div>
+                                <form action="<?= base_url('whatsapp-settings/logout') ?>" method="post" onsubmit="return confirm('Apakah Anda yakin ingin memutus koneksi nomor WhatsApp saat ini?');" style="max-width: 400px; width: 100%;">
+                                    <?= csrf_field() ?>
+                                    <button type="submit" class="btn btn-outline-danger btn-block font-weight-bold px-4" id="btn-wa-logout">
+                                        <i class="fas fa-sign-out-alt mr-1"></i> Putus Koneksi / Ganti Nomor
+                                    </button>
+                                </form>
+                            <?php else: ?>
+                                <div id="qr-hint-text" class="text-muted text-left" style="font-size: 13px; max-width: 400px; display: none;">
+                                    <i class="fas fa-info-circle text-info mr-1"></i> Buka WhatsApp di HP Anda -> Menu (Titik 3) / Setelan -> Perangkat Tertaut -> Tautkan Perangkat, lalu arahkan kamera ke kode QR di atas.
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                                                <!-- Variable Placeholders -->
-                                                <div class="p-3 bg-light rounded border">
-                                                    <h6 class="font-weight-bold text-dark mb-2" style="font-size: 13px;"><i class="fas fa-code mr-1 text-primary"></i> Variabel yang Tersedia:</h6>
-                                                    <div class="d-flex flex-wrap gap-2">
-                                                        <?php 
-                                                            $vars = explode(',', $tpl['variables']);
-                                                            foreach ($vars as $v): $v = trim($v);
-                                                        ?>
-                                                            <span class="badge badge-secondary px-2 py-1 mr-2 mb-2 bg-dark text-white cursor-pointer select-var-badge" title="Klik untuk menyalin" data-var="{<?= $v ?>}">
-                                                                <code>{<?= $v ?>}</code>
-                                                            </span>
-                                                        <?php endforeach; ?>
-                                                    </div>
-                                                    <small class="text-muted d-block mt-1"><i class="fas fa-info-circle mr-1"></i> Klik tag variabel di atas untuk menyisipkannya ke posisi kursor teks.</small>
-                                                </div>
-                                            </div>
+            <!-- TAB 2: TEMPLATE PESAN -->
+            <div class="tab-pane fade" id="tab-templates" role="tabpanel">
+                <div class="mb-4 text-center">
+                    <h4 class="font-weight-bold text-dark"><i class="fas fa-envelope text-info mr-2"></i> Editor Template Pesan</h4>
+                    <p class="text-secondary">Pilih dan edit masing-masing template pesan WhatsApp di bawah ini. Klik tombol <strong>Simpan Template Ini</strong> di setiap kotak untuk menyimpannya.</p>
+                </div>
+                <?php
+                $templateMetadata = [
+                    'class_attendance_warning' => [
+                        'target' => 'Grup Utama Sekolah (SCHOOL_GROUP_JID)',
+                        'trigger' => 'Tugas otomatis (Cron Job) harian setiap pukul 08:30 WIB.',
+                        'note' => 'Mengingatkan guru piket/pengajar jika absensi KBM belum diisi pagi hari.'
+                    ],
+                    'pkl_report_reminder' => [
+                        'target' => 'Grup Khusus Absensi PKL (BROADCAST_GROUP_JID)',
+                        'trigger' => 'Tugas otomatis (Cron Job) harian setiap pukul 14:00 WIB.',
+                        'note' => 'Mengirim rekapitulasi daftar lokasi kelompok PKL siswa yang belum melapor.'
+                    ],
+                    'pkl_escalation_warning' => [
+                        'target' => 'Grup Koordinasi Guru Pembimbing (TEACHER_GROUP_JID).',
+                        'trigger' => 'Tugas otomatis (Cron Job) harian setiap pukul 16:00 WIB.',
+                        'note' => 'Mengirimkan rekap massal kelompok yang belum melapor ke dalam grup guru.'
+                    ],
+                    'kbm_attendance_broadcast' => [
+                        'target' => 'Grup Utama Sekolah (SCHOOL_GROUP_JID).',
+                        'trigger' => 'Real-time: Ketika guru menyimpan absensi kelas KBM di dashboard web.',
+                        'note' => 'Melaporkan persentase kehadiran beserta daftar nama siswa tidak hadir (Sakit/Izin/Alpha).'
+                    ],
+                    'kbm_consolidated_recap' => [
+                        'target' => 'Grup Utama Sekolah (SCHOOL_GROUP_JID)',
+                        'trigger' => 'Real-time: Ketika seluruh kelas KBM (100%) selesai mengisi absensi hari tersebut.',
+                        'note' => 'Mengirim rekapitulasi total sekolah secara akumulatif beserta status kehadiran tiap kelas.'
+                    ],
+                    'pkl_masuk_grup' => [
+                        'target' => 'Grup Khusus Absensi PKL (BROADCAST_GROUP_JID)',
+                        'trigger' => 'Real-time: Ketika siswa PKL mengirimkan laporan absensi/jurnal harian (Masuk).',
+                        'note' => 'Memerlukan pengaturan "Kirim ke Grup Sekolah" dalam kondisi Aktif di tab Grup & Target.'
+                    ],
+
+                    'pkl_masuk_instruktur' => [
+                        'target' => 'Japri ke Nomor Pribadi Instruktur Industri (DUDI).',
+                        'trigger' => 'Real-time: Ketika siswa PKL mengirimkan laporan absensi/jurnal harian (Masuk).',
+                        'note' => 'Memerlukan pengaturan "Kirim ke Instruktur Industri" aktif di tab Grup & Target.'
+                    ],
+                    'pkl_libur_grup' => [
+                        'target' => 'Grup Khusus Absensi PKL (BROADCAST_GROUP_JID)',
+                        'trigger' => 'Real-time: Ketika siswa PKL melaporkan status Libur/Tutup hari tersebut.',
+                        'note' => 'Menginfokan secara publik bahwa kelompok PKL bersangkutan sedang libur beserta alasannya.'
+                    ],
+
+                    'pkl_libur_instruktur' => [
+                        'target' => 'Japri ke Nomor Pribadi Instruktur Industri (DUDI).',
+                        'trigger' => 'Real-time: Ketika siswa PKL melaporkan status Libur/Tutup hari tersebut.',
+                        'note' => 'Mengirimkan notifikasi ke pihak industri bahwa siswa melapor libur.'
+                    ],
+                    'pkl_monitoring_broadcast' => [
+                        'target' => 'Grup Khusus Guru (TEACHER_GROUP_JID)',
+                        'trigger' => 'Real-time: Ketika guru pembimbing menyimpan/mengedit data kunjungan monitoring PKL.',
+                        'note' => 'Mengirim laporan hasil kunjungan monitoring ke grup WhatsApp beserta catatan dan lokasi GPS.'
+                    ],
+                ];
+                ?>
+                
+                <div class="row">
+                    <?php foreach ($templates as $index => $tpl): ?>
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 border shadow-sm" style="border-radius: 8px;">
+                                <div class="card-header bg-light border-bottom d-flex justify-content-between align-items-center py-2">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-info text-white rounded d-flex align-items-center justify-content-center mr-3" style="width: 32px; height: 32px; font-size: 14px;">
+                                            <i class="fas fa-file-alt"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0 font-weight-bold text-dark" style="font-size: 14px;"><?= htmlspecialchars(!empty($tpl['name']) ? $tpl['name'] : ucwords(str_replace('_', ' ', $tpl['key']))) ?></h6>
                                         </div>
                                     </div>
-                                <?php endforeach; ?>
-                            </div>
+                                </div>
+                                <div class="card-body p-3 d-flex flex-column">
+                                    <form action="<?= base_url('whatsapp-settings/update-templates') ?>" method="post" class="flex-grow-1 d-flex flex-column">
+                                        <?= csrf_field() ?>
+                                        
+                                        <!-- Metadata Template (Target & Pemicu) -->
+                                        <div class="alert alert-light border p-2 mb-3" style="font-size: 12px; border-radius: 6px; background-color: #fafafa;">
+                                            <?php if (isset($templateMetadata[$tpl['key']])): ?>
+                                                <div class="mb-1">
+                                                    <strong>🎯 Target Kirim:</strong> <span class="text-primary font-weight-bold"><?= htmlspecialchars($templateMetadata[$tpl['key']]['target']) ?></span>
+                                                </div>
+                                                <div class="mb-1">
+                                                    <strong>⚡ Pemicu (Trigger):</strong> <span class="text-success"><?= htmlspecialchars($templateMetadata[$tpl['key']]['trigger']) ?></span>
+                                                </div>
+                                                <div style="font-size: 11px; line-height: 1.4;" class="text-secondary mt-1">
+                                                    <i class="fas fa-info-circle mr-1"></i> <?= htmlspecialchars($templateMetadata[$tpl['key']]['note']) ?>
+                                                </div>
+                                            <?php else: ?>
+                                                <span class="text-secondary"><i class="fas fa-info-circle mr-1"></i> Template kustom tambahan.</span>
+                                            <?php endif; ?>
+                                        </div>
 
-                            <div class="text-right mt-4 pt-3 border-top">
-                                <button type="submit" class="btn btn-success font-weight-bold px-4">
-                                    <i class="fas fa-save mr-1"></i> Simpan Semua Template
+                                        <div class="form-group mb-2 flex-grow-1">
+                                            <textarea 
+                                                name="templates[<?= $tpl['key'] ?>]" 
+                                                class="form-control font-mono text-dark tpl-textarea h-100" 
+                                                rows="7" 
+                                                data-key="<?= $tpl['key'] ?>"
+                                                style="font-size: 13px; line-height: 1.5; background-color: #fcfcfc;"
+                                                required
+                                            ><?= htmlspecialchars($tpl['body']) ?></textarea>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <small class="text-muted d-block mb-1"><i class="fas fa-code mr-1"></i> Variabel (Klik untuk Salin):</small>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <?php 
+                                                    $vars = explode(',', $tpl['variables']);
+                                                    foreach ($vars as $v): $v = trim($v);
+                                                ?>
+                                                    <span class="badge badge-secondary px-2 py-1 mr-1 mb-1 cursor-pointer select-var-badge" data-var="{<?= $v ?>}" style="font-size: 11px;">
+                                                        <code>{<?= $v ?>}</code>
+                                                    </span>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="text-right mt-auto border-top pt-3">
+                                            <button type="submit" class="btn btn-sm btn-info font-weight-bold px-3 shadow-sm">
+                                                <i class="fas fa-save mr-1"></i> Simpan Template Ini
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <!-- THE REST OF THE TABS WILL BE INJECTED HERE -->
+            <div class="tab-pane fade" id="tab-groups" role="tabpanel">
+<div class="mb-4 text-center"><h4 class="font-weight-bold text-dark"><i class="fas fa-users-cog text-primary mr-2"></i> Grup & Target Laporan</h4><p class="text-secondary">Atur ID Grup dan target kemana saja notifikasi sistem harus dikirimkan.</p></div>
+
+                        <form action="<?= base_url('whatsapp-settings/update-groups') ?>" method="post" class="mb-4">
+                            <?= csrf_field() ?>
+                            <h5 class="font-weight-bold text-dark mb-3"><i class="fas fa-sliders-h mr-1 text-primary"></i> Konfigurasi Target Grup WA</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label class="font-weight-bold text-secondary mb-1">1. Grup Khusus Absensi PKL (Grup Siswa PKL):</label>
+                                    <input 
+                                        type="text" 
+                                        name="broadcast_group_jid" 
+                                        id="inputBroadcastJid"
+                                        class="form-control font-mono" 
+                                        placeholder="Contoh: 120363248@g.us"
+                                        value="<?= htmlspecialchars($broadcastGroupJid) ?>"
+                                    >
+                                    <small class="text-muted">(Tempat dikirimkannya laporan jurnal/absensi PKL harian khusus siswa)</small>
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="font-weight-bold text-secondary mb-1">2. Grup Khusus Guru (Rekap PKL & Monitoring Guru):</label>
+                                    <input 
+                                        type="text" 
+                                        name="teacher_group_jid" 
+                                        id="inputTeacherJid"
+                                        class="form-control font-mono" 
+                                        placeholder="Contoh: 120363123@g.us"
+                                        value="<?= htmlspecialchars($teacherGroupJid) ?>"
+                                    >
+                                    <small class="text-muted">(Tempat dikirimkannya rekap absensi sore hari & notifikasi live kunjungan monitoring guru)</small>
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="font-weight-bold text-secondary mb-1">3. Grup Khusus KBM:</label>
+                                    <input 
+                                        type="text" 
+                                        name="school_group_jid" 
+                                        id="inputSchoolJid"
+                                        class="form-control font-mono" 
+                                        placeholder="Contoh: 120363999@g.us"
+                                        value="<?= htmlspecialchars($schoolGroupJid) ?>"
+                                    >
+                                    <small class="text-muted">(Tempat dikirimkannya peringatan/peringkat kelas yang belum diabsen jam 08:30 WIB)</small>
+                                </div>
+                            </div>
+                            
+                            <div class="text-right">
+                                <button type="submit" class="btn btn-success font-weight-bold">
+                                    <i class="fas fa-save mr-1"></i> Simpan Target JID
                                 </button>
                             </div>
                         </form>
-                    </div>
 
-                    <!-- TAB 2: Dynamic Cron Configurations -->
-                    <div class="tab-pane fade" id="tab-cron" role="tabpanel">
-                        <form action="<?= base_url('whatsapp-settings/update-cron') ?>" method="post">
-                            <?= csrf_field() ?>
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-hover bg-white mb-0 shadow-none">
-                                    <thead class="thead-light">
+                        <div class="border-top pt-4 mb-4">
+                            <form action="<?= base_url('whatsapp-settings/update-targets') ?>" method="post">
+                                <?= csrf_field() ?>
+                                <h6 class="font-weight-bold text-dark mb-3"><i class="fas fa-bullhorn mr-1 text-primary"></i> Target Broadcast Laporan PKL</h6>
+                                <p class="text-secondary small mb-3">Tentukan kepada siapa saja laporan jurnal harian PKL siswa akan diteruskan secara otomatis oleh bot WhatsApp.</p>
+                                
+                                <div class="row px-3">
+                                    <div class="col-md-6 mb-2 custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="target_group" name="broadcast_pkl_group" <?= ($broadcastTargets['broadcast_pkl_group'] ?? '1') == '1' ? 'checked' : '' ?>>
+                                        <label class="custom-control-label" for="target_group">Grup WA Sekolah (Utama/Yayasan)</label>
+                                    </div>
+                                    <div class="col-md-6 mb-2 custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="target_instruktur" name="broadcast_pkl_instruktur" <?= ($broadcastTargets['broadcast_pkl_instruktur'] ?? '0') == '1' ? 'checked' : '' ?>>
+                                        <label class="custom-control-label" for="target_instruktur">Instruktur DU/DI (Japri Instruktur)</label>
+                                    </div>
+                                    <!-- Catatan: Target Orang Tua, Siswa (Anggota), dan Guru Pembimbing (Japri) telah dihapus/digantikan dengan Grup Guru Pembimbing -->
+                                </div>
+                                <div class="text-right mt-3">
+                                    <button type="submit" class="btn btn-success font-weight-bold">
+                                        <i class="fas fa-save mr-1"></i> Simpan Target Broadcast
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="border-top pt-4">
+                            <!-- Link Group Join Form -->
+                            <div class="card card-body bg-light mb-4 border shadow-none">
+                                <h6 class="font-weight-bold text-dark mb-2">
+                                    <i class="fas fa-link mr-1 text-primary"></i> Hubungkan Grup Baru via Link Undangan
+                                </h6>
+                                <p class="text-secondary mb-3" style="font-size: 13px;">
+                                    Masukkan link undangan grup WhatsApp (contoh: <code>https://chat.whatsapp.com/CWAXdVXIHeP7d7FkOv9ZF3</code>). Bot akan otomatis masuk dan membaca JID (ID Obrolan) grup tersebut.
+                                </p>
+                                <div class="input-group">
+                                    <input type="text" id="invite-link-input" class="form-control" placeholder="https://chat.whatsapp.com/...">
+                                    <div class="input-group-append">
+                                        <button type="button" id="btnJoinGroupLink" class="btn btn-primary font-weight-bold" style="height: 42px;">
+                                            <i class="fas fa-plus mr-1"></i> Hubungkan & Gabung Grup
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="join-group-alert" class="mt-2 d-none"></div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="font-weight-bold text-dark mb-0"><i class="fas fa-list-alt mr-1 text-success"></i> Grup WhatsApp yang Diikuti Bot</h5>
+                                <button type="button" class="btn btn-xs btn-outline-secondary font-weight-bold" id="btnRefreshGroups">
+                                    <i class="fas fa-sync fa-spin mr-1"></i> Reload Live
+                                </button>
+                            </div>
+                            
+                            <div class="alert alert-secondary" id="groups-info-box">
+                                <i class="fas fa-info-circle mr-1"></i> Memuat daftar grup live dari perangkat WhatsApp terhubung...
+                            </div>
+
+                            <div class="table-responsive border rounded bg-white d-none" id="groups-table-container">
+                                <table class="table table-hover mb-0" style="font-size: 13px;">
+                                    <thead class="bg-light">
                                         <tr>
-                                            <th style="width: 60px;" class="text-center">Aktif</th>
-                                            <th>Nama Tugas (Cron Job)</th>
-                                            <th style="width: 180px;">Jadwal (Cron Expression)</th>
-                                            <th>Aksi & Kaitan</th>
+                                            <th>Nama Grup</th>
+                                            <th>Group JID (ID Obrolan)</th>
+                                            <th style="width: 320px;" class="text-center">Tetapkan Sebagai Target</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <?php foreach ($cronConfigs as $cron): ?>
-                                            <tr>
-                                                <td class="text-center align-middle">
-                                                    <!-- Switch/Toggle -->
-                                                    <div class="custom-control custom-switch">
-                                                        <input 
-                                                            type="checkbox" 
-                                                            name="cron[<?= $cron['key'] ?>][is_active]" 
-                                                            class="custom-control-input" 
-                                                            id="switch-<?= $cron['key'] ?>"
-                                                            <?= $cron['is_active'] ? 'checked' : '' ?>
-                                                        >
-                                                        <label class="custom-control-label" for="switch-<?= $cron['key'] ?>"></label>
-                                                    </div>
-                                                </td>
-                                                <td class="align-middle">
-                                                    <span class="font-weight-bold text-dark"><?= htmlspecialchars($cron['name']) ?></span>
-                                                    <small class="d-block text-muted">Key: <code><?= htmlspecialchars($cron['key']) ?></code></small>
-                                                    <small class="d-block text-secondary mt-1" style="font-size: 12px;"><?= htmlspecialchars($cron['description']) ?></small>
-                                                    <?php if ($cron['action'] === 'custom_message' && !empty($cron['payload'])): ?>
-                                                        <?php $payload = json_decode($cron['payload'], true); ?>
-                                                        <div class="mt-2 p-2 bg-light border rounded" style="font-size: 11px;">
-                                                            <strong>Target:</strong> <?= htmlspecialchars($payload['target'] ?? '-') ?><br>
-                                                            <strong>Pesan:</strong> <span class="text-muted">"<?= htmlspecialchars(substr($payload['message'] ?? '', 0, 50)) ?>..."</span>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </td>
-                                                <td class="align-middle">
-                                                    <input 
-                                                        type="text" 
-                                                        name="cron[<?= $cron['key'] ?>][cron_expression]" 
-                                                        class="form-control text-center font-weight-bold text-secondary font-mono" 
-                                                        value="<?= htmlspecialchars($cron['cron_expression']) ?>"
-                                                        required
-                                                    >
-                                                    <small class="d-block text-center text-muted mt-1" style="font-size: 11px;">(Menit Jam Hari Bulan Pekan)</small>
-                                                </td>
-                                                <td class="align-middle">
-                                                    <span class="badge badge-light border text-secondary mb-1">
-                                                        Aksi: <code><?= htmlspecialchars($cron['action'] ?? $cron['key']) ?></code>
-                                                    </span>
-                                                    
-                                                    <!-- Delete Button for custom crons -->
-                                                    <?php if (!in_array($cron['key'], ['class_attendance_check', 'pkl_report_check', 'pkl_escalation_check', 'auto_alpha_job'])): ?>
-                                                        <form action="<?= base_url('whatsapp-settings/delete-cron/' . $cron['key']) ?>" method="post" class="d-inline ml-2" onsubmit="return confirm('Apakah Anda yakin ingin menghapus tugas cron kustom ini?')">
-                                                            <?= csrf_field() ?>
-                                                            <button type="submit" class="btn btn-xs btn-outline-danger" title="Hapus Tugas Cron">
-                                                                <i class="fas fa-trash"></i> Hapus
-                                                            </button>
-                                                        </form>
-                                                    <?php endif; ?>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
+                                    <tbody id="groups-table-body"></tbody>
                                 </table>
                             </div>
+                        </div>
+                    
+</div>
+            <div class="tab-pane fade" id="tab-whitelist" role="tabpanel">
+<div class="mb-4 text-center"><h4 class="font-weight-bold text-dark"><i class="fas fa-user-shield text-warning mr-2"></i> Whitelist Guru & Staf</h4><p class="text-secondary">Kelola nomor telepon guru, wali kelas, atau pembimbing yang diizinkan menerima pesan broadcast.</p></div>
 
-                            <div class="alert alert-info mt-4">
-                                <h5><i class="icon fas fa-info"></i> Petunjuk Ekspresi Cron:</h5>
-                                <ul class="mb-0 pl-4">
-                                    <li><code>30 8 * * *</code> = Dijalankan setiap hari pada pukul **08:30 WIB**</li>
-                                    <li><code>0 14 * * *</code> = Dijalankan setiap hari pada pukul **14:00 WIB**</li>
-                                    <li><code>30 15 * * *</code> = Dijalankan setiap hari pada pukul **15:30 WIB**</li>
-                                    <li><code>*/15 * * * *</code> = Dijalankan setiap **15 menit sekali**</li>
-                                </ul>
-                            </div>
-
-                            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                                <button type="button" class="btn btn-outline-primary font-weight-bold" data-toggle="modal" data-target="#modal-add-cron">
-                                    <i class="fas fa-plus-circle mr-1"></i> Tambah Jadwal Baru
-                                </button>
-                                <button type="submit" class="btn btn-success font-weight-bold px-4">
-                                    <i class="fas fa-save mr-1"></i> Simpan & Terapkan Jadwal
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- TAB 3: Whitelist Nomor WA -->
-                    <div class="tab-pane fade" id="tab-whitelist" role="tabpanel">
                         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
                             <div class="mb-2">
                                 <input type="text" id="whitelistSearch" class="form-control form-control-sm" placeholder="🔍 Cari Nama / No WA / Tugas...">
@@ -348,203 +555,106 @@
                                 </tbody>
                             </table>
                         </div>
-                    </div>
+                    
+                    
+</div>
+            <div class="tab-pane fade" id="tab-cron" role="tabpanel">
+<div class="mb-4 text-center"><h4 class="font-weight-bold text-dark"><i class="fas fa-clock text-secondary mr-2"></i> Jadwal Tugas Otomatis (Cron)</h4><p class="text-secondary">Kelola tugas yang dikirim secara otomatis oleh bot pada jam tertentu.</p></div>
 
-                    <!-- TAB 4: Grup WhatsApp -->
-                    <div class="tab-pane fade" id="tab-groups" role="tabpanel">
-                        <form action="<?= base_url('whatsapp-settings/update-groups') ?>" method="post" class="mb-4">
+                        <form action="<?= base_url('whatsapp-settings/update-cron') ?>" method="post">
                             <?= csrf_field() ?>
-                            <h5 class="font-weight-bold text-dark mb-3"><i class="fas fa-sliders-h mr-1 text-primary"></i> Konfigurasi Target Grup WA</h5>
-                            
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="font-weight-bold text-secondary mb-1">JID Grup Broadcast Laporan PKL:</label>
-                                    <input 
-                                        type="text" 
-                                        name="broadcast_group_jid" 
-                                        id="inputBroadcastJid"
-                                        class="form-control font-mono" 
-                                        placeholder="Contoh: 120363248@g.us"
-                                        value="<?= htmlspecialchars($broadcastGroupJid) ?>"
-                                    >
-                                    <small class="text-muted">(Tempat dikirimkannya rangkuman laporan jurnal PKL kelompok harian)</small>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="font-weight-bold text-secondary mb-1">JID Grup Peringatan Absensi KBM:</label>
-                                    <input 
-                                        type="text" 
-                                        name="school_group_jid" 
-                                        id="inputSchoolJid"
-                                        class="form-control font-mono" 
-                                        placeholder="Contoh: 120363999@g.us"
-                                        value="<?= htmlspecialchars($schoolGroupJid) ?>"
-                                    >
-                                    <small class="text-muted">(Tempat dikirimkannya info warning kelas belum absen pada jam 08:30 WIB)</small>
-                                </div>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover bg-white mb-0 shadow-none">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th style="width: 60px;" class="text-center">Aktif</th>
+                                            <th>Nama Tugas (Cron Job)</th>
+                                            <th style="width: 180px;">Jadwal (Cron Expression)</th>
+                                            <th>Aksi & Kaitan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($cronConfigs as $cron): ?>
+                                            <tr>
+                                                <td class="text-center align-middle">
+                                                    <!-- Switch/Toggle -->
+                                                    <div class="custom-control custom-switch">
+                                                        <input 
+                                                            type="checkbox" 
+                                                            name="cron[<?= $cron['key'] ?>][is_active]" 
+                                                            class="custom-control-input" 
+                                                            id="switch-<?= $cron['key'] ?>"
+                                                            <?= $cron['is_active'] ? 'checked' : '' ?>
+                                                        >
+                                                        <label class="custom-control-label" for="switch-<?= $cron['key'] ?>"></label>
+                                                    </div>
+                                                </td>
+                                                <td class="align-middle">
+                                                    <span class="font-weight-bold text-dark"><?= htmlspecialchars($cron['name']) ?></span>
+                                                    <small class="d-block text-muted">Key: <code><?= htmlspecialchars($cron['key']) ?></code></small>
+                                                    <small class="d-block text-secondary mt-1" style="font-size: 12px;"><?= htmlspecialchars($cron['description']) ?></small>
+                                                    <?php if ($cron['action'] === 'custom_message' && !empty($cron['payload'])): ?>
+                                                        <?php $payload = json_decode($cron['payload'], true); ?>
+                                                        <div class="mt-2 p-2 bg-light border rounded" style="font-size: 11px;">
+                                                            <strong>Target:</strong> <?= htmlspecialchars($payload['target'] ?? '-') ?><br>
+                                                            <strong>Pesan:</strong> <span class="text-muted">"<?= htmlspecialchars(substr($payload['message'] ?? '', 0, 50)) ?>..."</span>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td class="align-middle">
+                                                    <input 
+                                                        type="text" 
+                                                        name="cron[<?= $cron['key'] ?>][cron_expression]" 
+                                                        class="form-control text-center font-weight-bold text-secondary font-mono" 
+                                                        value="<?= htmlspecialchars($cron['cron_expression']) ?>"
+                                                        required
+                                                    >
+                                                    <small class="d-block text-center text-muted mt-1" style="font-size: 11px;">(Menit Jam Hari Bulan Pekan)</small>
+                                                </td>
+                                                <td class="align-middle">
+                                                    <span class="badge badge-light border text-secondary mb-1">
+                                                        Aksi: <code><?= htmlspecialchars($cron['action'] ?? $cron['key']) ?></code>
+                                                    </span>
+                                                    
+                                                    <!-- Delete Button for custom crons -->
+                                                    <?php if (!in_array($cron['key'], ['class_attendance_check', 'pkl_report_check', 'pkl_escalation_check', 'auto_alpha_job'])): ?>
+                                                        <button type="button" class="btn btn-xs btn-outline-danger ml-2" title="Hapus Tugas Cron" onclick="confirmDeleteCron('<?= esc($cron['key'], 'js') ?>')">
+                                                            <i class="fas fa-trash"></i> Hapus
+                                                        </button>
+                                                    <?php endif; ?>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                                <div class="alert alert-info mt-4">
+                                 <h5><i class="icon fas fa-info"></i> Petunjuk Ekspresi Cron:</h5>
+                                 <ul class="mb-0 pl-4">
+                                     <li><code>30 8 * * *</code> = Dijalankan setiap hari pada pukul **08:30 WIB**</li>
+                                     <li><code>0 14 * * *</code> = Dijalankan setiap hari pada pukul **14:00 WIB**</li>
+                                     <li><code>0 16 * * *</code> = Dijalankan setiap hari pada pukul **16:00 WIB**</li>
+                                     <li><code>*/15 * * * *</code> = Dijalankan setiap **15 menit sekali**</li>
+                                 </ul>
+                             </div>
                             </div>
-                            
-                            <div class="text-right">
-                                <button type="submit" class="btn btn-success font-weight-bold">
-                                    <i class="fas fa-save mr-1"></i> Simpan Target JID
+
+                            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                                <button type="button" class="btn btn-outline-primary font-weight-bold" data-toggle="modal" data-target="#modal-add-cron">
+                                    <i class="fas fa-plus-circle mr-1"></i> Tambah Jadwal Baru
+                                </button>
+                                <button type="submit" class="btn btn-success font-weight-bold px-4">
+                                    <i class="fas fa-save mr-1"></i> Simpan & Terapkan Jadwal
                                 </button>
                             </div>
                         </form>
+                    
+                    
+</div>
 
-                        <div class="border-top pt-4 mb-4">
-                            <form action="<?= base_url('whatsapp-settings/update-targets') ?>" method="post">
-                                <?= csrf_field() ?>
-                                <h6 class="font-weight-bold text-dark mb-3"><i class="fas fa-bullhorn mr-1 text-primary"></i> Target Broadcast Laporan PKL</h6>
-                                <p class="text-secondary small mb-3">Tentukan kepada siapa saja laporan jurnal harian PKL siswa akan diteruskan secara otomatis oleh bot WhatsApp.</p>
-                                
-                                <div class="row px-3">
-                                    <div class="col-md-4 mb-2 custom-control custom-checkbox">
-                                        <input type="checkbox" class="custom-control-input" id="target_group" name="broadcast_pkl_group" <?= ($broadcastTargets['broadcast_pkl_group'] ?? '1') == '1' ? 'checked' : '' ?>>
-                                        <label class="custom-control-label" for="target_group">Grup WA Sekolah</label>
-                                    </div>
-                                    <div class="col-md-4 mb-2 custom-control custom-checkbox">
-                                        <input type="checkbox" class="custom-control-input" id="target_pembimbing" name="broadcast_pkl_pembimbing" <?= ($broadcastTargets['broadcast_pkl_pembimbing'] ?? '1') == '1' ? 'checked' : '' ?>>
-                                        <label class="custom-control-label" for="target_pembimbing">Guru Pembimbing</label>
-                                    </div>
-                                    <div class="col-md-4 mb-2 custom-control custom-checkbox">
-                                        <input type="checkbox" class="custom-control-input" id="target_orangtua" name="broadcast_pkl_orangtua" <?= ($broadcastTargets['broadcast_pkl_orangtua'] ?? '0') == '1' ? 'checked' : '' ?>>
-                                        <label class="custom-control-label" for="target_orangtua">Orang Tua Siswa</label>
-                                    </div>
-                                    <div class="col-md-4 mb-2 custom-control custom-checkbox">
-                                        <input type="checkbox" class="custom-control-input" id="target_instruktur" name="broadcast_pkl_instruktur" <?= ($broadcastTargets['broadcast_pkl_instruktur'] ?? '0') == '1' ? 'checked' : '' ?>>
-                                        <label class="custom-control-label" for="target_instruktur">Instruktur DU/DI</label>
-                                    </div>
-                                    <div class="col-md-4 mb-2 custom-control custom-checkbox">
-                                        <input type="checkbox" class="custom-control-input" id="target_anggota" name="broadcast_pkl_anggota" <?= ($broadcastTargets['broadcast_pkl_anggota'] ?? '0') == '1' ? 'checked' : '' ?>>
-                                        <label class="custom-control-label" for="target_anggota">Siswa / Anggota PKL</label>
-                                    </div>
-                                </div>
-                                <div class="text-right mt-3">
-                                    <button type="submit" class="btn btn-success font-weight-bold">
-                                        <i class="fas fa-save mr-1"></i> Simpan Target Broadcast
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-
-                        <div class="border-top pt-4">
-                            <!-- Link Group Join Form -->
-                            <div class="card card-body bg-light mb-4 border shadow-none">
-                                <h6 class="font-weight-bold text-dark mb-2">
-                                    <i class="fas fa-link mr-1 text-primary"></i> Hubungkan Grup Baru via Link Undangan
-                                </h6>
-                                <p class="text-secondary mb-3" style="font-size: 13px;">
-                                    Masukkan link undangan grup WhatsApp (contoh: <code>https://chat.whatsapp.com/CWAXdVXIHeP7d7FkOv9ZF3</code>). Bot akan otomatis masuk dan membaca JID (ID Obrolan) grup tersebut.
-                                </p>
-                                <div class="input-group">
-                                    <input type="text" id="invite-link-input" class="form-control" placeholder="https://chat.whatsapp.com/...">
-                                    <div class="input-group-append">
-                                        <button type="button" id="btnJoinGroupLink" class="btn btn-primary font-weight-bold" style="height: 42px;">
-                                            <i class="fas fa-plus mr-1"></i> Hubungkan & Gabung Grup
-                                        </button>
-                                    </div>
-                                </div>
-                                <div id="join-group-alert" class="mt-2 d-none"></div>
-                            </div>
-
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="font-weight-bold text-dark mb-0"><i class="fas fa-list-alt mr-1 text-success"></i> Grup WhatsApp yang Diikuti Bot</h5>
-                                <button type="button" class="btn btn-xs btn-outline-secondary font-weight-bold" id="btnRefreshGroups">
-                                    <i class="fas fa-sync fa-spin mr-1"></i> Reload Live
-                                </button>
-                            </div>
-                            
-                            <div class="alert alert-secondary" id="groups-info-box">
-                                <i class="fas fa-info-circle mr-1"></i> Memuat daftar grup live dari perangkat WhatsApp terhubung...
-                            </div>
-
-                            <div class="table-responsive border rounded bg-white d-none" id="groups-table-container">
-                                <table class="table table-hover mb-0" style="font-size: 13px;">
-                                    <thead class="bg-light">
-                                        <tr>
-                                            <th>Nama Grup</th>
-                                            <th>Group JID (ID Obrolan)</th>
-                                            <th style="width: 320px;" class="text-center">Tetapkan Sebagai Target</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="groups-table-body"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <!-- Kolom Bawah: Status Koneksi & QR Code (WebSockets) -->
-    <div class="col-lg-6 col-md-8 mx-auto mb-4">
-        <div class="card card-outline card-success shadow-sm">
-            <div class="card-header border-bottom">
-                <h3 class="card-title font-weight-bold text-dark">
-                    <i class="fab fa-whatsapp text-success mr-2"></i> Koneksi Perangkat Bot
-                </h3>
-            </div>
-            <div class="card-body d-flex flex-column align-items-center justify-content-center text-center py-5">
-                <!-- Status Badge -->
-                <div class="mb-4">
-                    <span id="wa-status-badge" class="badge badge-pill <?= $botStatus['connected'] ? 'badge-success' : 'badge-danger' ?> px-3 py-2 font-weight-bold" style="font-size: 14px; letter-spacing: 0.5px; transition: all 0.3s ease;">
-                        <i id="wa-status-icon" class="fas <?= $botStatus['connected'] ? 'fa-check-circle' : 'fa-times-circle' ?> mr-1"></i>
-                        <span id="wa-status-text"><?= $botStatus['connected'] ? 'TERHUBUNG' : 'TIDAK TERHUBUNG' ?></span>
-                    </span>
-                </div>
-
-                <!-- QR Code Container -->
-                <div id="qr-container" class="border rounded p-3 bg-light shadow-inner mb-4 d-flex align-items-center justify-content-center" style="width: 250px; height: 250px; position: relative; transition: all 0.3s ease;">
-                    <?php if ($botStatus['connected']): ?>
-                        <div class="text-success text-center">
-                            <i class="fas fa-circle-check fa-4x mb-3 animate__animated animate__bounceIn"></i>
-                            <p class="font-weight-bold mb-0">Bot Aktif</p>
-                            <small class="text-muted">Siap menerima perintah</small>
-                        </div>
-                    <?php else: ?>
-                        <div id="qr-loading" class="text-secondary text-center">
-                            <i class="fas fa-spinner fa-spin fa-3x mb-3"></i>
-                            <p class="font-weight-bold mb-0" style="font-size: 14px;">Menghubungkan...</p>
-                            <small class="text-muted" style="font-size: 12px;">Membuka sesi bot</small>
-                        </div>
-                    <?php endif; ?>
-                </div>
-
-                <!-- Device Info -->
-                <div class="w-100 px-3 text-left mb-4">
-                    <div class="d-flex justify-content-between border-bottom py-2">
-                        <span class="text-secondary">Nama Perangkat</span>
-                        <span class="font-weight-bold text-dark" id="wa-device-name"><?= htmlspecialchars($botStatus['name'] ?: '—') ?></span>
-                    </div>
-                    <div class="d-flex justify-content-between border-bottom py-2">
-                        <span class="text-secondary">Nomor WhatsApp</span>
-                        <span class="font-weight-bold text-dark" id="wa-device-phone"><?= $botStatus['phone'] ? '+' . explode(':', $botStatus['phone'])[0] : '—' ?></span>
-                    </div>
-                    <div class="d-flex justify-content-between py-2">
-                        <span class="text-secondary">Versi Layanan</span>
-                        <span class="font-weight-bold text-dark"><?= htmlspecialchars($botStatus['version']) ?></span>
-                    </div>
-                </div>
-
-                <!-- Logout Form -->
-                <?php if ($botStatus['connected']): ?>
-                    <form action="<?= base_url('whatsapp-settings/logout') ?>" method="post" onsubmit="return confirm('Apakah Anda yakin ingin memutus koneksi nomor WhatsApp saat ini? Anda harus memindai QR code baru untuk menyambungkan kembali.');" class="w-100">
-                        <?= csrf_field() ?>
-                        <button type="submit" class="btn btn-outline-danger btn-block font-weight-bold px-4" id="btn-wa-logout">
-                            <i class="fas fa-sign-out-alt mr-1"></i> Putus Koneksi / Ganti Nomor
-                        </button>
-                    </form>
-                <?php else: ?>
-                    <div id="qr-hint-text" class="text-muted" style="font-size: 12px; max-width: 280px; display: none;">
-                        <i class="fas fa-info-circle text-info mr-1"></i> Buka WhatsApp di HP Anda -> Menu (Titik 3) / Setelan -> Perangkat Tertaut -> Tautkan Perangkat, lalu arahkan kamera ke kode QR di atas.
-                    </div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Add Cron Modal -->
 <div class="modal fade" id="modal-add-cron" tabindex="-1" role="dialog" aria-hidden="true">
@@ -792,11 +902,18 @@
         socket.on("disconnect", () => {
             console.log("[SOCKET] Connection lost from bot server.");
             // Set Badge Status to offline if not already
-            badge.className = "badge badge-pill badge-danger px-3 py-2 font-weight-bold";
-            icon.className = "fas fa-times-circle mr-1";
-            statusText.textContent = "TIDAK TERHUBUNG";
-            devicePhone.textContent = "—";
-            deviceName.textContent = "—";
+            if (badge) badge.className = "badge badge-pill badge-danger px-3 py-2 font-weight-bold";
+            if (icon) icon.className = "fas fa-times-circle mr-1";
+            if (statusText) statusText.textContent = "TIDAK TERHUBUNG";
+            if (devicePhone) devicePhone.textContent = "—";
+            if (deviceName) deviceName.textContent = "—";
+            
+            const gridCard = document.getElementById('wa-status-card');
+            const gridIconBox = document.getElementById('wa-status-icon-box');
+            const gridText = document.getElementById('wa-status-text-top');
+            if (gridCard) { gridCard.classList.remove('active-tab'); gridCard.classList.add('border-danger'); }
+            if (gridIconBox) { gridIconBox.classList.remove('bg-success'); gridIconBox.classList.add('bg-danger'); }
+            if (gridText) gridText.textContent = 'TERPUTUS';
         });
 
         // Event: Bot connected to WhatsApp successfully
@@ -804,17 +921,24 @@
             console.log("[SOCKET] WhatsApp connection status update:", data);
             
             if (data.connected) {
-                badge.className = "badge badge-pill badge-success px-3 py-2 font-weight-bold";
-                icon.className = "fas fa-check-circle mr-1";
-                statusText.textContent = "TERHUBUNG";
+                if (badge) badge.className = "badge badge-pill badge-success px-3 py-2 font-weight-bold";
+                if (icon) icon.className = "fas fa-check-circle mr-1";
+                if (statusText) statusText.textContent = "TERHUBUNG";
                 
-                if (data.phone) {
+                if (data.phone && devicePhone) {
                     const cleanPhone = data.phone.split(':')[0];
                     devicePhone.textContent = "+" + cleanPhone;
                 }
-                if (data.name) {
+                if (data.name && deviceName) {
                     deviceName.textContent = data.name;
                 }
+                
+                const gridCard = document.getElementById('wa-status-card');
+                const gridIconBox = document.getElementById('wa-status-icon-box');
+                const gridText = document.getElementById('wa-status-text-top');
+                if (gridCard) { gridCard.classList.remove('border-danger'); gridCard.classList.add('active-tab'); }
+                if (gridIconBox) { gridIconBox.classList.remove('bg-danger'); gridIconBox.classList.add('bg-success'); }
+                if (gridText) gridText.textContent = 'TERHUBUNG';
                 
                 qrContainer.innerHTML = `
                     <div class="text-success text-center animate__animated animate__zoomIn">
@@ -831,11 +955,18 @@
                     }, 1500);
                 }
             } else {
-                badge.className = "badge badge-pill badge-danger px-3 py-2 font-weight-bold";
-                icon.className = "fas fa-times-circle mr-1";
-                statusText.textContent = "TIDAK TERHUBUNG";
-                devicePhone.textContent = "—";
-                deviceName.textContent = "—";
+                if (badge) badge.className = "badge badge-pill badge-danger px-3 py-2 font-weight-bold";
+                if (icon) icon.className = "fas fa-times-circle mr-1";
+                if (statusText) statusText.textContent = "TIDAK TERHUBUNG";
+                if (devicePhone) devicePhone.textContent = "—";
+                if (deviceName) deviceName.textContent = "—";
+                
+                const gridCard = document.getElementById('wa-status-card');
+                const gridIconBox = document.getElementById('wa-status-icon-box');
+                const gridText = document.getElementById('wa-status-text-top');
+                if (gridCard) { gridCard.classList.remove('active-tab'); gridCard.classList.add('border-danger'); }
+                if (gridIconBox) { gridIconBox.classList.remove('bg-success'); gridIconBox.classList.add('bg-danger'); }
+                if (gridText) gridText.textContent = 'TERPUTUS';
                 
                 if (data.reason === 'loggedOut') {
                     qrContainer.innerHTML = `
@@ -896,14 +1027,18 @@
         const urlParams = new URLSearchParams(window.location.search);
         const activeTab = urlParams.get('tab');
         if (activeTab) {
-            document.querySelectorAll('#settings-tab .nav-link').forEach(el => el.classList.remove('active'));
+            // Hapus status aktif dari semua trigger dan tab content
+            document.querySelectorAll('.tab-trigger').forEach(el => el.classList.remove('active-tab'));
             document.querySelectorAll('#settings-tabContent .tab-pane').forEach(el => el.classList.remove('show', 'active'));
 
-            const targetLink = document.getElementById(activeTab + '-tab');
             const targetPane = document.getElementById('tab-' + activeTab);
-            if (targetLink && targetPane) {
-                targetLink.classList.add('active');
+            const targetTrigger = document.querySelector(`.tab-trigger[data-target="#tab-${activeTab}"]`);
+            
+            if (targetPane) {
                 targetPane.classList.add('show', 'active');
+            }
+            if (targetTrigger) {
+                targetTrigger.classList.add('active-tab');
             }
         }
 
@@ -1076,6 +1211,7 @@
         const btnRefresh = document.getElementById("btnRefreshGroups");
         const inputBroadcastJid = document.getElementById("inputBroadcastJid");
         const inputSchoolJid = document.getElementById("inputSchoolJid");
+        const inputTeacherJid = document.getElementById("inputTeacherJid");
 
         function fetchGroups() {
             if (!groupsInfoBox) return;
@@ -1112,10 +1248,12 @@
                             // Check if active target
                             const isPKL = g.id === inputBroadcastJid.value;
                             const isKBM = g.id === inputSchoolJid.value;
+                            const isGuru = g.id === inputTeacherJid.value;
                             
                             let badges = "";
-                            if (isPKL) badges += '<span class="badge badge-success px-2 py-1 mr-1">Laporan PKL</span>';
-                            if (isKBM) badges += '<span class="badge badge-info px-2 py-1">Absensi KBM</span>';
+                            if (isPKL) badges += '<span class="badge badge-success px-2 py-1 mr-1">Absensi PKL</span>';
+                            if (isGuru) badges += '<span class="badge badge-warning px-2 py-1 mr-1 text-dark">Grup Guru (Rekap/Mon)</span>';
+                            if (isKBM) badges += '<span class="badge badge-info px-2 py-1 mr-1">Grup KBM</span>';
                             
                             tr.innerHTML = `
                                 <td class="align-middle font-weight-bold text-dark">
@@ -1124,14 +1262,14 @@
                                 </td>
                                 <td class="align-middle"><code>${escapeHtml(g.id)}</code></td>
                                 <td class="align-middle text-center">
-                                    <button type="button" class="btn btn-xs btn-outline-success mr-1 btn-set-pkl" data-jid="${escapeHtml(g.id)}">
-                                        <i class="fas fa-clipboard-check mr-1"></i> Set PKL
+                                    <button type="button" class="btn btn-xs btn-outline-success mr-1 mb-1 btn-set-pkl" data-jid="${escapeHtml(g.id)}">
+                                        <i class="fas fa-clipboard-check mr-1"></i> Set PKL Siswa
                                     </button>
-                                    <button type="button" class="btn btn-xs btn-outline-info mr-1 btn-set-kbm" data-jid="${escapeHtml(g.id)}">
-                                        <i class="fas fa-calendar-check mr-1"></i> Set KBM
+                                    <button type="button" class="btn btn-xs btn-outline-warning text-dark mr-1 mb-1 btn-set-guru" data-jid="${escapeHtml(g.id)}">
+                                        <i class="fas fa-chalkboard-teacher mr-1"></i> Set Khusus Guru
                                     </button>
-                                    <button type="button" class="btn btn-xs btn-outline-primary btn-set-both" data-jid="${escapeHtml(g.id)}">
-                                        <i class="fas fa-users-cog mr-1"></i> Set Keduanya
+                                    <button type="button" class="btn btn-xs btn-outline-info mr-1 mb-1 btn-set-kbm" data-jid="${escapeHtml(g.id)}">
+                                        <i class="fas fa-calendar-check mr-1"></i> Set Khusus KBM
                                     </button>
                                 </td>
                             `;
@@ -1153,14 +1291,11 @@
                                 fetchGroups(); // redraw badges
                             });
                         });
-                        document.querySelectorAll(".btn-set-both").forEach(btn => {
+                        document.querySelectorAll(".btn-set-guru").forEach(btn => {
                             btn.addEventListener("click", function() {
-                                const jid = this.getAttribute("data-jid");
-                                inputBroadcastJid.value = jid;
-                                inputSchoolJid.value = jid;
-                                highlightInput(inputBroadcastJid);
-                                highlightInput(inputSchoolJid);
-                                fetchGroups(); // redraw badges
+                                inputTeacherJid.value = this.getAttribute("data-jid");
+                                highlightInput(inputTeacherJid);
+                                fetchGroups();
                             });
                         });
                     }
@@ -1292,4 +1427,51 @@
         gap: 0.5rem;
     }
 </style>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Custom Kotak Menu Dashboard Tab Switcher
+    const tabTriggers = document.querySelectorAll('.tab-trigger');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    tabTriggers.forEach(function(trigger) {
+        trigger.addEventListener('click', function() {
+            // Reset active state for all triggers
+            tabTriggers.forEach(function(t) {
+                t.classList.remove('active-tab');
+            });
+            
+            // Add active state to clicked trigger
+            this.classList.add('active-tab');
+            
+            // Hide all panes
+            tabPanes.forEach(function(pane) {
+                pane.classList.remove('show', 'active');
+            });
+            
+            // Show target pane
+            const targetId = this.getAttribute('data-target');
+            const targetPane = document.querySelector(targetId);
+            if (targetPane) {
+                targetPane.classList.add('show', 'active');
+            }
+        });
+    });
+});
+</script>
+
+<form id="delete-cron-form" action="" method="post" style="display:none;">
+    <?= csrf_field() ?>
+</form>
+<script>
+function confirmDeleteCron(key) {
+    if (confirm('Apakah Anda yakin ingin menghapus tugas cron kustom ini?')) {
+        const form = document.getElementById('delete-cron-form');
+        form.action = '<?= base_url('whatsapp-settings/delete-cron') ?>/' + encodeURIComponent(key);
+        form.submit();
+    }
+}
+</script>
+
 <?= $this->endSection() ?>

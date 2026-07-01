@@ -14,6 +14,24 @@
         display: none !important;
     }
     
+    .print-img-container {
+        width: 250px !important;
+    }
+    
+    .print-img {
+        width: 250px !important;
+        height: 250px !important;
+        border: 2px solid #ccc !important;
+    }
+    
+    .print-table {
+        font-size: 12pt !important;
+    }
+    
+    .print-col-nama { width: 22% !important; }
+    .print-col-status { width: 12% !important; }
+    .print-col-jurnal { width: 66% !important; }
+    
     body {
         margin: 0;
         padding: 0;
@@ -64,6 +82,14 @@
 @media screen {
     .print-header {
         display: none;
+    }
+}
+
+/* Fix for mobile view to prevent cramped tables */
+@media screen and (max-width: 767.98px) {
+    .print-table {
+        min-width: 550px !important;
+        table-layout: auto !important;
     }
 }
 </style>
@@ -197,31 +223,33 @@
                                     <?php else: ?>
                                         <div class="row">
                                             <div class="col-12">
-                                                <table class="table table-sm table-bordered mb-0" style="font-size: 13px;">
-                                                    <thead class="bg-light">
-                                                        <tr>
-                                                            <th width="30%">Nama</th>
-                                                            <th width="15%" class="text-center">Status</th>
-                                                            <th>Jurnal / Keterangan</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <?php foreach ($members as $name): ?>
-                                                            <?php 
-                                                                $status = $attendanceData[$name] ?? 'alpha';
-                                                                $jurnal = $jurnalData[$name] ?? '-';
-                                                                $statusColor = ['hadir' => 'success', 'sakit' => 'warning', 'izin' => 'info', 'alpha' => 'danger'][strtolower($status)] ?? 'secondary';
-                                                            ?>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-bordered mb-0 print-table" style="font-size: 13px; width: 100%;">
+                                                        <thead class="bg-light">
                                                             <tr>
-                                                                <td class="align-middle font-weight-bold"><?= htmlspecialchars($name) ?></td>
-                                                                <td class="text-center align-middle">
-                                                                    <span class="badge badge-<?= $statusColor ?>"><?= strtoupper($status) ?></span>
-                                                                </td>
-                                                                <td class="align-middle"><?= htmlspecialchars($jurnal) ?></td>
+                                                                <th class="print-col-nama" style="width: 25%;">Nama</th>
+                                                                <th class="print-col-status text-center" style="width: 15%;">Status</th>
+                                                                <th class="print-col-jurnal" style="width: 60%;">Jurnal / Keterangan</th>
                                                             </tr>
-                                                        <?php endforeach; ?>
-                                                    </tbody>
-                                                </table>
+                                                        </thead>
+                                                        <tbody>
+                                                            <?php foreach ($members as $name): ?>
+                                                                <?php 
+                                                                    $status = $attendanceData[$name] ?? 'alpha';
+                                                                    $jurnal = $jurnalData[$name] ?? '-';
+                                                                    $statusColor = ['hadir' => 'success', 'sakit' => 'warning', 'izin' => 'info', 'alpha' => 'danger'][strtolower($status)] ?? 'secondary';
+                                                                ?>
+                                                                <tr>
+                                                                    <td class="align-middle font-weight-bold" style="word-break: break-word;"><?= htmlspecialchars($name) ?></td>
+                                                                    <td class="text-center align-middle">
+                                                                        <span class="badge badge-<?= $statusColor ?>"><?= strtoupper($status) ?></span>
+                                                                    </td>
+                                                                    <td class="align-middle" style="word-break: break-word; white-space: pre-wrap;"><?= htmlspecialchars($jurnal) ?></td>
+                                                                </tr>
+                                                            <?php endforeach; ?>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
 
                                                 <?php if (!empty($photoUrls)): ?>
                                                     <div class="mt-3">
@@ -229,12 +257,25 @@
                                                         <div class="d-flex flex-wrap" style="gap: 8px;">
                                                             <?php foreach ($photoUrls as $key => $url): ?>
                                                                 <?php $dispUrl = get_photo_display_url($url); ?>
-                                                                <div class="text-center" style="width: 100px;">
+                                                                <div class="text-center print-img-container" style="width: 100px;">
                                                                     <a href="<?= htmlspecialchars($dispUrl) ?>" target="_blank">
-                                                                        <img src="<?= htmlspecialchars($dispUrl) ?>" class="rounded border shadow-sm" style="width: 100px; height: 100px; object-fit: cover;" title="Klik untuk perbesar">
+                                                                        <img src="<?= htmlspecialchars($dispUrl) ?>" class="rounded border shadow-sm print-img" style="width: 100px; height: 100px; object-fit: cover;" title="Klik untuk perbesar">
                                                                     </a>
                                                                     <small class="d-block mt-1 text-muted text-xs text-truncate" title="<?= htmlspecialchars($key) ?>">
-                                                                        <?= htmlspecialchars($key === 'kelompok' ? 'Kelompok' : 'Bukti ' . $key) ?>
+                                                                        <?php 
+                                                                            if ($key === 'kelompok') {
+                                                                                echo 'Dokumentasi Kelompok';
+                                                                            } else {
+                                                                                $statusLabel = $attendanceData[$key] ?? 'Bukti';
+                                                                                if ($statusLabel === 'sakit') {
+                                                                                    echo 'Surat Sakit (' . htmlspecialchars($key) . ')';
+                                                                                } elseif ($statusLabel === 'izin') {
+                                                                                    echo 'Surat Izin (' . htmlspecialchars($key) . ')';
+                                                                                } else {
+                                                                                    echo 'Bukti ' . htmlspecialchars($key);
+                                                                                }
+                                                                            }
+                                                                        ?>
                                                                     </small>
                                                                 </div>
                                                             <?php endforeach; ?>

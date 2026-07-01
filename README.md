@@ -1,6 +1,6 @@
 # 🏫 SIAKANUDA — Sistem Informasi Akademik SMK NU Darussalam
 
-> **v1.11.1** · Production-Ready · Self-Hosted · WhatsApp Bot Integrated
+> **v1.21.0** · Production-Ready · Self-Hosted · WhatsApp Bot Integrated
 
 <div align="center">
 
@@ -180,7 +180,7 @@ siakanuda/
 ├── data/               # Template statis (Excel, jadwal)
 ├── database/           # Skrip migrasi
 ├── tests/              # Playwright E2E tests
-└── public/             # PWA assets & BKK portal
+└── public/             # PWA assets
 ```
 
 ---
@@ -196,8 +196,8 @@ Panduan lengkap: [docs/DEPLOY_NOTES.md](docs/DEPLOY_NOTES.md)
 |-------|-----|------------|
 | **Internet (Publik)** | [https://siakanuda.qzz.io](https://siakanuda.qzz.io) | Via Cloudflare Tunnel |
 | **Shortlink** | [https://s.id/siakanuda](https://s.id/siakanuda) | Redirect ke URL di atas |
-| **LAN Sekolah** | `http://[ip-lokal]:8080` | Akses langsung tanpa internet |
-
+| **LAN Sekolah** | `http://[IP_SERVER_LAN]:8080` | Akses langsung tanpa internet |
+| **SSH (Tailscale VPN)** | `ssh [SSH_USER]@[IP_SERVER_TAILSCALE]` | Administrasi server |
 
 ### 🔒 Cloudflare Tunnel
 
@@ -239,7 +239,7 @@ Semua service `enabled` (auto-start) + health-check script via cron `@reboot`.
 | Komponen | Detail |
 |----------|--------|
 | **Hardware** | Laptop repurposed (CPU Atom N455, 2GB RAM) |
-| **OS** | Debian 12 (Bookworm) |
+| **OS** | Debian 13 (Trixie) |
 | **Storage** | 115 GB SSD |
 | **Node.js** | v22.x |
 | **PHP** | 8.4.x |
@@ -305,3 +305,15 @@ Hak cipta © 2026 SMK NU Darussalam. All rights reserved.
 *Dikembangkan oleh Bangun Setyawan dengan bantuan AI Agent*
 
 </div>
+## ?? PERINGATAN KRITIKAL: DEPLOYMENT SERVER PRODUCTION
+
+> [!CAUTION]
+> **DILARANG KERAS** menggunakan php spark serve (atau php -S) di environment production (server asli)!
+> Server bawaan PHP ini bersifat Single-Threaded. Jika diakses lebih dari 1 orang bersamaan, server akan mati, CPU akan mencapai 100%, dan database SQLite akan terkunci (Crash database is locked).
+
+> [!IMPORTANT]
+> **SYARAT WAJIB SERVER PRODUCTION:**
+> 1. **Gunakan Nginx + PHP-FPM.** Nginx memiliki kemampuan Multi-Threading.
+> 2. **Tuning PHP-FPM:** Sesuaikan `pm.max_children` dengan kapasitas RAM server. Untuk server dengan spesifikasi 2GB RAM (seperti spesifikasi production saat ini), gunakan maksimal **12 hingga 15**. **DILARANG KERAS** menggunakan angka 50 karena akan memicu Out of Memory (OOM) dan server hang/stuck. Sedikit antrean di Nginx jauh lebih baik daripada server crash.
+> 3. **Mode WAL SQLite:** Wajib aktifkan Write-Ahead Logging (WAL) pada siakanuda.db agar puluhan siswa bisa menyimpan data tanpa saling *lock*. 
+> 4. **Jangan Hardcode Pragma:** Bot Node.js (execution/db.js) sudah dimodifikasi agar membungkus db.pragma dengan try-catch dan diberi _timeout_ 15 detik. Jangan kembalikan kodenya seperti semula, atau bot akan gagal _booting_ dengan error SQLITE_BUSY.

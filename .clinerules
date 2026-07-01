@@ -6,21 +6,23 @@ You must follow these rules absolutely.
 ## 1. Context Reading
 Before answering or starting ANY task, you MUST silently read:
 - `AGENTS.md` (for rules)
-- `AI_CONTEXT.md` (for architecture and folder map)
-- `STATUS_FITUR.md` (for current progress)
+- `docs/AI_CONTEXT.md` (for architecture and folder map)
+- `docs/STATUS_FITUR.md` (for current progress)
 
 ## 2. Environment Constraints
 - **PORTABLE SSD WARNING**: The project is on a portable SSD. Drive letters (E:\, F:\, G:\) change frequently.
 - **NEVER** use absolute paths. Always use relative paths (e.g., `./`, `siakanuda/`).
 - **NEVER** create new versioned folders (like `siakanuda-v2/`). All changes happen in the current directory.
+- **PRODUCTION WARNING**: Server production WAJIB menggunakan **Nginx + PHP-FPM**. JANGAN sarankan `php spark serve` untuk production.
 
 ## 3. Tech Stack
-- Frontend/Dashboard: CodeIgniter 4 (PHP)
-- Background API/Bot: Node.js
-- Database: SQLite
+- Frontend/Dashboard: CodeIgniter 4 (PHP) — Port 8080
+- Background API/Bot: Node.js Express — Port 7860
+- Database: SQLite (mode WAL untuk konkurensi)
+- WhatsApp: Baileys (session di folder `sessions/`)
 
 ## 4. Work Completion
 When you finish making code changes:
 1. Commit the changes using conventional commits: `feat(vX.Y.Z): [desc]` or `fix(vX.Y.Z): [desc]`.
 2. You do NOT need to manually run `update-docs.js` anymore. A git post-commit hook will automatically run it and amend the docs into your commit.
-3. If you added a completely new feature, manually check off the relevant box in `STATUS_FITUR.md`.
+3. If you added a completely new feature, manually check off the relevant box in `docs/STATUS_FITUR.md`.

@@ -24,8 +24,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const ROOT = join(__dirname, '..');
-const STATUS_FILE = join(ROOT, 'STATUS_FITUR.md');
-const AI_CONTEXT_FILE = join(ROOT, 'AI_CONTEXT.md');
+const STATUS_FILE = join(ROOT, 'docs', 'STATUS_FITUR.md');
+const AI_CONTEXT_FILE = join(ROOT, 'docs', 'AI_CONTEXT.md');
 const PKG_FILE = join(ROOT, 'package.json');
 const SERVER_FILE = join(ROOT, 'execution', 'server.js');
 

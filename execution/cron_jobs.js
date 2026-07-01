@@ -6,7 +6,7 @@
 
 import cron from 'node-cron';
 import * as db from './db.js';
-import { sendMessage } from './bot.js';
+import { sendMessage, queueMessage } from './bot.js';
 import { syncLocalPhotosToSupabase } from './photo_sync.js';
 import path from 'path';
 import fs from 'fs';
@@ -15,15 +15,19 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TZ_JAKARTA = 'Asia/Jakarta';
 const SCHOOL_NAME = process.env.SCHOOL_NAME || 'SMK NU Darussalam';
-// 1. 08:30 WIB — Early Warning Absensi Kelas
+// 1. 08:30 WIB — Early Warning Absensi Kelas (Grup KBM)
 export async function runClassAttendanceCheck() {
   try {
-    console.log('[CRON] Running 08:30 WIB Class Attendance Check...');
+    console.log('[CRON] Running Class Attendance Check...');
     const today = new Date().toISOString().split('T')[0];
     const activeTP = await db.getActiveTahunPelajaran();
     const tpId = activeTP ? activeTP.id : 1;
 
     const groupJid = (process.env.SCHOOL_GROUP_JID || process.env.BROADCAST_GROUP_JID)?.trim() || null;
+    if (!groupJid) {
+      console.log('[CRON] Skip KBM check: No Group JID configured.');
+      return { ok: true, msg: 'Group JID not configured' };
+    }
 
     // Get all students to extract classes
     const allStudents = await db.getAllStudents();
@@ -45,19 +49,9 @@ export async function runClassAttendanceCheck() {
         daftar_kelas: classListStr
       }, fallbackMsg);
       
-      if (groupJid) {
-        await sendMessage(groupJid, msg);
-        console.log('[CRON] Sent class attendance warnings to Group JID.');
-      } else {
-        // Fallback: send warning to admins
-        const allowed = await db.getAllowedNumbers();
-        const admins = allowed.filter(n => n.role === 'admin');
-        for (const admin of admins) {
-          await sendMessage(admin.phone, msg + '\n\n_(Pesan ini dikirim ke Admin karena SCHOOL_GROUP_JID belum diatur)_');
-        }
-        console.log('[CRON] Sent class attendance warnings to admins.');
-      }
-      return { ok: true, msg: 'Peringatan absensi dikirim', missingClasses };
+      await sendMessage(groupJid, msg);
+      console.log(`[CRON] Sent class attendance warnings to Group JID: ${groupJid}`);
+      return { ok: true, msg: 'Peringatan absensi dikirim ke grup', missingClasses };
     } else {
       console.log('[CRON] All classes have reported attendance today.');
       return { ok: true, msg: 'Semua kelas sudah lapor absensi hari ini' };
@@ -68,13 +62,19 @@ export async function runClassAttendanceCheck() {
   }
 }
 
-// 2. 14:00 WIB — Pengingat Laporan Jurnal PKL (Ketua Kelompok)
+// 2. 14:00 WIB — Pengingat Laporan Jurnal PKL (Grup KBM/Umum)
 export async function runPklReportCheck() {
   try {
-    console.log('[CRON] Running 14:00 WIB PKL Report Check...');
+    console.log('[CRON] Running PKL Report Check...');
     const today = new Date().toISOString().split('T')[0];
     const activeTP = await db.getActiveTahunPelajaran();
     const tpId = activeTP ? activeTP.id : 1;
+
+    const groupJid = process.env.BROADCAST_GROUP_JID?.trim() || null;
+    if (!groupJid) {
+      console.log('[CRON] Skip PKL report check: No Broadcast Group JID configured.');
+      return { ok: true, msg: 'Broadcast Group JID not configured' };
+    }
 
     // Get all groups
     const allGroups = (await db.getKelompokPkl()).filter(g => g.tahun_pelajaran_id === tpId);
@@ -86,25 +86,39 @@ export async function runPklReportCheck() {
 
     const missingGroups = allGroups.filter(g => !reportedPhones.includes(g.ketua_phone));
 
-    for (const group of missingGroups) {
-      const fallbackMsg = `⚠️ *PENGINGAT SIAKANUDA (PKL)*\n\nHalo Ketua Kelompok! Tim Anda di *${group.tempat_pkl}* terpantau belum melaporkan absensi dan jurnal kegiatan hari ini.\n\nSegera laporkan bukti foto dan jurnal kegiatan kelompok Anda via WhatsApp sebelum pukul *15:30 WIB* agar tidak tercatat alpa.\n\n_Ketik menu *4* untuk mulai pelaporan._`;
+    if (missingGroups.length > 0) {
+      // Format a consolidated list
+      const listStr = missingGroups.map((g, idx) => `${idx + 1}. *${g.tempat_pkl}*`).join('\n');
+      const fallbackMsg = `⚠️ *PENGINGAT LAPORAN PKL — SIAKANUDA*\n\nHalo teman-teman siswa PKL! Kelompok PKL di lokasi berikut terpantau *BELUM* melaporkan absensi & jurnal hari ini:\n\n${listStr}\n\nMohon ketua kelompok segera melaporkan bukti foto dan jurnal kelompok via WhatsApp sebelum batas akhir. Terima kasih!`;
+      
       const msg = await db.renderTemplate('pkl_report_reminder', {
-        tempat_pkl: group.tempat_pkl
+        tempat_pkl: 'beberapa lokasi (daftar terlampir)'
       }, fallbackMsg);
-      await sendMessage(group.ketua_phone, msg);
-      console.log(`[CRON] Sent PKL reminder to Ketua: ${group.ketua_phone} (${group.tempat_pkl})`);
+
+      let finalMsg = msg;
+      if (msg === fallbackMsg) {
+        finalMsg = fallbackMsg;
+      } else {
+        finalMsg = `${msg}\n\n📋 *Daftar Kelompok Belum Melapor:*\n${listStr}`;
+      }
+
+      await sendMessage(groupJid, finalMsg);
+      console.log(`[CRON] Sent consolidated PKL reminder to Group JID: ${groupJid}`);
+      return { ok: true, msg: `Selesai memeriksa, pengingat grup dikirim`, missingCount: missingGroups.length };
+    } else {
+      console.log('[CRON] All PKL groups have reported today.');
+      return { ok: true, msg: 'Semua kelompok PKL sudah lapor hari ini' };
     }
-    return { ok: true, msg: `Selesai memeriksa, ${missingGroups.length} pengingat dikirim`, sentCount: missingGroups.length };
   } catch (err) {
-    console.error('[CRON] Error in 14:00 job:', err);
+    console.error('[CRON] Error in PKL report check job:', err);
     throw err;
   }
 }
 
-// 3. 15:30 WIB — Eskalasi Peringatan PKL (Guru Pembimbing)
+// 3. 16:00 WIB — Eskalasi Peringatan PKL (Guru Pembimbing)
 export async function runPklEscalationCheck() {
   try {
-    console.log('[CRON] Running 15:30 WIB PKL Escalation Check...');
+    console.log('[CRON] Running PKL Escalation Check...');
     const today = new Date().toISOString().split('T')[0];
     const activeTP = await db.getActiveTahunPelajaran();
     const tpId = activeTP ? activeTP.id : 1;
@@ -117,22 +131,49 @@ export async function runPklEscalationCheck() {
 
     const missingGroups = allGroups.filter(g => !reportedPhones.includes(g.ketua_phone));
 
-    let sentCount = 0;
-    for (const group of missingGroups) {
-      if (group.pembimbing_phone) {
-        const fallbackMsg = `⚠️ *ESKALASI PENGINGAT PKL — SIAKANUDA*\n\nBapak/Ibu Guru Pembimbing, mohon izin menginformasikan bahwa kelompok PKL di *${group.tempat_pkl}* (Ketua: ${group.ketua_phone}) *BELUM* mengirimkan laporan harian hingga pukul 15:30 WIB.\n\nSistem telah mengingatkan ketua kelompok pada pukul 14:00 WIB. Mohon berkenan untuk melakukan konfirmasi/kroscek dengan kelompok siswa bersangkutan.\n\nTerima kasih atas bantuan Bapak/Ibu.`;
-        const msg = await db.renderTemplate('pkl_escalation_warning', {
-          tempat_pkl: group.tempat_pkl,
-          ketua_phone: group.ketua_phone
-        }, fallbackMsg);
-        await sendMessage(group.pembimbing_phone, msg);
-        console.log(`[CRON] Sent PKL escalation to Pembimbing: ${group.pembimbing_phone} for ${group.tempat_pkl}`);
-        sentCount++;
+    if (missingGroups.length > 0) {
+      const teacherGroupJid = process.env.TEACHER_GROUP_JID?.trim() || process.env.SCHOOL_GROUP_JID?.trim() || null;
+      if (!teacherGroupJid) {
+        console.log('[CRON] Skip PKL escalation: No Teacher Group JID configured.');
+        return { ok: true, msg: 'Teacher Group JID not configured' };
       }
+
+      // Map allowed numbers to get teacher names
+      const allowed = await db.getAllowedNumbers();
+      const teachersMap = {};
+      const cleanPhone = (p) => p ? String(p).replace(/\D/g, '').replace(/^(0|62)/, '') : '';
+      for (const t of allowed) {
+        teachersMap[cleanPhone(t.phone)] = t.name;
+      }
+
+      // Consolidate all missing groups into one list
+      const fallbackMsg = `⚠️ *ESKALASI PENGINGAT PKL — SIAKANUDA*\n\nYth. Bapak/Ibu Dewan Guru & Pembimbing, mohon izin menginformasikan bahwa hingga pukul 16:00 WIB hari ini, kelompok PKL berikut *BELUM* mengirimkan laporan harian.\n\nSistem telah mengirimkan teguran otomatis ke Grup Siswa pada pukul 14:00 WIB sebelumnya. Mohon berkenan bagi Bapak/Ibu Pembimbing yang bersangkutan untuk melakukan konfirmasi/kroscek.\n\nTerima kasih.`;
+      const baseMsg = await db.renderTemplate('pkl_escalation_warning', {
+        tempat_pkl: 'beberapa lokasi (daftar terlampir)',
+        ketua_phone: 'daftar terlampir'
+      }, fallbackMsg);
+      
+      const listStr = missingGroups.map((g, idx) => {
+        let pembimbingName = '-';
+        if (g.pembimbing_phone) {
+          pembimbingName = teachersMap[cleanPhone(g.pembimbing_phone)] || g.pembimbing_phone;
+        }
+        return `${idx + 1}. *${g.tempat_pkl}*\n   👨‍🏫 Pembimbing: ${pembimbingName}\n   👨‍🎓 Ketua: ${g.ketua_phone || '-'}`;
+      }).join('\n');
+      
+      const msg = `${baseMsg}\n\n📋 *Daftar Kelompok Belum Melapor:*\n${listStr}`;
+
+      // Broadcast single message to Teacher Group
+      await sendMessage(teacherGroupJid, msg);
+      console.log(`[CRON] Sent PKL escalation to Teacher Group: ${teacherGroupJid} for ${missingGroups.length} groups`);
+      
+      return { ok: true, msg: `Eskalasi massal dikirim ke grup guru`, sentCount: 1 };
+    } else {
+      console.log('[CRON] All PKL groups have reported today.');
+      return { ok: true, msg: 'Semua kelompok PKL sudah lapor hari ini' };
     }
-    return { ok: true, msg: `Selesai memproses, ${sentCount} eskalasi dikirim`, sentCount };
   } catch (err) {
-    console.error('[CRON] Error in 15:30 job:', err);
+    console.error('[CRON] Error in escalation job:', err);
     throw err;
   }
 }

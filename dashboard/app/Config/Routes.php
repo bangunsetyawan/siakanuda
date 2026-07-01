@@ -70,6 +70,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     // WhatsApp Bot Settings
     $routes->get('whatsapp-settings', 'WhatsappSettings::index');
     $routes->post('whatsapp-settings/logout', 'WhatsappSettings::logout');
+    $routes->post('whatsapp-settings/test-bot', 'WhatsappSettings::testBot');
     $routes->post('whatsapp-settings/update-templates', 'WhatsappSettings::updateTemplates');
     $routes->post('whatsapp-settings/update-cron', 'WhatsappSettings::updateCron');
     $routes->post('whatsapp-settings/update-groups', 'WhatsappSettings::updateGroups');
@@ -104,6 +105,16 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->post('pkl/resend-broadcast', 'Pkl::resendBroadcast');
     $routes->post('pkl/delete-all-reports', 'Pkl::deleteAllReports');
     $routes->post('pkl/reset-all-ketua-passwords', 'Pkl::resetAllKetuaPasswords');
+    $routes->post('pkl/broadcast-recap', 'Pkl::broadcastRecap');
+
+
+    // PKL Monitoring
+    $routes->get('pkl/monitoring',                'Pkl::monitoring');
+    $routes->get('pkl/monitoring/add',            'Pkl::addMonitoring');
+    $routes->get('pkl/monitoring/edit/(:num)',     'Pkl::editMonitoring/$1');
+    $routes->post('pkl/monitoring/store',         'Pkl::storeMonitoring');
+    $routes->post('pkl/monitoring/update/(:num)', 'Pkl::updateMonitoring/$1');
+    $routes->post('pkl/monitoring/delete/(:num)', 'Pkl::deleteMonitoring/$1');
 
     // Violations (Poin Pelanggaran)
     $routes->get('violations', 'Violation::index');
@@ -133,23 +144,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
 
     // API: Holiday status today (for JS dashboard label)
     $routes->get('api/holiday-status', 'KalenderAkademik::todayStatus');
-
-    // --- BKK & TRACER STUDY MODULE ---
-    $routes->group('bkk', function($routes) {
-        $routes->get('dashboard', 'Bkk::index');
-        $routes->get('data_alumni', 'Bkk::data_alumni');
-        $routes->get('mitra_industri', 'Bkk::mitra_industri');
-        $routes->get('mou_iduka', 'Bkk::mou_iduka');
-        $routes->get('kunjungan_industri', 'Bkk::kunjungan_industri');
-
-        // CRUD Routes (Form POST)
-        $routes->post('store_alumni', 'Bkk::store_alumni');
-        $routes->post('delete_alumni', 'Bkk::delete_alumni');
-
-        $routes->post('store_mou', 'Bkk::store_mou');
-        $routes->post('delete_mou', 'Bkk::delete_mou');
-
-        $routes->post('store_kunjungan', 'Bkk::store_kunjungan');
-        $routes->post('delete_kunjungan', 'Bkk::delete_kunjungan');
-    });
 });
+
+// URL Shortener Internal (Public access)
+$routes->get('p/(:segment)', 'Pkl::shortLink/$1');

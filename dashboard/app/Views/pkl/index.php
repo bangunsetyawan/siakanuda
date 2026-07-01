@@ -1,6 +1,124 @@
 <?= $this->extend('layouts/template') ?>
 
 <?= $this->section('content') ?>
+
+<!-- Custom Styles for Premium Mobile Responsiveness on PKL Monitoring -->
+<style>
+    @media (max-width: 767.98px) {
+        .content-header h1 {
+            font-size: 20px !important;
+            text-align: center;
+        }
+        .content-header p {
+            font-size: 11.5px !important;
+            text-align: center;
+            margin-bottom: 12px !important;
+        }
+        /* Stack search and filters cleanly */
+        .content-header .container-fluid {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            padding: 0 4px !important;
+        }
+        .content-header .d-flex.align-items-center {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            width: 100% !important;
+            gap: 8px !important;
+        }
+        .content-header .input-group {
+            width: 100% !important;
+            margin-right: 0 !important;
+        }
+        .content-header form {
+            width: 100% !important;
+            margin-right: 0 !important;
+            display: block !important;
+        }
+        .content-header form input[type="date"] {
+            width: 100% !important;
+            margin-right: 0 !important;
+            display: block !important;
+            height: 36px !important;
+            font-size: 14px !important;
+        }
+        .content-header form button {
+            width: 100% !important;
+            margin-top: 6px;
+        }
+        .content-header .btn {
+            width: 100% !important;
+            padding: 6px 12px !important;
+            font-size: 13px !important;
+            margin-bottom: 4px;
+        }
+
+        /* Summary Stats Grid Adjustments */
+        .row.mb-3 {
+            margin-left: -4px !important;
+            margin-right: -4px !important;
+            gap: 8px !important;
+        }
+        .row.mb-3 > [class*="col-"] {
+            padding-left: 4px !important;
+            padding-right: 4px !important;
+            margin-bottom: 0 !important;
+            flex: 0 0 100% !important;
+            max-width: 100% !important;
+        }
+        .row.mb-3 .card {
+            margin-bottom: 0 !important;
+        }
+
+        /* Horizontal Scroll Table Constraints */
+        .table-responsive table {
+            border: 0 !important;
+        }
+        .table-responsive table th {
+            white-space: nowrap !important;
+            font-size: 11px !important;
+            padding: 10px 6px !important;
+            text-align: center !important;
+        }
+        .table-responsive table td {
+            font-size: 12px !important;
+            padding: 10px 8px !important;
+        }
+        /* Min widths for columns to make horizontal scroll work nicely */
+        .table-responsive table th:nth-child(1),
+        .table-responsive table td:nth-child(1) {
+            min-width: 40px !important; /* # */
+            text-align: center !important;
+        }
+        .table-responsive table th:nth-child(2),
+        .table-responsive table td:nth-child(2) {
+            min-width: 190px !important; /* Tempat DU/DI & Kelompok */
+            white-space: normal !important;
+        }
+        .table-responsive table th:nth-child(3),
+        .table-responsive table td:nth-child(3) {
+            min-width: 90px !important; /* Jam Lapor */
+            text-align: center !important;
+        }
+        .table-responsive table th:nth-child(4),
+        .table-responsive table td:nth-child(4) {
+            min-width: 190px !important; /* Status Kehadiran */
+            white-space: normal !important;
+            text-align: center !important;
+        }
+        .table-responsive table th:nth-child(5),
+        .table-responsive table td:nth-child(5) {
+            min-width: 120px !important; /* Jurnal & Foto */
+            text-align: center !important;
+        }
+        .table-responsive table th:nth-child(6),
+        .table-responsive table td:nth-child(6) {
+            min-width: 180px !important; /* Aksi */
+            text-align: center !important;
+        }
+    }
+</style>
+
 <div class="content-header p-0 mb-4">
     <div class="container-fluid d-flex justify-content-between align-items-center flex-wrap">
         <div>
@@ -28,7 +146,18 @@
                     <i class="fas fa-cog"></i> Pengaturan PKL
                 </button>
             <?php endif; ?>
+            <?php if ($userRole === 'admin'): ?>
+                <form action="<?= base_url('/pkl/broadcast-recap') ?>" method="post" onsubmit="return confirm('Apakah Anda yakin ingin mengirim rekapitulasi absensi PKL pada tanggal <?= date('d M Y', strtotime($date)) ?> ke Grup WA Guru?');" class="m-0">
+
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="date" value="<?= htmlspecialchars($date) ?>">
+                    <button type="submit" class="btn btn-success font-weight-bold btn-sm">
+                        <i class="fab fa-whatsapp mr-1"></i> Kirim Rekap WA
+                    </button>
+                </form>
+            <?php endif; ?>
             <form action="" method="get" class="form-inline m-0">
+
                 <input type="date" name="date" class="form-control form-control-sm mr-2" value="<?= htmlspecialchars($date) ?>" onchange="this.form.submit()">
                 <noscript><button type="submit" class="btn btn-outline-primary btn-sm">Pilih Tanggal</button></noscript>
             </form>
@@ -100,7 +229,7 @@
                 <tbody id="reportTableBody">
                     <?php if (empty($reports)): ?>
                         <tr>
-                            <td colspan="5" class="text-center text-secondary py-5">
+                            <td colspan="6" class="text-center text-secondary py-5">
                                 <i class="fas fa-folder-open mb-2" style="font-size: 32px;"></i>
                                 <p class="mb-0">Belum ada laporan PKL masuk untuk tanggal ini.</p>
                             </td>
@@ -305,6 +434,13 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div id="modal-kelompok-photo-container" class="mt-4" style="display: none;">
+                    <h6 class="font-weight-bold text-dark mb-2"><i class="fas fa-camera text-primary mr-1"></i> Foto Dokumentasi Kelompok</h6>
+                    <a id="modal-kelompok-photo-link" href="#" target="_blank">
+                        <img id="modal-kelompok-photo-img" src="" class="rounded border shadow-sm" style="max-width: 200px; max-height: 200px; object-fit: cover;">
+                    </a>
+                </div>
             </div>
             <div class="modal-footer bg-light border-top">
                 <button type="button" class="btn btn-secondary font-weight-bold rounded-lg px-4" data-dismiss="modal">Tutup</button>
@@ -422,6 +558,16 @@ function showReportDetail(report) {
 
             tbody.appendChild(tr);
         }
+    }
+
+    // Handle kelompok photo
+    const kelompokPhotoContainer = document.getElementById('modal-kelompok-photo-container');
+    if (report.photo_urls && report.photo_urls['kelompok']) {
+        document.getElementById('modal-kelompok-photo-link').href = report.photo_urls['kelompok'];
+        document.getElementById('modal-kelompok-photo-img').src = report.photo_urls['kelompok'];
+        if (kelompokPhotoContainer) kelompokPhotoContainer.style.display = 'block';
+    } else {
+        if (kelompokPhotoContainer) kelompokPhotoContainer.style.display = 'none';
     }
 
     // Show bootstrap modal

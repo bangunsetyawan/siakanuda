@@ -217,7 +217,7 @@ Untuk menghindari masalah di atas terulang, berikut SOP deploy ke production:
 tar -czf F:\Antigravity\update.tar.gz --exclude=".git" --exclude="node_modules" --exclude="sessions" --exclude="sessions_corrupt" --exclude="backups" --exclude=".env" --exclude="siakanuda.db" --exclude="uploads/pkl" --exclude=".tmp" --exclude="scratch" --exclude="siakanuda-apk" --exclude="test-results" --exclude="playwright-report" -C "F:\Antigravity" siakanuda
 
 # 2. Upload ke server
-scp F:\Antigravity\update.tar.gz smknuda@100.110.83.48:~/
+scp F:\Antigravity\update.tar.gz [SSH_USER]@[IP_SERVER_TAILSCALE]:~/
 ```
 
 ### Di SSH (Debian):

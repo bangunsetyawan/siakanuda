@@ -19,12 +19,12 @@ Server Debian dihubungkan ke infrastruktur jaringan sekolah menggunakan Switch M
                     ( Trunk / LAN )
                           │
             [ Switch TP-Link TL-SG3210 ]
-             ├── Server Debian (Lokal: 10.10.11.37 / Tailscale: 100.110.83.48) -> Port 8080 (CI4) & 7860 (Node.js API)
+             ├── Server Debian (Lokal: [IP_SERVER_LAN] / Tailscale: [IP_SERVER_TAILSCALE]) -> Port 8080 (CI4) & 7860 (Node.js API)
              ├── Access Point Wi-Fi Ujian
              └── Komputer Lab Sekolah
 ```
 
-* **IP Server Lokal:** `10.10.11.37` (atau `100.110.83.48` jika diakses via Tailscale)
+* **IP Server Lokal:** `[IP_SERVER_LAN]` (atau `[IP_SERVER_TAILSCALE]` jika diakses via Tailscale)
 * **Subnet Mask:** `255.255.254.0` (`/23`)
 * **Gateway/DNS:** Dikelola oleh Mikrotik. IP server diset permanen/statis melalui DHCP Lease Reservation pada Winbox Mikrotik.
 
@@ -74,13 +74,13 @@ Proyek diletakkan pada folder `/home/smknuda/siakanuda/`.
 ### Root `.env` (Node.js Bot WA) — `~/siakanuda/.env`
 Tambahkan alamat IP lokal server Debian di bagian bawah:
 ```env
-BASE_URL=http://10.10.11.37:7860   # ATAU http://100.110.83.48:7860 jika via Tailscale
+BASE_URL=http://[IP_SERVER_LAN]:7860   # ATAU http://[IP_SERVER_TAILSCALE]:7860 jika via Tailscale
 ```
 
 ### Dashboard `.env` (CodeIgniter 4) — `~/siakanuda/dashboard/.env`
 Sesuaikan URL akses dashboard agar mengarah ke port 8080 (CI4):
 ```env
-app.baseURL = 'http://10.10.11.37:8080/'   # ATAU 'http://100.110.83.48:8080/' jika via Tailscale
+app.baseURL = 'http://[IP_SERVER_LAN]:8080/'   # ATAU 'http://[IP_SERVER_TAILSCALE]:8080/' jika via Tailscale
 database.default.DBDriver = SQLite3
 database.default.database = ../../siakanuda.db
 WA_BOT_URL = 'http://127.0.0.1:7860'
@@ -171,10 +171,10 @@ Untuk mengelola server secara remote via SSH atau transfer update dari rumah:
    tar --exclude="node_modules" --exclude="dashboard/vendor" --exclude=".git" -czf update.tar.gz -C F:\Antigravity siakanuda
    
    # 2. Kirim via SCP menggunakan IP Tailscale
-   scp update.tar.gz smknuda@100.110.83.48:~/
+   scp update.tar.gz [SSH_USER]@[IP_SERVER_TAILSCALE]:~/
    
    # 3. SSH & Ekstrak di Debian
-   ssh smknuda@100.110.83.48
+   ssh [SSH_USER]@[IP_SERVER_TAILSCALE]
    tar -xzf update.tar.gz -C ~/
    sudo systemctl restart bot.siswa
    sudo systemctl restart siakadash

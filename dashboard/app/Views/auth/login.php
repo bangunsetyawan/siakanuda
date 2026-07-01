@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="utf-8">
@@ -336,32 +336,6 @@
             color: var(--text-muted);
         }
 
-        /* === BKK Button === */
-        .btn-bkk {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            width: 100%;
-            height: 2.875rem;
-            border: 2px solid var(--primary);
-            border-radius: var(--radius-md);
-            background: transparent;
-            color: var(--primary);
-            font-family: inherit;
-            font-size: 0.875rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        .btn-bkk:hover {
-            background: var(--primary);
-            color: #ffffff;
-            transform: translateY(-0.0625rem);
-            box-shadow: 0 0.25rem 0.75rem rgba(14, 122, 82, 0.15);
-        }
-
         /* === Footer === */
         .login-footer {
             text-align: center;
@@ -462,19 +436,24 @@
             </button>
         </div>
 
-        <form action="<?= base_url('/login') ?>" method="post">
+        <form action="<?= base_url('/login') ?>" method="post" autocomplete="off">
             <?= csrf_field() ?>
+            <input type="hidden" name="login_type" id="login_type" value="siswa">
+            
+            <!-- Honeypot untuk mengecoh Google Password Manager yang bandel -->
+            <input type="text" style="width:0;height:0;position:absolute;visibility:hidden;opacity:0" autocomplete="username">
+            <input type="password" style="width:0;height:0;position:absolute;visibility:hidden;opacity:0" autocomplete="current-password">
             
             <!-- Siswa Username (NISN) Input -->
             <div class="form-group" id="username-siswa-container">
                 <label class="form-label" for="username-siswa">NISN Siswa</label>
-                <input type="text" name="username" id="username-siswa" class="form-control" placeholder="Masukkan 10 digit NISN Anda" value="<?= old('username') ?>" required>
+                <input type="text" name="username_siswa" id="username-siswa" class="form-control" placeholder="Masukkan 10 digit NISN Anda" value="<?= old('username_siswa') ?>" required autocomplete="off">
             </div>
 
             <!-- Guru/Staf Dropdown Select -->
             <div class="form-group d-none" id="username-guru-container">
                 <label class="form-label" for="username-guru">Pilih Nama Guru / Staf</label>
-                <select id="username-guru" class="form-control" style="background-image: none;">
+                <select id="username-guru" name="username_guru" class="form-control" style="background-image: none;">
                     <option value="" disabled selected>-- Pilih Nama Anda --</option>
                     <?php if (!empty($teachers)): ?>
                         <?php foreach ($teachers as $t): ?>
@@ -494,7 +473,7 @@
             <div class="form-group">
                 <label class="form-label" for="password">Password *</label>
                 <div class="password-container">
-                    <input type="password" name="password" id="password" class="form-control" placeholder="Masukkan Password Anda" required>
+                    <input type="password" name="password" id="password" class="form-control" placeholder="Masukkan Password Anda" required autocomplete="new-password">
                     <button type="button" class="password-toggle" onclick="togglePassword()" aria-label="Toggle password visibility">
                         <i class="fas fa-eye" id="toggleIcon"></i>
                     </button>
@@ -510,14 +489,7 @@
             </a>
         </div>
 
-        <div class="divider">
-            <span>Atau</span>
-        </div>
 
-        <a href="<?= base_url('bkk/dashboard') ?>" class="btn-bkk">
-            <i class="fas fa-briefcase"></i>
-            Masuk Portal BKK
-        </a>
 
         <div class="login-footer">
             <p>Dikembangkan Oleh Tim TKJ SMKNUDA &copy; 2026</p>
@@ -546,27 +518,42 @@
             const containerGuru = document.getElementById('username-guru-container');
             const inputSiswa = document.getElementById('username-siswa');
             const selectGuru = document.getElementById('username-guru');
+            const loginType = document.getElementById('login_type');
 
             if (role === 'siswa') {
                 btnSiswa.classList.add('active');
                 btnGuru.classList.remove('active');
                 containerSiswa.classList.remove('d-none');
                 containerGuru.classList.add('d-none');
-                inputSiswa.setAttribute('name', 'username');
                 inputSiswa.required = true;
-                selectGuru.removeAttribute('name');
                 selectGuru.required = false;
+                if (loginType) loginType.value = 'siswa';
             } else {
                 btnGuru.classList.add('active');
                 btnSiswa.classList.remove('active');
                 containerGuru.classList.remove('d-none');
                 containerSiswa.classList.add('d-none');
-                selectGuru.setAttribute('name', 'username');
                 selectGuru.required = true;
-                inputSiswa.removeAttribute('name');
                 inputSiswa.required = false;
+                if (loginType) loginType.value = 'guru';
             }
         }
+
+        // Auto-restore tab after validation failure
+        document.addEventListener('DOMContentLoaded', function() {
+            const lastTab = "<?= old('login_type', 'siswa') ?>";
+            if (lastTab === 'guru') {
+                switchTab('guru');
+                // Restore selected guru if any
+                const lastUsername = "<?= old('username_guru') ?>";
+                if (lastUsername) {
+                    const select = document.getElementById('username-guru');
+                    if (select) select.value = lastUsername;
+                }
+            } else {
+                switchTab('siswa');
+            }
+        });
     </script>
 </body>
 </html>

@@ -8,6 +8,7 @@ use App\Models\AllowedNumberModel;
 use App\Models\StudentModel;
 use App\Models\AttendanceModel;
 use App\Models\SettingModel;
+use App\Models\MonitoringPklModel;
 
 class Pkl extends BaseController
 {
@@ -359,6 +360,21 @@ class Pkl extends BaseController
             return redirect()->to('/pkl')->with('error', 'Kelompok tidak ditemukan.');
         }
 
+        // --- TAMBAHAN KEAMANAN UNTUK MENCEGAH IDOR TAKEOVER ---
+        if ($isTakeover && in_array($role, ['guru', 'guru_mapel', 'guru_bk'])) {
+            $userPhone = (string) $session->get('phone');
+            $pembimbingPhone = (string) $group['pembimbing_phone'];
+            
+            // Standarisasi nomor ke 628 untuk perbandingan yang akurat
+            if (str_starts_with($userPhone, '08')) $userPhone = '628' . substr($userPhone, 2);
+            if (str_starts_with($pembimbingPhone, '08')) $pembimbingPhone = '628' . substr($pembimbingPhone, 2);
+            
+            if ($pembimbingPhone !== $userPhone) {
+                return redirect()->to('/pkl')->with('error', 'Akses ditolak. Anda hanya dapat mengisi laporan kelompok bimbingan Anda.');
+            }
+        }
+        // --------------------------------------------------------
+
         $settingModel = new SettingModel();
         if ($settingModel->getSetting('pkl_active', '1') !== '1') {
             return redirect()->to('/pkl')->with('error', 'Fitur laporan harian PKL sedang dinonaktifkan oleh Admin.');
@@ -426,12 +442,30 @@ class Pkl extends BaseController
                 return redirect()->back()->withInput()->with('error', 'Alasan tempat PKL libur/tutup wajib diisi.');
             }
         } else {
+            // Handle photo deletions
+            if ($this->request->getPost('delete_photo_kelompok')) {
+                unset($photoUrls['kelompok']);
+            }
+            foreach ($members as $name) {
+                $delName = 'delete_photo_' . preg_replace('/[^a-zA-Z0-9]/', '_', $name);
+                if ($this->request->getPost($delName)) {
+                    unset($photoUrls[$name]);
+                }
+            }
+
+            $hasHadir = false;
+            foreach ($members as $name) {
+                if (($attendanceInput[$name] ?? 'hadir') === 'hadir') {
+                    $hasHadir = true;
+                    break;
+                }
+            }
             $hasExistingKelompokPhoto = isset($photoUrls['kelompok']) && !empty($photoUrls['kelompok']);
             $fileKelompok = $this->request->getFile('photo_kelompok');
             $hasNewKelompokPhoto = $fileKelompok && $fileKelompok->isValid() && !$fileKelompok->hasMoved();
 
-            if (!$hasNewKelompokPhoto && !$hasExistingKelompokPhoto) {
-                return redirect()->back()->withInput()->with('error', 'Wajib mengunggah foto dokumentasi kelompok hari ini!');
+            if ($hasHadir && !$hasNewKelompokPhoto && !$hasExistingKelompokPhoto) {
+                return redirect()->back()->withInput()->with('error', 'Wajib mengunggah foto dokumentasi kelompok karena ada anggota yang Hadir!');
             }
 
             foreach ($members as $name) {
@@ -1333,6 +1367,541 @@ class Pkl extends BaseController
         }
 
         return redirect()->to('/pkl/groups')->with('success', $message);
+    }
+
+    public function broadcastRecap()
+    {
+        $session = session();
+        $role = $session->get('role');
+        if ($role !== 'admin') {
+            return redirect()->to('/dashboard')->with('error', 'Akses ditolak.');
+        }
+
+
+        $date = $this->request->getPost('date') ?: date('Y-m-d');
+
+        try {
+            $client = \Config\Services::curlrequest();
+            $response = $client->post('http://localhost:7860/api/pkl/broadcast-recap', [
+                'json' => [
+                    'date' => $date
+                ],
+                'timeout' => 12
+            ]);
+
+            $statusCode = $response->getStatusCode();
+            $body = json_decode($response->getBody(), true);
+
+            if ($statusCode === 200 && isset($body['ok'])) {
+                return redirect()->to('/pkl?date=' . $date)->with('success', 'Rekapitulasi absensi PKL berhasil dikirim ke antrean WhatsApp Grup Guru.');
+            } else {
+                $err = $body['error'] ?? 'Gagal mengirim rekap.';
+                return redirect()->to('/pkl?date=' . $date)->with('error', 'Error dari bot server: ' . $err);
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Failed to send PKL recap WA broadcast: ' . $e->getMessage());
+            return redirect()->to('/pkl?date=' . $date)->with('error', 'Gagal menghubungi bot server: ' . $e->getMessage());
+        }
+    }
+
+
+    /**
+     * Halaman Utama Monitoring PKL
+     */
+    public function monitoring()
+    {
+        $session = session();
+        $role = $session->get('role');
+        $userType = $session->get('user_type');
+        $phone = $session->get('phone');
+        $tpId = $this->getActiveTPId();
+
+        if (!empty($phone) && str_starts_with($phone, '08')) {
+            $phone = '628' . substr($phone, 2);
+        }
+
+        $monitoringPklModel = new MonitoringPklModel();
+        $kelompokPklModel = new KelompokPklModel();
+        $allowedNumberModel = new AllowedNumberModel();
+
+        // 1. Fetch available kelompok for input dropdown selection
+        if (in_array($role, ['admin', 'kepsek'])) {
+            $groups = $kelompokPklModel->where('tahun_pelajaran_id', $tpId)->orderBy('tempat_pkl', 'ASC')->findAll();
+        } elseif (in_array($role, ['guru', 'guru_mapel', 'guru_bk'])) {
+            $groups = $kelompokPklModel->where('tahun_pelajaran_id', $tpId)
+                                       ->where('pembimbing_phone', $phone)
+                                       ->orderBy('tempat_pkl', 'ASC')
+                                       ->findAll();
+        } else {
+            $groups = [];
+        }
+
+        // Fetch last monitoring date for each group
+        foreach ($groups as &$g) {
+            $lastMon = $monitoringPklModel->where('kelompok_pkl_id', $g['id'])
+                                          ->orderBy('tanggal', 'DESC')
+                                          ->first();
+            $g['last_monitoring'] = $lastMon ? date('d M Y', strtotime($lastMon['tanggal'])) : 'Belum pernah';
+        }
+
+        // 2. Fetch monitoring records with join
+        $db = \Config\Database::connect();
+        $builder = $db->table('monitoring_pkl');
+        $builder->select('monitoring_pkl.*, kelompok_pkl.tempat_pkl, kelompok_pkl.anggota');
+        $builder->join('kelompok_pkl', 'kelompok_pkl.id = monitoring_pkl.kelompok_pkl_id');
+        $builder->where('monitoring_pkl.tahun_pelajaran_id', $tpId);
+
+        // Filter based on role
+        if (in_array($role, ['admin', 'kepsek'])) {
+            // No filter, see all
+        } elseif (in_array($role, ['guru', 'guru_mapel', 'guru_bk'])) {
+            // Pembimbing sees their own input
+            $builder->where('monitoring_pkl.pembimbing_phone', $phone);
+        } else {
+            // Student sees their own group's monitoring
+            $group = null;
+            if (!empty($phone)) {
+                $group = $kelompokPklModel->where('ketua_phone', $phone)
+                                          ->where('tahun_pelajaran_id', $tpId)
+                                          ->first();
+            }
+            if (!$group) {
+                $studentName = $session->get('name');
+                if (!empty($studentName)) {
+                    $allGroups = $kelompokPklModel->where('tahun_pelajaran_id', $tpId)->findAll();
+                    foreach ($allGroups as $g) {
+                        $members = explode(',', $g['anggota']);
+                        $members = array_map('trim', $members);
+                        if (in_array($studentName, $members)) {
+                            $group = $g;
+                            break;
+                        }
+                    }
+                }
+            }
+            if ($group) {
+                $builder->where('monitoring_pkl.kelompok_pkl_id', $group['id']);
+            } else {
+                $builder->where('monitoring_pkl.id', -1);
+            }
+        }
+
+        $builder->orderBy('monitoring_pkl.tanggal', 'DESC');
+        $records = $builder->get()->getResultArray();
+
+        // 3. Parse photo urls and map pembimbing name
+        $teachers = $allowedNumberModel->findAll();
+        $teacherMap = [];
+        foreach ($teachers as $t) {
+            $teacherMap[$t['phone']] = $t['name'];
+        }
+
+        $parsedRecords = [];
+        foreach ($records as $r) {
+            $rawUrls = json_decode($r['photo_url'] ?: '[]', true) ?: [];
+            $urls = [];
+            foreach ($rawUrls as $url) {
+                $urls[] = get_photo_display_url($url);
+            }
+            $r['parsed_photo_urls'] = $urls;
+            $r['pembimbing_name'] = $teacherMap[$r['pembimbing_phone']] ?? $r['pembimbing_phone'];
+            $parsedRecords[] = $r;
+        }
+
+        $data = [
+            'title' => 'Monitoring PKL',
+            'records' => $parsedRecords,
+            'groups' => $groups,
+            'userRole' => $role,
+            'userPhone' => $phone
+        ];
+
+        return view('pkl/monitoring', $data);
+    }
+
+    /**
+     * Halaman Tambah Monitoring PKL (Form Input Page)
+     */
+    public function addMonitoring()
+    {
+        $session = session();
+        $role = $session->get('role');
+        $phone = $session->get('phone');
+        $tpId = $this->getActiveTPId();
+
+        if (!in_array($role, ['admin', 'kepsek', 'guru', 'guru_mapel', 'guru_bk'])) {
+            return redirect()->to('/dashboard')->with('error', 'Akses ditolak.');
+        }
+
+        if (!empty($phone) && str_starts_with($phone, '08')) {
+            $phone = '628' . substr($phone, 2);
+        }
+
+        $kelompokPklModel = new KelompokPklModel();
+        
+        // Fetch groups
+        if (in_array($role, ['admin', 'kepsek'])) {
+            $groups = $kelompokPklModel->where('tahun_pelajaran_id', $tpId)->orderBy('tempat_pkl', 'ASC')->findAll();
+        } else {
+            $groups = $kelompokPklModel->where('tahun_pelajaran_id', $tpId)
+                                       ->where('pembimbing_phone', $phone)
+                                       ->orderBy('tempat_pkl', 'ASC')
+                                       ->findAll();
+        }
+
+        $selectedGroupId = $this->request->getGet('group_id');
+
+        $data = [
+            'title' => 'Tambah Kunjungan Monitoring',
+            'groups' => $groups,
+            'selectedGroupId' => $selectedGroupId,
+            'userRole' => $role
+        ];
+
+        return view('pkl/monitoring_add', $data);
+    }
+
+    /**
+     * Halaman Edit Monitoring PKL (Form Edit Page)
+     */
+    public function editMonitoring($id)
+    {
+        $session = session();
+        $role = $session->get('role');
+        $phone = $session->get('phone');
+
+        if (!in_array($role, ['admin', 'kepsek', 'guru', 'guru_mapel', 'guru_bk'])) {
+            return redirect()->to('/dashboard')->with('error', 'Akses ditolak.');
+        }
+
+        if (!empty($phone) && str_starts_with($phone, '08')) {
+            $phone = '628' . substr($phone, 2);
+        }
+
+        $monitoringPklModel = new MonitoringPklModel();
+        $kelompokPklModel = new KelompokPklModel();
+
+        $record = $monitoringPklModel->find($id);
+        if (!$record) {
+            return redirect()->to('/pkl/monitoring')->with('error', 'Data monitoring tidak ditemukan.');
+        }
+
+        // Authorization check
+        $recordPembimbing = $record['pembimbing_phone'];
+        if (!empty($recordPembimbing) && str_starts_with($recordPembimbing, '08')) {
+            $recordPembimbing = '628' . substr($recordPembimbing, 2);
+        }
+        if (!in_array($role, ['admin', 'kepsek']) && $recordPembimbing !== $phone) {
+            return redirect()->to('/pkl/monitoring')->with('error', 'Akses ditolak. Anda tidak berhak mengedit data ini.');
+        }
+
+        $group = $kelompokPklModel->find($record['kelompok_pkl_id']);
+
+        $rawUrls = json_decode($record['photo_url'] ?: '[]', true) ?: [];
+        $urls = [];
+        foreach ($rawUrls as $url) {
+            $urls[] = get_photo_display_url($url);
+        }
+        $record['parsed_photo_urls'] = $urls;
+
+        $data = [
+            'title' => 'Edit Kunjungan Monitoring',
+            'record' => $record,
+            'group' => $group,
+            'userRole' => $role
+        ];
+
+        return view('pkl/monitoring_edit', $data);
+    }
+
+    /**
+     * Simpan Data Monitoring Baru
+     */
+    public function storeMonitoring()
+    {
+        $session = session();
+        $role = $session->get('role');
+        $phone = $session->get('phone');
+        $tpId = $this->getActiveTPId();
+
+        if (!in_array($role, ['admin', 'kepsek', 'guru', 'guru_mapel', 'guru_bk'])) {
+            return redirect()->to('/dashboard')->with('error', 'Akses ditolak.');
+        }
+
+        if (!empty($phone) && str_starts_with($phone, '08')) {
+            $phone = '628' . substr($phone, 2);
+        }
+
+        $kelompokPklId = $this->request->getPost('kelompok_pkl_id');
+        $tanggal = $this->request->getPost('tanggal') ?: date('Y-m-d');
+        $catatan = $this->request->getPost('catatan');
+
+        if (empty($kelompokPklId)) {
+            return redirect()->back()->withInput()->with('error', 'Kelompok PKL wajib dipilih.');
+        }
+        if (empty($catatan) || strlen(trim($catatan)) < 10) {
+            return redirect()->back()->withInput()->with('error', 'Catatan monitoring wajib diisi minimal 10 karakter.');
+        }
+
+        $kelompokPklModel = new KelompokPklModel();
+        $group = $kelompokPklModel->find($kelompokPklId);
+        if (!$group) {
+            return redirect()->back()->withInput()->with('error', 'Kelompok PKL tidak ditemukan.');
+        }
+
+        if (!in_array($role, ['admin', 'kepsek'])) {
+            $groupPembimbing = $group['pembimbing_phone'];
+            if (!empty($groupPembimbing) && str_starts_with($groupPembimbing, '08')) {
+                $groupPembimbing = '628' . substr($groupPembimbing, 2);
+            }
+            if ($groupPembimbing !== $phone) {
+                return redirect()->back()->withInput()->with('error', 'Anda bukan pembimbing kelompok ini.');
+            }
+        }
+
+        $uploadPath = ROOTPATH . '../dashboard/public/uploads/monitoring';
+        if (!is_dir($uploadPath)) {
+            mkdir($uploadPath, 0777, true);
+        }
+
+        $photoUrls = [];
+        $files = $this->request->getFiles();
+        if (isset($files['photo_monitoring'])) {
+            $index = 0;
+            foreach ($files['photo_monitoring'] as $file) {
+                if ($file->isValid() && !$file->hasMoved()) {
+                    if (!in_array($file->getMimeType(), ['image/jpeg', 'image/png', 'image/jpg'])) {
+                        return redirect()->back()->withInput()->with('error', 'Format foto harus JPG atau PNG.');
+                    }
+                    if ($file->getSizeByUnit('mb') > 5) {
+                        return redirect()->back()->withInput()->with('error', 'Ukuran foto maksimal 5MB.');
+                    }
+                    $newName = 'mon_' . $file->getRandomName();
+                    $file->move($uploadPath, $newName);
+                    $photoUrls[] = '/uploads/monitoring/' . $newName;
+                    $index++;
+                }
+            }
+        }
+
+        $locationData = $this->request->getPost('location_data') ?: null;
+
+        $monitoringPklModel = new MonitoringPklModel();
+        $monitoringPklModel->insert([
+            'kelompok_pkl_id' => $kelompokPklId,
+            'tanggal' => $tanggal,
+            'pembimbing_phone' => $phone,
+            'catatan' => ucfirst(trim($catatan)),
+            'photo_url' => json_encode($photoUrls),
+            'location_data' => $locationData,
+            'tahun_pelajaran_id' => $tpId
+        ]);
+
+        // Broadcast WA notification to monitoring group
+        try {
+            $client = \Config\Services::curlrequest();
+            $client->post('http://localhost:7860/api/pkl/monitoring/broadcast', [
+                'json' => [
+                    'kelompok_pkl_id' => $kelompokPklId,
+                    'tanggal' => $tanggal,
+                    'catatan' => ucfirst(trim($catatan)),
+                    'pembimbing_phone' => $phone,
+                    'location_data' => $locationData,
+                    'photo_count' => count($photoUrls),
+                    'photo_urls' => $photoUrls,
+                    'is_update' => false
+                ],
+                'timeout' => 5
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Failed to send monitoring WA broadcast: ' . $e->getMessage());
+        }
+
+        return redirect()->to('/pkl/monitoring')->with('success', 'Data monitoring berhasil disimpan.');
+    }
+
+    /**
+     * Edit Data Monitoring
+     */
+    public function updateMonitoring($id)
+    {
+        $session = session();
+        $role = $session->get('role');
+        $phone = $session->get('phone');
+        
+        if (!in_array($role, ['admin', 'kepsek', 'guru', 'guru_mapel', 'guru_bk'])) {
+            return redirect()->to('/dashboard')->with('error', 'Akses ditolak.');
+        }
+
+        if (!empty($phone) && str_starts_with($phone, '08')) {
+            $phone = '628' . substr($phone, 2);
+        }
+
+        $monitoringPklModel = new MonitoringPklModel();
+        $record = $monitoringPklModel->find($id);
+        if (!$record) {
+            return redirect()->to('/pkl/monitoring')->with('error', 'Data monitoring tidak ditemukan.');
+        }
+
+        $recordPembimbing = $record['pembimbing_phone'];
+        if (!empty($recordPembimbing) && str_starts_with($recordPembimbing, '08')) {
+            $recordPembimbing = '628' . substr($recordPembimbing, 2);
+        }
+        if (!in_array($role, ['admin', 'kepsek']) && $recordPembimbing !== $phone) {
+            return redirect()->to('/pkl/monitoring')->with('error', 'Akses ditolak. Anda tidak berhak mengedit data ini.');
+        }
+
+        $tanggal = $this->request->getPost('tanggal') ?: $record['tanggal'];
+        $catatan = $this->request->getPost('catatan');
+
+        if (empty($catatan) || strlen(trim($catatan)) < 10) {
+            return redirect()->back()->withInput()->with('error', 'Catatan monitoring wajib diisi minimal 10 karakter.');
+        }
+
+        $photoUrls = json_decode($record['photo_url'] ?: '[]', true) ?: [];
+        $deletePhotos = $this->request->getPost('delete_photos') ?: [];
+        if (!empty($deletePhotos)) {
+            $newPhotoUrls = [];
+            foreach ($photoUrls as $index => $url) {
+                if (in_array($index, $deletePhotos)) {
+                    $filePath = ROOTPATH . '../dashboard/public' . $url;
+                    if (file_exists($filePath)) {
+                        @unlink($filePath);
+                    }
+                } else {
+                    $newPhotoUrls[] = $url;
+                }
+            }
+            $photoUrls = $newPhotoUrls;
+        }
+
+        $uploadPath = ROOTPATH . '../dashboard/public/uploads/monitoring';
+        if (!is_dir($uploadPath)) {
+            mkdir($uploadPath, 0777, true);
+        }
+
+        $files = $this->request->getFiles();
+        if (isset($files['photo_monitoring'])) {
+            $existingCount = count($photoUrls);
+            $index = 0;
+            foreach ($files['photo_monitoring'] as $file) {
+                if ($file->isValid() && !$file->hasMoved()) {
+                    if ($existingCount + $index >= 3) {
+                        break;
+                    }
+                    if (!in_array($file->getMimeType(), ['image/jpeg', 'image/png', 'image/jpg'])) {
+                        return redirect()->back()->withInput()->with('error', 'Format foto harus JPG or PNG.');
+                    }
+                    if ($file->getSizeByUnit('mb') > 5) {
+                        return redirect()->back()->withInput()->with('error', 'Ukuran foto maksimal 5MB.');
+                    }
+                    $newName = 'mon_' . $file->getRandomName();
+                    $file->move($uploadPath, $newName);
+                    $photoUrls[] = '/uploads/monitoring/' . $newName;
+                    $index++;
+                }
+            }
+        }
+
+        $locationData = $this->request->getPost('location_data') ?: $record['location_data'];
+
+        $monitoringPklModel->update($id, [
+            'tanggal' => $tanggal,
+            'catatan' => ucfirst(trim($catatan)),
+            'photo_url' => json_encode($photoUrls),
+            'location_data' => $locationData
+        ]);
+
+        // Broadcast WA notification to monitoring group (update)
+        try {
+            $client = \Config\Services::curlrequest();
+            $client->post('http://localhost:7860/api/pkl/monitoring/broadcast', [
+                'json' => [
+                    'kelompok_pkl_id' => $record['kelompok_pkl_id'],
+                    'tanggal' => $tanggal,
+                    'catatan' => ucfirst(trim($catatan)),
+                    'pembimbing_phone' => $phone,
+                    'location_data' => $locationData,
+                    'photo_count' => count($photoUrls),
+                    'photo_urls' => $photoUrls,
+                    'is_update' => true
+                ],
+                'timeout' => 5
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Failed to send monitoring WA broadcast (update): ' . $e->getMessage());
+        }
+
+        return redirect()->to('/pkl/monitoring')->with('success', 'Data monitoring berhasil diperbarui.');
+    }
+
+    /**
+     * Hapus Data Monitoring
+     */
+    public function deleteMonitoring($id)
+    {
+        $session = session();
+        $role = $session->get('role');
+        $phone = $session->get('phone');
+
+        if (!in_array($role, ['admin', 'kepsek', 'guru', 'guru_mapel', 'guru_bk'])) {
+            return redirect()->to('/dashboard')->with('error', 'Akses ditolak.');
+        }
+
+        if (!empty($phone) && str_starts_with($phone, '08')) {
+            $phone = '628' . substr($phone, 2);
+        }
+
+        $monitoringPklModel = new MonitoringPklModel();
+        $record = $monitoringPklModel->find($id);
+        if (!$record) {
+            return redirect()->to('/pkl/monitoring')->with('error', 'Data monitoring tidak ditemukan.');
+        }
+
+        $recordPembimbing = $record['pembimbing_phone'];
+        if (!empty($recordPembimbing) && str_starts_with($recordPembimbing, '08')) {
+            $recordPembimbing = '628' . substr($recordPembimbing, 2);
+        }
+        if (!in_array($role, ['admin', 'kepsek']) && $recordPembimbing !== $phone) {
+            return redirect()->to('/pkl/monitoring')->with('error', 'Akses ditolak. Anda tidak berhak menghapus data ini.');
+        }
+
+        $photoUrls = json_decode($record['photo_url'] ?: '[]', true) ?: [];
+        foreach ($photoUrls as $url) {
+            $filePath = ROOTPATH . '../dashboard/public' . $url;
+            if (file_exists($filePath)) {
+                @unlink($filePath);
+            }
+        }
+
+        $monitoringPklModel->delete($id);
+
+        return redirect()->to('/pkl/monitoring')->with('success', 'Data monitoring berhasil dihapus.');
+    }
+
+    public function shortLink($id)
+    {
+        // Sanitize input
+        $id = preg_replace('/[^a-zA-Z0-9]/', '', $id);
+        if (empty($id) || strlen($id) !== 6) return redirect()->to('/');
+        
+        $dirs = [FCPATH . 'uploads/pkl/', FCPATH . 'uploads/monitoring/'];
+        foreach ($dirs as $dir) {
+            if (is_dir($dir)) {
+                $files = scandir($dir);
+                foreach ($files as $file) {
+                    if ($file !== '.' && $file !== '..') {
+                        // Check if the short hash exists in the filename exactly after the underscore
+                        if (strpos($file, '_' . $id) !== false) {
+                            $subDir = basename($dir);
+                            // Redirect directly to the file
+                            return redirect()->to(base_url("uploads/{$subDir}/" . $file));
+                        }
+                    }
+                }
+            }
+        }
+        return redirect()->to('/');
     }
 }
 

@@ -66,6 +66,8 @@ class WhatsappSettings extends BaseController
         // 5. Fetch Active Group JIDs (Populated from Node.js status API)
         $broadcastGroupJid = $botStatus['broadcast_group_jid'] ?? '';
         $schoolGroupJid = $botStatus['school_group_jid'] ?? '';
+        $teacherGroupJid = $botStatus['teacher_group_jid'] ?? '';
+        $monitoringGroupJid = $botStatus['monitoring_group_jid'] ?? '';
         // 6. Fetch Broadcast Targets Settings
         $broadcastTargets = [];
         $settings = $db->table('system_settings')->like('key', 'broadcast_pkl_')->get()->getResultArray();
@@ -82,6 +84,8 @@ class WhatsappSettings extends BaseController
             'whitelist' => $whitelist,
             'broadcastGroupJid' => $broadcastGroupJid,
             'schoolGroupJid' => $schoolGroupJid,
+            'teacherGroupJid' => $teacherGroupJid,
+            'monitoringGroupJid' => $monitoringGroupJid,
             'broadcastTargets' => $broadcastTargets
         ];
 
@@ -106,6 +110,35 @@ class WhatsappSettings extends BaseController
             }
         } catch (\Exception $e) {
             return redirect()->to('/whatsapp-settings')->with('error', 'Gagal berkomunikasi dengan layanan WhatsApp: ' . $e->getMessage());
+        }
+    }
+
+    public function testBot()
+    {
+        $this->checkAdmin();
+        $target = $this->request->getPost('target_number');
+        
+        if (empty($target)) {
+            return redirect()->to('/whatsapp-settings')->with('error', 'Nomor tujuan harus diisi.');
+        }
+
+        try {
+            $client = Services::curlrequest();
+            $response = $client->post($this->waBotUrl . '/api/bot/test', [
+                'json' => ['target' => $target],
+                'timeout' => 10,
+                'http_errors' => false
+            ]);
+
+            if ($response->getStatusCode() === 200) {
+                return redirect()->to('/whatsapp-settings')->with('success', 'Pesan tes berhasil dikirimkan ke ' . esc($target));
+            } else {
+                $body = json_decode($response->getBody(), true);
+                $apiError = $body['error'] ?? 'Gagal mengirim pesan tes. Pastikan bot dalam keadaan terhubung.';
+                return redirect()->to('/whatsapp-settings')->with('error', $apiError);
+            }
+        } catch (\Exception $e) {
+            return redirect()->to('/whatsapp-settings')->with('error', 'Gagal berkomunikasi dengan layanan bot: ' . $e->getMessage());
         }
     }
 
@@ -192,13 +225,17 @@ class WhatsappSettings extends BaseController
         $this->checkAdmin();
         $broadcastGroupJid = $this->request->getPost('broadcast_group_jid');
         $schoolGroupJid = $this->request->getPost('school_group_jid');
+        $teacherGroupJid = $this->request->getPost('teacher_group_jid');
+        $monitoringGroupJid = $this->request->getPost('monitoring_group_jid');
 
         try {
             $client = Services::curlrequest();
             $response = $client->post($this->waBotUrl . '/api/settings/groups', [
                 'json' => [
                     'broadcast_group_jid' => $broadcastGroupJid,
-                    'school_group_jid' => $schoolGroupJid
+                    'school_group_jid' => $schoolGroupJid,
+                    'teacher_group_jid' => $teacherGroupJid,
+                    'monitoring_group_jid' => $monitoringGroupJid
                 ],
                 'timeout' => 5,
                 'http_errors' => false
@@ -220,6 +257,7 @@ class WhatsappSettings extends BaseController
         $db = \Config\Database::connect();
         $db->transBegin();
         try {
+            // Targets 'pembimbing', 'orangtua', 'siswa' are deprecated but we can leave them in DB as inactive
             $targets = ['group', 'pembimbing', 'orangtua', 'instruktur', 'anggota'];
             foreach ($targets as $target) {
                 $val = $this->request->getPost("broadcast_pkl_$target") ? '1' : '0';

@@ -438,7 +438,7 @@
 
 | # | Test Case | Expected Result | Status | Catatan |
 |---|-----------|-----------------|:------:|---------|
-| 13.1 | Akses via LAN (WiFi Sekolah) | `http://[IP_SERVER_LOKAL]:8080` → dashboard berfungsi | [ ] | |
+| 13.1 | Akses via LAN (WiFi Sekolah) | `http://[IP_SERVER_LAN]:8080` → dashboard berfungsi | [ ] | |
 | 13.2 | Akses via Tailscale VPN | `http://[IP_SERVER_TAILSCALE]:8080` → berfungsi | [ ] | |
 | 13.3 | Akses via Cloudflare Tunnel | `https://domain.tld` → berfungsi | [ ] | |
 | 13.4 | Dynamic baseURL | `HTTP_HOST` otomatis mendeteksi domain/IP | [ ] | |

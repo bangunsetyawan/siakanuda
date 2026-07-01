@@ -1,6 +1,6 @@
 /**
  * execution/server.js
- * SIAKANUDA v1.11.1 - Sistem Informasi Akademik SMK NU Darussalam
+ * SIAKANUDA v1.21.0 - Sistem Informasi Akademik SMK NU Darussalam
  * Tier 3 — Express web server + Socket.io + WhatsApp bot entry point.
  *
  * Port 7860 default untuk background API (WA Bot, PDF, Cron, Sync).
@@ -33,7 +33,7 @@ import {
   renderTemplate, getBotTemplates, updateBotTemplate, getCronConfigs, updateCronConfig, addCronConfig, deleteCronConfig,
   runAsync, getDb
 } from './db.js';
-import { initAI } from './ai_processor.js';
+// import { initAI } from './ai_processor.js'; // Disabled: AI Command Parser tidak digunakan di produksi
 import { startBot, getBotStatus, sendMessage, queueMessage, setSocketIO, logoutSession } from './bot.js';
 import { startCronJobs, runClassAttendanceCheck, runPklReportCheck, runPklEscalationCheck, runAutoAlphaJob, loadAndScheduleCronJobs } from './cron_jobs.js';
 import { syncLocalPhotosToSupabase } from './photo_sync.js';
@@ -65,10 +65,12 @@ app.get('/ping', (_, res) => res.status(200).send('PONG — SIAKANUDA aktif'));
 app.get('/api/status', (_, res) => {
   res.json({ 
     ...getBotStatus(), 
-    school: SCHOOL_NAME, 
-    version: '1.11.1',
+    school: SCHOOL_NAME,
+    phone: process.env.WA_NUMBER || '',
+    version: '1.21.0',
     broadcast_group_jid: (process.env.BROADCAST_GROUP_JID || '').trim(),
-    school_group_jid: (process.env.SCHOOL_GROUP_JID || '').trim()
+    school_group_jid: (process.env.SCHOOL_GROUP_JID || '').trim(),
+    teacher_group_jid: (process.env.TEACHER_GROUP_JID || '').trim()
   });
 });
 
@@ -481,6 +483,7 @@ app.post('/api/pkl/broadcast', async (req, res) => {
     }
 
     // Parse JSON fields
+    const baseUrl = process.env.BASE_URL || 'http://localhost:8080';
     let attendanceData = {};
     let jurnalKegiatan = {};
     let photoUrls = [];
@@ -493,25 +496,57 @@ app.post('/api/pkl/broadcast', async (req, res) => {
           ? Object.values(photoUrls) 
           : [photoUrls].filter(Boolean));
 
+    const makeShortUrl = (fullUrl, base) => {
+      if (fullUrl.includes('/uploads/pkl/')) {
+        const parts = fullUrl.split('_');
+        if (parts.length > 1) {
+          const hash = parts[1].substring(0, 6);
+          return `${base}/p/${hash}`;
+        }
+      }
+      return fullUrl.startsWith('http') ? fullUrl : base + fullUrl;
+    };
+
+    let fotoListStr = '_(Tidak ada lampiran foto)_';
+    const hasObjPhoto = typeof photoUrls === 'object' && photoUrls !== null && !Array.isArray(photoUrls) && Object.keys(photoUrls).length > 0;
+    if (hasObjPhoto) {
+      fotoListStr = Object.entries(photoUrls).map(([key, url], i) => {
+        let label = key === 'kelompok' ? 'Foto Dokumentasi Kelompok' : 'Bukti ' + key;
+        const statusLabel = attendanceData[key] || '';
+        if (statusLabel === 'sakit') {
+            label = 'Surat Sakit (' + key + ')';
+        } else if (statusLabel === 'izin') {
+            label = 'Surat Izin (' + key + ')';
+        }
+        const shortUrl = makeShortUrl(url, baseUrl);
+        return `${i + 1}. ${label}\n   ${shortUrl}`;
+      }).join('\n');
+    } else if (urlsArray.length > 0) {
+      fotoListStr = urlsArray.map((url, i) => `${i + 1}. ${makeShortUrl(url, baseUrl)}`).join('\n');
+    }
+
     const members = kelompok.anggota ? kelompok.anggota.split(',').map(a => a.trim()).filter(Boolean) : [];
     
+    const cleanPhone = (p) => p ? String(p).replace(/\D/g, '').replace(/^(0|62)/, '') : '';
+
     // Fetch Ketua Name
     const students = await getAllStudents();
-    const ketuaObj = students.find(s => s.phone === ketuaPhone || String(s.nis) === String(ketuaPhone)) || { name: 'Ketua Kelompok' };
+    const cleanKetua = cleanPhone(ketuaPhone);
+    const ketuaObj = students.find(s => cleanPhone(s.phone) === cleanKetua || String(s.nis) === String(ketuaPhone)) || { name: 'Ketua Kelompok' };
     const senderName = ketuaObj.name;
     const ketuaClass = ketuaObj.class ? ` (${ketuaObj.class})` : '';
     const senderNameWithClass = `${senderName}${ketuaClass}`;
 
     // Fetch Pembimbing Name
     const allowed = await getAllowedNumbers();
-    const pembimbingObj = allowed.find(g => g.phone === kelompok.pembimbing_phone);
+    const cleanPembimbing = cleanPhone(kelompok.pembimbing_phone);
+    const pembimbingObj = allowed.find(g => cleanPhone(g.phone) === cleanPembimbing);
     const pembimbingName = pembimbingObj ? pembimbingObj.name : 'Belum ditentukan';
 
     const dateOptions = { timeZone: 'Asia/Jakarta', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     const timeOptions = { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false };
     const todayFormatted = new Date().toLocaleDateString('id-ID', dateOptions);
     const timeString = new Date().toLocaleTimeString('id-ID', timeOptions);
-    const baseUrl = process.env.BASE_URL || 'http://localhost:8080';
 
     const isLibur = report.status_libur ? true : false;
     const anggotaStr = members.join(', ');
@@ -555,36 +590,22 @@ app.post('/api/pkl/broadcast', async (req, res) => {
       jurnalLines = '_(tidak ada kegiatan / semua anggota absen)_';
     }
 
-    const fallbackMsgLibur =
-      `📢 *[SIAKANUDA] Laporan PKL Libur/Tutup*\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `📅 *Tanggal:* ${todayFormatted} (Pukul ${timeString} WIB)\n` +
-      `🏭 *Tempat PKL:* ${kelompok.tempat_pkl}\n` +
-      `👨‍🏫 *Pembimbing:* ${pembimbingName}\n` +
-      `👨‍🎓 *Ketua:* ${senderNameWithClass}\n` +
-      `👥 *Anggota:* ${anggotaStr}\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `ℹ️ *Status:* 🏢 LIBUR / TUTUP\n` +
-      `📝 *Alasan:* "${report.libur_reason || '-'}"\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `🔗 Detail: ${baseUrl}/pkl`;
+    // (Fallback messages are now defined inside getTargetMessage)
 
-    const fallbackMsgMasuk =
-      `📋 *[SIAKANUDA] Laporan PKL Masuk*\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `📅 *Tanggal:* ${todayFormatted} (Pukul ${timeString} WIB)\n` +
-      `🏭 *Tempat PKL:* ${kelompok.tempat_pkl}\n` +
-      `👨‍🏫 *Pembimbing:* ${pembimbingName}\n` +
-      `👨‍🎓 *Ketua:* ${senderNameWithClass}\n` +
-      `📊 *Kehadiran:* ${hadir.length} Hadir / ${members.length} Total | 📸 *Foto:* ${urlsArray.length}${report.location_data ? ` | 📍 *lokasi absensi:* ${report.location_data}` : ''}\n` +
-      absenList +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `📝 *Jurnal Kegiatan:*\n${jurnalLines}\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `🔗 Detail: ${baseUrl}/pkl`;
+    // Parse location data for clickable Google Maps link
+    let locationText = report.location_data || '-';
+    if (locationText && locationText.includes('GPS:')) {
+      const coordsMatch = locationText.match(/GPS:\s*(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
+      if (coordsMatch) {
+        const lat = coordsMatch[1];
+        const lng = coordsMatch[2];
+        // Replace with clickable Maps URL
+        locationText = `https://www.google.com/maps?q=${lat},${lng}`;
+      }
+    }
 
     const templateVars = {
-      tanggal: todayFormatted,
+      tanggal: `${todayFormatted} (Pukul ${timeString} WIB)`,
       waktu: timeString,
       tempat_pkl: kelompok.tempat_pkl,
       pembimbing: pembimbingName,
@@ -592,29 +613,9 @@ app.post('/api/pkl/broadcast', async (req, res) => {
       kehadiran: `${hadir.length} Hadir / ${members.length} Total | 📸 *Foto:* ${urlsArray.length}${report.location_data ? ` | 📍 *lokasi absensi:* ${report.location_data}` : ''}`,
       absen_list: absenList,
       jurnal_lines: isLibur ? (report.libur_reason || '-') : jurnalLines,
+      lokasi: locationText,
+      foto_urls: fotoListStr,
       url: `${baseUrl}/pkl`
-    };
-
-    const getTargetMessage = async (targetType) => {
-      const key = isLibur ? `pkl_libur_${targetType}` : `pkl_masuk_${targetType}`;
-      let msg = await renderTemplate(key, templateVars, isLibur ? fallbackMsgLibur : fallbackMsgMasuk);
-      
-      // Append photo links to broadcast message
-      if (urlsArray && urlsArray.length > 0) {
-        const photoLinksStr = urlsArray.map((url, i) => `${i + 1}. ${baseUrl}${url}`).join('\n');
-        msg += `\n\n📸 *Lampiran Foto:*\n${photoLinksStr}`;
-      }
-
-      // Prepend update prefix if it is an update/re-send
-      if (isUpdate) {
-        msg = `⚠️ *[#Perubahan Laporan]*\n\n` + msg;
-      }
-
-      // Add unique Ref ID for WA Anti-Spam
-      const refId = Math.random().toString(36).substring(2, 8).toUpperCase();
-      msg += `\n\n[Ref: ${refId}]`;
-
-      return msg;
     };
 
     // Fetch system settings for broadcast targets
@@ -626,48 +627,76 @@ app.post('/api/pkl/broadcast', async (req, res) => {
     // Helper to send message to queue
     const sendToQueue = async (targetPhone, targetType, targetLabel) => {
       if (queueMessage && targetPhone) {
+        const getTargetMessage = async (targetType) => {
+          const key = isLibur ? `pkl_libur_${targetType}` : `pkl_masuk_${targetType}`;
+          const fallbackMsgLibur =
+            `📢 *[SIAKANUDA] Laporan PKL Libur/Tutup*\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
+            `📅 *Tanggal:* ${todayFormatted} (Pukul ${timeString} WIB)\n` +
+            `🏭 *Tempat PKL:* ${kelompok.tempat_pkl}\n` +
+            `👨‍🏫 *Pembimbing:* ${pembimbingName}\n` +
+            `👨‍🎓 *Ketua:* ${senderNameWithClass}\n` +
+            `👥 *Anggota:* ${members.join(', ')}\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
+            `ℹ️ *Status:* 🏢 LIBUR / TUTUP\n` +
+            `📝 *Alasan:* "${report.libur_reason || '-'}"\n` +
+            `📍 *Lokasi Lapor:* ${locationText}`;
+
+          const fallbackMsgMasuk =
+            `📋 *[SIAKANUDA] Laporan PKL Masuk*\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
+            `📅 *Tanggal:* ${todayFormatted} (Pukul ${timeString} WIB)\n` +
+            `🏭 *Tempat PKL:* ${kelompok.tempat_pkl}\n` +
+            `👨‍🏫 *Pembimbing:* ${pembimbingName}\n` +
+            `👨‍🎓 *Ketua:* ${senderNameWithClass}\n` +
+            `📊 *Kehadiran:* ${hadir.length} Hadir / ${members.length} Total | 📸 *Foto:* ${urlsArray.length} | 📍 *Lokasi Absensi:* ${locationText}\n` +
+            absenList +
+            `━━━━━━━━━━━━━━━━━━━━\n` +
+            `📝 *Jurnal Kegiatan:*\n${jurnalLines}`;
+          
+          let msg = await renderTemplate(key, templateVars, isLibur ? fallbackMsgLibur : fallbackMsgMasuk);
+          
+          // Append photo links to broadcast message if not already present via template
+          if (urlsArray && urlsArray.length > 0 && !msg.includes('Lampiran Foto')) {
+            const photoLinksStr = urlsArray.map((url, i) => `${i + 1}. ${makeShortUrl(url, baseUrl)}`).join('\n');
+            msg += `\n\n📸 *Lampiran Foto:*\n${photoLinksStr}`;
+          }
+
+          // Prepend update prefix if it is an update/re-send
+          if (isUpdate) {
+            msg = `⚠️ *[#Perubahan Laporan]*\n\n` + msg;
+          }
+
+          // Add unique Ref ID for WA Anti-Spam
+          const refId = Math.random().toString(36).substring(2, 8).toUpperCase();
+          msg += `\n\n[Ref: ${refId}]`;
+
+          return msg;
+        };
+
         const msg = await getTargetMessage(targetType);
         queueMessage(targetPhone.includes('@') ? targetPhone : `${targetPhone}@s.whatsapp.net`, msg);
         console.log(`[BOT] [WEB-API] 📤 Broadcast masuk antrean: ${targetPhone} (${targetLabel})`);
       }
     };
 
-    // 1. Group Broadcast
+    // 1. Group PKL Broadcast
     if (settings['broadcast_pkl_group'] !== '0') {
       const broadcastGroupJid = (process.env.BROADCAST_GROUP_JID || process.env.SCHOOL_GROUP_JID)?.trim();
       if (broadcastGroupJid) {
-        await sendToQueue(broadcastGroupJid, 'grup', 'Grup Sekolah');
+        await sendToQueue(broadcastGroupJid, 'grup', 'Grup PKL/Sekolah');
       }
     }
 
-    // 2. Pembimbing Broadcast
-    if (settings['broadcast_pkl_pembimbing'] !== '0') {
-      if (kelompok.pembimbing_phone) await sendToQueue(kelompok.pembimbing_phone, 'pembimbing', 'Guru Pembimbing');
-    }
+    // 2. Grup Guru Broadcast (Dihapus atas permintaan: ABSENSI PKL HANYA DIKIRIM DI GRUB SISWA SAJA)
+    // const teacherGroupJid = process.env.TEACHER_GROUP_JID?.trim();
+    // if (teacherGroupJid) {
+    //   await sendToQueue(teacherGroupJid, 'grup_guru', 'Grup Guru Pembimbing');
+    // }
 
-    // 3. Instruktur Broadcast
+    // 3. Instruktur DU/DI Broadcast
     if (settings['broadcast_pkl_instruktur'] === '1') {
       if (kelompok.instruktur_phone) await sendToQueue(kelompok.instruktur_phone, 'instruktur', 'Instruktur DU/DI');
-    }
-
-    // 4. Orang Tua Broadcast
-    if (settings['broadcast_pkl_orangtua'] === '1') {
-      for (const member of members) {
-        const studentObj = students.find(s => s.name === member);
-        if (studentObj && studentObj.orang_tua_phone) {
-          await sendToQueue(studentObj.orang_tua_phone, 'ortu', `Orang Tua ${member}`);
-        }
-      }
-    }
-
-    // 5. Anggota PKL Broadcast
-    if (settings['broadcast_pkl_anggota'] === '1') {
-      for (const member of members) {
-        const studentObj = students.find(s => s.name === member);
-        if (studentObj && studentObj.phone) {
-          await sendToQueue(studentObj.phone, 'siswa', `Anggota PKL ${member}`);
-        }
-      }
     }
 
     res.json({ ok: true });
@@ -676,6 +705,267 @@ app.post('/api/pkl/broadcast', async (req, res) => {
     res.status(500).json({ error: 'Terjadi kesalahan internal server.' });
   }
 });
+
+// ─── PKL Monitoring Broadcast ─────────────────────────────────────────────────
+app.post('/api/pkl/monitoring/broadcast', async (req, res) => {
+  const ip = req.ip || req.connection.remoteAddress;
+  if (!ip.includes('127.0.0.1') && !ip.includes('::1') && ip !== 'localhost') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  try {
+    const { kelompok_pkl_id, tanggal, catatan, pembimbing_phone, location_data, photo_count, is_update, photo_urls } = req.body;
+    if (!kelompok_pkl_id || !tanggal) {
+      return res.status(400).json({ error: 'kelompok_pkl_id dan tanggal wajib diisi' });
+    }
+
+    // 1. Fetch kelompok data
+    const db = getDb();
+    const kelompok = await runAsync(() => db.prepare('SELECT * FROM kelompok_pkl WHERE id = ?').get(kelompok_pkl_id));
+    if (!kelompok) {
+      return res.status(404).json({ error: 'Kelompok PKL tidak ditemukan' });
+    }
+
+    // 2. Resolve pembimbing name
+    const allowed = await getAllowedNumbers();
+    const cleanPhone = (p) => p ? String(p).replace(/\D/g, '').replace(/^(0|62)/, '') : '';
+    const cleanPembimbing = cleanPhone(pembimbing_phone);
+    const pembimbingObj = allowed.find(g => cleanPhone(g.phone) === cleanPembimbing);
+    const pembimbingName = pembimbingObj ? pembimbingObj.name : (pembimbing_phone || 'Tidak diketahui');
+
+    // 3. Format date & time
+    const dateOptions = { timeZone: 'Asia/Jakarta', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const timeOptions = { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false };
+    const tanggalFormatted = new Date(tanggal + 'T00:00:00+07:00').toLocaleDateString('id-ID', dateOptions);
+    const timeString = new Date().toLocaleTimeString('id-ID', timeOptions);
+
+    // 4. Parse location for Google Maps link
+    let locationText = location_data || '-';
+    if (locationText && locationText.includes('GPS:')) {
+      const coordsMatch = locationText.match(/GPS:\s*(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
+      if (coordsMatch) {
+        locationText = `https://www.google.com/maps?q=${coordsMatch[1]},${coordsMatch[2]}`;
+      }
+    }
+
+    // 5. Parse photo URLs for clickable links
+    let fotoListStr = '';
+    const baseUrl = process.env.BASE_URL || 'https://siakanuda.qzz.io';
+    const publicBaseUrl = baseUrl.includes('localhost') ? 'https://siakanuda.qzz.io' : baseUrl;
+    const cleanPhotoCount = Number(photo_count || (photo_urls ? photo_urls.length : 0));
+
+    const makeShortUrl = (fullUrl, base) => {
+      if (fullUrl.includes('/uploads/monitoring/')) {
+        const parts = fullUrl.split('_');
+        // Format baru: mon_1719757302_abc123.jpg -> parts.length === 3
+        if (parts.length === 3) {
+          const hash = parts[2].substring(0, 6);
+          return `${base}/p/${hash}`;
+        }
+        // Jika format lama (mon_56_1719..._0.jpg), jangan dipendekkan karena tidak punya hash unik
+      }
+      return fullUrl.startsWith('http') ? fullUrl : base + fullUrl;
+    };
+
+    if (photo_urls && Array.isArray(photo_urls) && photo_urls.length > 0) {
+      fotoListStr = '\n' + photo_urls.map((url, i) => `${i + 1}. ${makeShortUrl(url, publicBaseUrl)}`).join('\n');
+    }
+
+    // Build broadcast message via template
+    const members = kelompok.anggota ? kelompok.anggota.split(',').map(a => a.trim()).filter(Boolean) : [];
+    const catatanPreview = catatan && catatan.length > 200 ? catatan.substring(0, 200) + '...' : (catatan || '-');
+
+    const templateVars = {
+      tanggal: tanggalFormatted,
+      waktu: timeString,
+      tempat_pkl: kelompok.tempat_pkl,
+      pembimbing: pembimbingName,
+      anggota: members.join(', ') || '-',
+      lokasi: locationText,
+      foto_count: String(cleanPhotoCount),
+      foto_urls: fotoListStr,
+      catatan: catatanPreview
+    };
+
+    const fallbackMsg =
+      `📋 *[SIAKANUDA] Laporan Monitoring PKL*\n\n` +
+      `📅 *Tanggal Kunjungan:* ${tanggalFormatted}\n` +
+      `🕐 *Waktu Lapor:* Pukul ${timeString} WIB\n` +
+      `🏭 *Tempat PKL:* ${kelompok.tempat_pkl}\n` +
+      `👨‍🏫 *Pembimbing:* ${pembimbingName}\n` +
+      `👥 *Anggota:* ${members.join(', ') || '-'}\n` +
+      `📍 *Lokasi:* ${locationText}\n` +
+      `📸 *Foto Dokumentasi:* ${cleanPhotoCount} foto${fotoListStr}\n\n` +
+      `📝 *Catatan Monitoring:*\n_${catatanPreview}_\n\n` +
+      `_Pesan ini dikirim otomatis oleh SIAKANUDA ~ SMK NU Darussalam_`;
+
+    let msg = await renderTemplate('pkl_monitoring_broadcast', templateVars, fallbackMsg);
+
+    // Prepend update prefix if editing existing record
+    if (is_update) {
+      msg = `⚠️ *[#Pembaruan Monitoring]*\n\n` + msg;
+    }
+
+    // Add unique Ref ID for WA Anti-Spam
+    const refId = Math.random().toString(36).substring(2, 8).toUpperCase();
+    msg += `\n\n[Ref: ${refId}]`;
+
+    // 6. Send to target group (Grup Khusus Guru)
+    const teacherGroupJid = process.env.TEACHER_GROUP_JID?.trim();
+    if (teacherGroupJid && queueMessage) {
+      queueMessage(teacherGroupJid, msg);
+      console.log(`[BOT] [WEB-API] 📤 Monitoring PKL broadcast ke grup: ${teacherGroupJid}`);
+    }
+
+    res.json({ ok: true, sent_to: teacherGroupJid });
+  } catch (e) {
+    console.error('[WEB-API] Monitoring broadcast error:', e);
+    res.status(500).json({ error: 'Terjadi kesalahan internal server.' });
+  }
+});
+
+// ─── PKL Consolidated Recap Broadcast ─────────────────────────────────────────
+app.post('/api/pkl/broadcast-recap', async (req, res) => {
+  const ip = req.ip || req.connection.remoteAddress;
+  if (!ip.includes('127.0.0.1') && !ip.includes('::1') && ip !== 'localhost') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  try {
+    const { date } = req.body;
+    if (!date) {
+      return res.status(400).json({ error: 'date wajib diisi' });
+    }
+
+    const teacherGroupJid = (process.env.TEACHER_GROUP_JID || process.env.SCHOOL_GROUP_JID || process.env.BROADCAST_GROUP_JID)?.trim();
+    if (!teacherGroupJid) {
+      return res.status(400).json({ error: 'Target JID Grup Guru (TEACHER_GROUP_JID) belum diatur di server.' });
+    }
+
+    const db = getDb();
+    const { getActiveTahunPelajaran } = await import('./db.js');
+    const activeTP = await getActiveTahunPelajaran();
+    const tpId = activeTP ? activeTP.id : 1;
+
+    const groups = await runAsync(() => db.prepare('SELECT * FROM kelompok_pkl WHERE tahun_pelajaran_id = ?').all(tpId));
+    const reports = await runAsync(() => db.prepare('SELECT * FROM attendance_pkl WHERE date = ? AND tahun_pelajaran_id = ?').all(date, tpId));
+    const allowed = await getAllowedNumbers();
+
+    if (groups.length === 0) {
+      return res.status(404).json({ error: 'Tidak ada kelompok PKL aktif pada Tahun Pelajaran ini.' });
+    }
+
+    const cleanPhone = (p) => p ? String(p).replace(/\D/g, '').replace(/^(0|62)/, '') : '';
+
+    const reportMap = new Map();
+    reports.forEach(r => {
+      reportMap.set(cleanPhone(r.ketua_phone), r);
+    });
+
+    let reportedList = [];
+    let notReportedList = [];
+
+    groups.forEach(g => {
+      const cleanKetua = cleanPhone(g.ketua_phone);
+      const rep = reportMap.get(cleanKetua);
+      const pembimbingObj = allowed.find(a => cleanPhone(a.phone) === cleanPhone(g.pembimbing_phone));
+      const pembimbingName = pembimbingObj ? pembimbingObj.name : 'Belum diatur';
+
+      if (rep) {
+        reportedList.push({
+          group: g,
+          report: rep,
+          pembimbingName
+        });
+      } else {
+        notReportedList.push({
+          group: g,
+          pembimbingName
+        });
+      }
+    });
+
+    reportedList.sort((a, b) => a.group.tempat_pkl.localeCompare(b.group.tempat_pkl));
+    notReportedList.sort((a, b) => a.group.tempat_pkl.localeCompare(b.group.tempat_pkl));
+
+    const totalGroups = groups.length;
+    const totalReported = reports.length;
+    const totalNotReported = totalGroups - totalReported;
+    const countMasuk = reportedList.filter(r => !r.report.status_libur).length;
+    const countLibur = reportedList.filter(r => r.report.status_libur).length;
+
+    let detailStr = '';
+    reportedList.forEach((item, idx) => {
+      const g = item.group;
+      const r = item.report;
+      const pName = item.pembimbingName;
+
+      if (r.status_libur) {
+        detailStr += `${idx + 1}. *${g.tempat_pkl}* (Pembimbing: ${pName}) : 🏢 *LIBUR* (Alasan: "${r.libur_reason || '-'}")\n`;
+      } else {
+        let attendance = {};
+        try { attendance = JSON.parse(r.attendance_data) || {}; } catch(_) {}
+
+        const members = g.anggota ? g.anggota.split(',').map(m => m.trim()).filter(Boolean) : [];
+        const hadir = members.filter(m => (attendance[m] || 'hadir') === 'hadir');
+        const sakit = members.filter(m => attendance[m] === 'sakit');
+        const izin = members.filter(m => attendance[m] === 'izin');
+        const alpha = members.filter(m => attendance[m] === 'alpha');
+
+        let stats = `${hadir.length} Hadir`;
+        if (sakit.length > 0) stats += ` | 🤒 Sakit: ${sakit.length}`;
+        if (izin.length > 0) stats += ` | 📋 Izin: ${izin.length}`;
+        if (alpha.length > 0) stats += ` | 🔴 Alpha: ${alpha.length}`;
+
+        detailStr += `${idx + 1}. *${g.tempat_pkl}* (Pembimbing: ${pName}) : ✅ *MASUK* (${stats})\n`;
+      }
+    });
+
+    let notReportedStr = '';
+    if (notReportedList.length > 0) {
+      notReportedStr = notReportedList.map((item, idx) => {
+        return `${idx + 1}. *${item.group.tempat_pkl}* (Pembimbing: ${item.pembimbingName})`;
+      }).join('\n');
+    } else {
+      notReportedStr = '✅ Semua kelompok sudah melapor.';
+    }
+
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateString = new Date(date + 'T00:00:00+07:00').toLocaleDateString('id-ID', dateOptions);
+    const tpName = activeTP ? activeTP.nama : '-';
+
+    const msg =
+      `📊 *[SIAKANUDA] REKAPITULASI ABSENSI HARIAN PKL*\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📅 *Hari/Tanggal:* ${dateString}\n` +
+      `🏫 *Tahun Ajaran:* ${tpName}\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `*Ringkasan Laporan:*\n` +
+      `• Total Kelompok: ${totalGroups}\n` +
+      `• Sudah Melapor : ✅ ${totalReported} (Masuk: ${countMasuk}, Libur: ${countLibur})\n` +
+      `• Belum Melapor : ⏳ ${totalNotReported}\n\n` +
+      `*Detail Kehadiran Kelompok (Sudah Lapor):*\n` +
+      (detailStr || '-(Belum ada)-\n') + `\n` +
+      `*Kelompok Belum Melapor:*\n` +
+      notReportedStr + `\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `_Pesan ini dikirim otomatis oleh SIAKANUDA ~ SMK NU Darussalam_`;
+
+    if (queueMessage) {
+      queueMessage(teacherGroupJid, msg);
+      console.log(`[BOT] [WEB-API] Consolidated PKL recap added to queue for group: ${teacherGroupJid}`);
+      res.json({ ok: true, target_group: teacherGroupJid });
+    } else {
+      res.status(500).json({ error: 'WhatsApp queueMessage function is not initialized' });
+    }
+
+  } catch (e) {
+    console.error('[WEB-API] PKL Recap Broadcast error:', e);
+    res.status(500).json({ error: 'Terjadi kesalahan internal server.' });
+  }
+});
+
+
 app.post('/api/attendance/broadcast', async (req, res) => {
   // Allow localhost only
   const ip = req.ip || req.connection.remoteAddress;
@@ -736,7 +1026,7 @@ app.post('/api/attendance/broadcast', async (req, res) => {
     fallbackMsg += `🔗 Detail: ${baseUrl}/attendance?date=${date}`;
 
     let broadcastMsg = await renderTemplate('kbm_attendance_broadcast', {
-      tanggal: todayFormatted,
+      tanggal: `${todayFormatted} (Pukul ${timeString} WIB)`,
       waktu: timeString,
       kelas: class_name,
       guru: teacher,
@@ -774,12 +1064,8 @@ app.post('/api/attendance/broadcast', async (req, res) => {
     const refId = Math.random().toString(36).substring(2, 8).toUpperCase();
     broadcastMsg += `\n\n[Ref: ${refId}]`;
 
-    // 2. Kirim ke Wali Kelas (wali_phone)
-    const { wali_phone } = req.body;
-
     let sentToGroup = false;
     let targetGroupJid = null;
-
     const kbmPromises = [];
 
     // 1. Broadcast to School KBM Group JID (SCHOOL_GROUP_JID) or fallback to BROADCAST_GROUP_JID
@@ -799,16 +1085,10 @@ app.post('/api/attendance/broadcast', async (req, res) => {
           })
       );
     }
-    if (wali_phone && sendMessage) {
-      kbmPromises.push(
-        sendMessage(`${wali_phone}@s.whatsapp.net`, broadcastMsg)
-          .then(() => console.log(`[BOT] [WEB-API] 📤 Laporan KBM berhasil dikirim ke Wali Kelas: ${wali_phone}`))
-          .catch((err) => console.error(`[BOT] [WEB-API] Gagal kirim laporan KBM ke Wali Kelas ${wali_phone}:`, err.message))
-      );
-    }
 
     // Kirim response 200 OK langsung ke dashboard PHP agar tidak timeout
     res.json({ ok: true, sent_to_group: true, target_group: targetGroupJid });
+
 
     // Jalankan seluruh proses pengiriman pesan WA di latar belakang secara asinkron
     (async () => {
@@ -904,7 +1184,7 @@ app.post('/api/attendance/broadcast', async (req, res) => {
               `🔗 Detail Laporan Lengkap: ${baseUrl}/attendance?date=${date}`;
               
             const consolidatedBroadcastMsg = await renderTemplate('kbm_consolidated_recap', {
-              tanggal: todayFormatted,
+              tanggal: `${todayFormatted} (Pukul ${timeString} WIB)`,
               waktu: timeString,
               nama_sekolah: SCHOOL_NAME,
               rekap_kelas: classListStr,
@@ -963,6 +1243,53 @@ app.post('/api/bot/logout', requireAuth, onlyAdmin, async (_, res) => {
   } catch (e) {
     console.error('[API] Logout error:', e);
     res.status(500).json({ error: 'Gagal memutus sesi WhatsApp.' });
+  }
+});
+
+app.post('/api/bot/test', requireAuth, onlyAdmin, async (req, res) => {
+  try {
+    const { target } = req.body;
+    if (!target) return res.status(400).json({ error: 'Target number required' });
+    
+    const botModule = await import('./bot.js');
+    const sock = botModule.getSockInstance();
+    
+    if (!sock) {
+      return res.status(400).json({ error: 'Bot belum terkoneksi ke WhatsApp.' });
+    }
+
+    let jid = target.trim();
+    
+    // Check if it's a Group JID
+    if (jid.endsWith('@g.us')) {
+      // Validate group
+      try {
+        const groupMetadata = await sock.groupMetadata(jid);
+        if (!groupMetadata) throw new Error('Not found');
+      } catch (err) {
+        return res.status(400).json({ error: `Grup JID ${jid} tidak ditemukan atau bot belum bergabung di dalam grup tersebut.` });
+      }
+    } else {
+      // Personal Number
+      let cleanTarget = jid.replace(/[^0-9]/g, '');
+      if (!cleanTarget.includes('@')) {
+        jid = cleanTarget + '@s.whatsapp.net';
+      }
+      
+      // Check if number exists on WA
+      const [result] = await sock.onWhatsApp(jid);
+      if (!result || !result.exists) {
+        return res.status(400).json({ error: `Nomor ${target} tidak terdaftar di WhatsApp. Periksa apakah Anda lupa angka 8 (contoh: 62853...)` });
+      }
+      jid = result.jid;
+    }
+    
+    const msg = `✅ *SIAKANUDA TEST MESSAGE*\n\nHalo, bot SIAKANUDA telah berhasil terhubung dan dapat mengirim pesan dengan lancar.\n\nWaktu test: ${new Date().toLocaleString('id-ID')}`;
+    
+    await botModule.sendMessage(jid, msg);
+    res.json({ ok: true, message: 'Pesan tes sedang dikirimkan.' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
@@ -1093,7 +1420,7 @@ app.post('/api/bot/join-group', requireAuth, onlyAdmin, async (req, res) => {
 /** POST /api/settings/groups — Update BROADCAST_GROUP_JID and SCHOOL_GROUP_JID in .env */
 app.post('/api/settings/groups', requireAuth, onlyAdmin, async (req, res) => {
   try {
-    const { broadcast_group_jid, school_group_jid } = req.body;
+    const { broadcast_group_jid, school_group_jid, teacher_group_jid } = req.body;
     const { fileURLToPath } = await import('url');
     const path = await import('path');
     const fs = await import('fs');
@@ -1119,6 +1446,15 @@ app.post('/api/settings/groups', requireAuth, onlyAdmin, async (req, res) => {
           envContent += `\nSCHOOL_GROUP_JID=${school_group_jid}`;
         }
         process.env.SCHOOL_GROUP_JID = school_group_jid;
+      }
+      
+      if (teacher_group_jid !== undefined) {
+        if (envContent.includes('TEACHER_GROUP_JID=')) {
+          envContent = envContent.replace(/TEACHER_GROUP_JID=.*/, `TEACHER_GROUP_JID=${teacher_group_jid}`);
+        } else {
+          envContent += `\nTEACHER_GROUP_JID=${teacher_group_jid}`;
+        }
+        process.env.TEACHER_GROUP_JID = teacher_group_jid;
       }
       
       fs.writeFileSync(envPath, envContent, 'utf8');
@@ -1450,7 +1786,7 @@ io.on('connection', (socket) => {
 
 async function boot() {
   await initSchema();
-  initAI();
+  // initAI(); // Disabled: AI Command Parser tidak digunakan di produksi
   setSocketIO(io);
   startCronJobs();
   

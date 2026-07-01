@@ -265,8 +265,8 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
                                 </div>
                                 <input type="hidden" name="location_data" id="location_data" value="<?= htmlspecialchars($todayReport['location_data'] ?? '') ?>">
                                 
-                                <div class="mt-3 form-group p-2 rounded" style="background: #f8fafc; border: 1px dashed #cbd5e1;">
-                                    <label class="font-weight-bold text-dark mb-1" style="font-size: 12px;">
+                                <div id="kelompok-photo-section" class="mt-3 form-group p-2 rounded" style="background: #f8fafc; border: 1px dashed #cbd5e1; display: <?= ($statusLiburValue === '1' || $statusLiburValue === 1) ? 'none' : 'block' ?>;">
+                                    <label class="font-weight-bold text-dark mb-1" style="font-size: 12px;" id="label_photo_kelompok">
                                         📸 Foto Dokumentasi Kelompok Hari Ini (Wajib)
                                     </label>
                                     <small class="d-block text-secondary mb-2" style="font-size: 11px;">Satu foto bersama seluruh anggota kelompok yang hadir.</small>
@@ -276,6 +276,10 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
                                                 <img src="<?= htmlspecialchars($todayReport['photo_urls']['kelompok']) ?>" class="rounded border shadow-xs" style="width: 70px; height: 70px; object-fit: cover;">
                                             </a>
                                             <small class="text-success d-block" style="font-size: 10px;"><i class="fas fa-check-circle"></i> Sudah upload foto kelompok.</small>
+                                            <div class="form-check mt-1">
+                                                <input class="form-check-input" type="checkbox" name="delete_photo_kelompok" value="1" id="del_kelompok">
+                                                <label class="form-check-label text-danger font-weight-bold" style="font-size: 11px; cursor: pointer;" for="del_kelompok"><i class="fas fa-trash-alt"></i> Hapus Foto Ini</label>
+                                            </div>
                                         </div>
                                     <?php endif; ?>
                                     <div class="custom-file" style="max-width: 280px;">
@@ -422,6 +426,10 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
                                                     <img src="<?= htmlspecialchars($todayReport['photo_urls'][$name]) ?>" class="rounded border shadow-xs" style="width: 70px; height: 70px; object-fit: cover;">
                                                 </a>
                                                 <small class="text-success d-block" style="font-size: 10px;"><i class="fas fa-check-circle"></i> Sudah upload foto bukti.</small>
+                                                <div class="form-check mt-1">
+                                                    <input class="form-check-input" type="checkbox" name="delete_photo_<?= htmlspecialchars($name_sanitized) ?>" value="1" id="del_<?= htmlspecialchars($name_sanitized) ?>">
+                                                    <label class="form-check-label text-danger font-weight-bold" style="font-size: 11px; cursor: pointer;" for="del_<?= htmlspecialchars($name_sanitized) ?>"><i class="fas fa-trash-alt"></i> Hapus Foto Ini</label>
+                                                </div>
                                             </div>
                                         <?php endif; ?>
 
@@ -690,6 +698,7 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
         const btnLibur = document.getElementById('btn-status-libur');
         const liburSection = document.getElementById('libur-reason-section');
         const attendanceSection = document.getElementById('attendance-section');
+        const photoSection = document.getElementById('kelompok-photo-section');
 
         const mainContent = document.getElementById('main-form-content');
         if (mainContent) mainContent.style.display = 'block';
@@ -707,6 +716,7 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
             
             if (liburSection) liburSection.style.display = 'block';
             if (attendanceSection) attendanceSection.style.display = 'none';
+            if (photoSection) photoSection.style.display = 'none';
         } else {
             btnMasuk.style.background = '#28a745';
             btnMasuk.style.color = 'white';
@@ -718,6 +728,7 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
             
             if (liburSection) liburSection.style.display = 'none';
             if (attendanceSection) attendanceSection.style.display = 'block';
+            if (photoSection) photoSection.style.display = 'block';
         }
         
         checkLocationFilled();
@@ -766,6 +777,28 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
         }
     });
 
+    function updateKelompokPhotoLabel() {
+        const labelEl = document.getElementById('label_photo_kelompok');
+        if (!labelEl) return;
+        let hasHadir = false;
+        document.querySelectorAll('input[name^="attendance["]:checked').forEach(radio => {
+            if (radio.value === 'hadir') hasHadir = true;
+        });
+        if (hasHadir) {
+            labelEl.innerHTML = '📸 Foto Dokumentasi Kelompok Hari Ini (Wajib)';
+            labelEl.classList.add('text-dark');
+            labelEl.classList.remove('text-secondary');
+        } else {
+            labelEl.innerHTML = '📸 Foto Dokumentasi Kelompok Hari Ini (Opsional)';
+            labelEl.classList.remove('text-dark');
+            labelEl.classList.add('text-secondary');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateKelompokPhotoLabel();
+    });
+
     function handleAttendanceChange(name, status) {
         const sanitized = name.replace(/[^a-zA-Z0-9]/g, '_');
         
@@ -787,6 +820,8 @@ $groupIdParam = isset($_GET['group_id']) ? '&group_id=' . htmlspecialchars($_GET
                 photoContainer.style.display = 'none';
             }
         }
+        
+        updateKelompokPhotoLabel();
         
         // Update photo label text dynamically
         const label = document.getElementById('photo-label-' + sanitized);

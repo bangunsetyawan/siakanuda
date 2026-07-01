@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="utf-8">
@@ -158,57 +158,227 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
             border: none;
         }
+
+        /* Mobile Premium App Layout (< 768px) */
+        @media (max-width: 767.98px) {
+            html, body {
+                overflow-x: hidden !important;
+                width: 100% !important;
+                position: relative;
+            }
+            .wrapper {
+                overflow-x: hidden !important;
+                width: 100% !important;
+            }
+            /* Sembunyikan toggle sidebar & sidebar container */
+            .main-header .nav-item:has([data-widget="pushmenu"]) {
+                display: none !important;
+            }
+            .main-sidebar {
+                display: none !important;
+            }
+            /* Konten penuh tanpa margin sidebar */
+            .content-wrapper, .main-header, .main-footer {
+                margin-left: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow-x: hidden !important;
+            }
+            .container-fluid, .container {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            /* Margin bawah agar konten tidak tertimbun bottom nav */
+            .content-wrapper {
+                padding-bottom: 90px !important;
+            }
+            /* Sembunyikan footer di HP agar lega */
+            .main-footer {
+                display: none !important;
+            }
+            /* Beri bayangan lembut pada header atas dan sesuaikan padding */
+            .main-header {
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03) !important;
+                padding: 0 16px !important;
+                display: flex !important;
+                align-items: center !important;
+                height: 56px !important;
+            }
+
+            /* Global Table & Container Responsiveness Override */
+            .table-responsive {
+                -webkit-overflow-scrolling: touch;
+                overflow-x: auto !important;
+                width: 100% !important;
+                border: 0;
+                margin-bottom: 0;
+            }
+            
+            /* Allow tables to scroll horizontally naturally without squishing text */
+            .table td, .table th {
+                white-space: nowrap;
+            }
+            
+            /* Exceptions for long text columns to wrap naturally */
+            .table td.wrap-text, .table td p {
+                white-space: normal;
+                min-width: 200px;
+            }
+
+            /* Fix inline forms, date pickers, and search boxes for Mobile */
+            .form-inline {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                width: 100% !important;
+                gap: 0.75rem;
+            }
+            .form-inline .form-control, .form-inline .custom-select, .form-inline .btn {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+            }
+            .form-inline .custom-control {
+                margin: 0 !important;
+                align-self: flex-start !important;
+            }
+            
+            /* Fix Alert and Callout Overflow */
+            .alert, .callout, .info-box {
+                overflow-wrap: break-word;
+            }
+        }
+
+        /* Bottom Tab Navigation Bar */
+        .mobile-bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1040;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .mobile-bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #64748b !important;
+            text-decoration: none !important;
+            font-size: 0.7rem;
+            font-weight: 600;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            flex: 1;
+            height: 100%;
+            padding-top: 4px;
+        }
+        .mobile-bottom-nav-item i {
+            font-size: 1.25rem;
+            margin-bottom: 2px;
+            transition: transform 0.2s ease, color 0.2s ease;
+        }
+        .mobile-bottom-nav-item.active {
+            color: #0284c7 !important;
+        }
+        .mobile-bottom-nav-item.active i {
+            transform: scale(1.15) translateY(-1px);
+            color: #0284c7 !important;
+        }
     </style>
+
+    <?= $this->renderSection('styles') ?>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
 <div class="wrapper">
 
     <!-- Navbar -->
     <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-        <!-- Left navbar links -->
-        <ul class="navbar-nav">
-            <li class="nav-item">
-                <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i> <span class="d-md-none">Menu</span></a>
-            </li>
-            <?php if (uri_string() !== 'dashboard' && uri_string() !== ''): ?>
+        <!-- Desktop Header Content (d-none d-md-flex) -->
+        <div class="d-none d-md-flex w-100 justify-content-between align-items-center">
+            <!-- Left navbar links -->
+            <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a href="javascript:history.back()" class="nav-link text-primary font-weight-bold">
-                        <i class="fas fa-chevron-left mr-1"></i> Kembali
-                    </a>
+                    <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
                 </li>
-            <?php else: ?>
-                <li class="nav-item d-none d-sm-inline-block">
-                    <a href="<?= base_url('/dashboard') ?>" class="nav-link">Home</a>
-                </li>
+                <?php if (uri_string() !== 'dashboard' && uri_string() !== ''): ?>
+                    <li class="nav-item">
+                        <a href="javascript:history.back()" class="nav-link text-primary font-weight-bold">
+                            <i class="fas fa-chevron-left mr-1"></i> Kembali
+                        </a>
+                    </li>
+                <?php else: ?>
+                    <li class="nav-item d-none d-sm-inline-block">
+                        <a href="<?= base_url('/dashboard') ?>" class="nav-link">Home</a>
+                    </li>
+                <?php endif; ?>
+            </ul>
+
+            <!-- Center content: Active Academic Year -->
+            <?php if (!empty($activeTahunPelajaran)): ?>
+            <div class="d-flex align-items-center mx-auto text-muted font-weight-bold" style="font-size: 0.85rem; gap: 0.5rem;">
+                <i class="fas fa-graduation-cap text-success"></i>
+                <span>Dapodik: TP <?= esc($activeTahunPelajaran['nama']) ?></span>
+            </div>
             <?php endif; ?>
-        </ul>
 
-        <!-- Center content: Active Academic Year -->
-        <?php if (!empty($activeTahunPelajaran)): ?>
-        <div class="d-none d-md-flex align-items-center mx-auto text-muted font-weight-bold" style="font-size: 0.85rem; gap: 0.5rem;">
-            <i class="fas fa-graduation-cap text-success"></i>
-            <span>Dapodik: TP <?= esc($activeTahunPelajaran['nama']) ?></span>
+            <!-- Right navbar links -->
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link d-flex align-items-center" data-toggle="dropdown" href="#" style="gap: 0.5rem;">
+                        <span class="text-dark font-weight-bold" style="font-size: 0.8125rem; max-width: 8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><?= session()->get('name') ?: 'User' ?></span>
+                        <span class="badge" style="background: linear-gradient(135deg, #0e7a52, #12a06b); color: #fff; font-size: 0.625rem; padding: 0.2rem 0.5rem; border-radius: 1rem; text-transform: uppercase; letter-spacing: 0.03em;"><?= session()->get('role') ?></span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right rounded-lg border-0 shadow" style="min-width: 12rem;">
+                        <a href="<?= base_url('/profile') ?>" class="dropdown-item">
+                            <i class="fas fa-user-cog mr-2 text-primary"></i> Profil & Password
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="<?= base_url('/logout') ?>" class="dropdown-item text-danger">
+                            <i class="fas fa-sign-out-alt mr-2"></i> Keluar
+                        </a>
+                    </div>
+                </li>
+            </ul>
         </div>
-        <?php endif; ?>
 
-        <!-- Right navbar links -->
-        <ul class="navbar-nav ml-auto">
-            <li class="nav-item dropdown">
-                <a class="nav-link d-flex align-items-center" data-toggle="dropdown" href="#" style="gap: 0.5rem;">
-                    <span class="text-dark font-weight-bold" style="font-size: 0.8125rem; max-width: 8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><?= session()->get('name') ?: 'User' ?></span>
-                    <span class="badge" style="background: linear-gradient(135deg, #0e7a52, #12a06b); color: #fff; font-size: 0.625rem; padding: 0.2rem 0.5rem; border-radius: 1rem; text-transform: uppercase; letter-spacing: 0.03em;"><?= session()->get('role') ?></span>
-                </a>
-                <div class="dropdown-menu dropdown-menu-right rounded-lg border-0 shadow" style="min-width: 12rem;">
-                    <a href="<?= base_url('/profile') ?>" class="dropdown-item">
-                        <i class="fas fa-user-cog mr-2 text-primary"></i> Profil & Password
+        <!-- Mobile App Bar (d-flex d-md-none) -->
+        <div class="mobile-app-bar d-flex d-md-none justify-content-between align-items-center w-100" style="height: 56px;">
+            <!-- Left Side -->
+            <div>
+                <?php if (uri_string() !== 'dashboard' && uri_string() !== ''): ?>
+                    <a href="javascript:history.back()" class="text-primary font-weight-bold d-flex align-items-center" style="font-size: 15px; text-decoration: none;">
+                        <i class="fas fa-chevron-left mr-1" style="font-size: 18px;"></i> Kembali
                     </a>
-                    <div class="dropdown-divider"></div>
-                    <a href="<?= base_url('/logout') ?>" class="dropdown-item text-danger">
-                        <i class="fas fa-sign-out-alt mr-2"></i> Keluar
-                    </a>
+                <?php else: ?>
+                    <span class="font-weight-bold text-dark" style="font-size: 18px; letter-spacing: 0.5px;">
+                        SIAKA<span class="text-success">NUDA</span>
+                    </span>
+                <?php endif; ?>
+            </div>
+
+            <!-- Center (Page Title) -->
+            <?php if (uri_string() !== 'dashboard' && uri_string() !== ''): ?>
+                <div class="text-center font-weight-bold text-dark" style="font-size: 15px; position: absolute; left: 50%; transform: translateX(-50%); max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <?= esc($title ?? 'SIAKANUDA') ?>
                 </div>
-            </li>
-        </ul>
+            <?php endif; ?>
+
+            <!-- Right Side: Big Touch-Friendly Logout Button -->
+            <div>
+                <a href="<?= base_url('/logout') ?>" class="text-danger d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; border-radius: 50%; background-color: rgba(220,53,69,0.06); text-decoration: none;" title="Keluar">
+                    <i class="fas fa-sign-out-alt" style="font-size: 18px;"></i>
+                </a>
+            </div>
+        </div>
     </nav>
     <!-- /.navbar -->
 
@@ -318,27 +488,61 @@
                                 </a>
                             </li>
                             <?php endif; ?>
+                            <li class="nav-item">
+                                <a href="<?= base_url('/pkl/monitoring') ?>" class="nav-link <?= $curUri == 'pkl/monitoring' ? 'active' : '' ?>">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Monitoring</p>
+                                </a>
+                            </li>
                         </ul>
                     </li>
                     <?php endif; ?>
 
                     <?php /* PKL Menu for Ketua PKL */ ?>
                     <?php if ($role === 'ketua_pkl'): ?>
-                    <li class="nav-item">
-                        <a href="<?= base_url('/pkl') ?>" class="nav-link <?= $curUri == 'pkl' ? 'active' : '' ?>">
+                    <li class="nav-item <?= str_starts_with($curUri, 'pkl') ? 'menu-open' : '' ?>">
+                        <a href="#" class="nav-link <?= str_starts_with($curUri, 'pkl') ? 'active' : '' ?>">
                             <i class="nav-icon fas fa-clipboard-list text-success"></i>
-                            <p class="font-weight-bold" style="color:#16a34a;">Isi Absen &amp; Jurnal PKL</p>
+                            <p class="font-weight-bold" style="color:#16a34a;">PKL <i class="right fas fa-angle-left"></i></p>
                         </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a href="<?= base_url('/pkl') ?>" class="nav-link <?= $curUri == 'pkl' ? 'active' : '' ?>">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Isi Absen & Jurnal PKL</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="<?= base_url('/pkl/monitoring') ?>" class="nav-link <?= $curUri == 'pkl/monitoring' ? 'active' : '' ?>">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Monitoring</p>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     <?php endif; ?>
 
-                    <?php /* PKL read-only for siswa/anggotapkl (non-ketua) â€” hanya tampil jika anggota PKL */ ?>
+                    <?php /* PKL read-only for siswa/anggotapkl (non-ketua) — hanya tampil jika anggota PKL */ ?>
                     <?php if (in_array($role, ['siswa', 'anggotapkl']) && session()->get('is_pkl_member')): ?>
-                    <li class="nav-item">
-                        <a href="<?= base_url('/pkl') ?>" class="nav-link <?= $curUri == 'pkl' ? 'active' : '' ?>">
+                    <li class="nav-item <?= str_starts_with($curUri, 'pkl') ? 'menu-open' : '' ?>">
+                        <a href="#" class="nav-link <?= str_starts_with($curUri, 'pkl') ? 'active' : '' ?>">
                             <i class="nav-icon fas fa-briefcase"></i>
-                            <p>Laporan PKL Saya</p>
+                            <p>PKL <i class="right fas fa-angle-left"></i></p>
                         </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a href="<?= base_url('/pkl') ?>" class="nav-link <?= $curUri == 'pkl' ? 'active' : '' ?>">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Laporan PKL Saya</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="<?= base_url('/pkl/monitoring') ?>" class="nav-link <?= $curUri == 'pkl/monitoring' ? 'active' : '' ?>">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Monitoring</p>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     <?php endif; ?>
 
@@ -351,14 +555,7 @@
                     </li>
                     <?php endif; ?>
 
-                    <?php if (in_array($role, ['admin', 'kepsek', 'guru'])): ?>
-                    <li class="nav-item">
-                        <a href="<?= base_url('bkk/dashboard') ?>" class="nav-link <?= strpos($curUri, 'bkk') !== false ? 'active' : '' ?>">
-                            <i class="nav-icon fas fa-user-graduate"></i>
-                            <p>BKK & Tracer Study</p>
-                        </a>
-                    </li>
-                    <?php endif; ?>
+
 
                     <li class="nav-item">
                         <a href="<?= base_url('/prestasi') ?>" class="nav-link <?= $curUri == 'prestasi' ? 'active' : '' ?>">
@@ -385,6 +582,8 @@
                     </li>
                     <?php endif; ?>
 
+
+
                     <?php if ($role === 'admin'): ?>
                     <li class="nav-item">
                         <a href="<?= base_url('/whatsapp-settings') ?>" class="nav-link <?= $curUri == 'whatsapp-settings' ? 'active' : '' ?>">
@@ -400,13 +599,7 @@
                     </li>
                     <?php endif; ?>
 
-                    <?php /* Portal Alumni & BKK â€” external link, all roles */ ?>
-                    <li class="nav-item">
-                        <a href="<?= base_url('bkk/dashboard') ?>" target="_blank" class="nav-link">
-                            <i class="nav-icon fas fa-graduation-cap"></i>
-                            <p>Alumni & BKK <i class="fas fa-external-link-alt ml-1" style="font-size:10px;opacity:0.5;"></i></p>
-                        </a>
-                    </li>
+
                     <!-- Profil & Ganti Password -->
                     <li class="nav-item" style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(0,0,0,0.06);">
                         <a href="<?= base_url('/profile') ?>" class="nav-link <?= uri_string() === 'profile' ? 'active' : '' ?>">
@@ -486,6 +679,72 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.1/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE App -->
 <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+    <!-- Bottom Navigation Bar for Mobile -->
+    <div class="mobile-bottom-nav d-md-none d-print-none">
+        <a href="<?= base_url('/dashboard') ?>" class="mobile-bottom-nav-item <?= $curUri == 'dashboard' || $curUri == '' ? 'active' : '' ?>">
+            <i class="fas fa-home"></i>
+            <span>Beranda</span>
+        </a>
+        
+        <?php if (in_array($role, ['admin', 'kepsek', 'guru', 'guru_mapel', 'guru_bk'])): ?>
+            <a href="<?= base_url('/attendance') ?>" class="mobile-bottom-nav-item <?= str_starts_with($curUri, 'attendance') ? 'active' : '' ?>">
+                <i class="fas fa-calendar-check"></i>
+                <span>Absen KBM</span>
+            </a>
+            <a href="<?= base_url('/pkl') ?>" class="mobile-bottom-nav-item <?= str_starts_with($curUri, 'pkl') ? 'active' : '' ?>">
+                <i class="fas fa-briefcase"></i>
+                <span>PKL</span>
+            </a>
+        <?php elseif ($role === 'ketua_pkl' || (in_array($role, ['siswa', 'anggotapkl']) && session()->get('is_pkl_member'))): ?>
+            <a href="<?= base_url('/schedules') ?>" class="mobile-bottom-nav-item <?= str_starts_with($curUri, 'schedules') ? 'active' : '' ?>">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Jadwal</span>
+            </a>
+            <a href="<?= base_url('/pkl') ?>" class="mobile-bottom-nav-item <?= str_starts_with($curUri, 'pkl') ? 'active' : '' ?>">
+                <i class="fas fa-briefcase"></i>
+                <span>Lapor PKL</span>
+            </a>
+        <?php else: ?>
+            <a href="<?= base_url('/schedules') ?>" class="mobile-bottom-nav-item <?= str_starts_with($curUri, 'schedules') ? 'active' : '' ?>">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Jadwal</span>
+            </a>
+            <a href="<?= base_url('/violations') ?>" class="mobile-bottom-nav-item <?= str_starts_with($curUri, 'violations') ? 'active' : '' ?>">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Poin</span>
+            </a>
+        <?php endif; ?>
+
+        <a href="<?= base_url('/profile') ?>" class="mobile-bottom-nav-item <?= $curUri == 'profile' ? 'active' : '' ?>">
+            <i class="fas fa-user-cog"></i>
+            <span>Profil</span>
+        </a>
+    </div>
+
+    <!-- Smart Mobile Date Label Injector -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll('.form-inline input[type="date"], .form-inline input[type="month"]').forEach(function(input) {
+            var previous = input.previousElementSibling;
+            if (!previous || previous.tagName.toLowerCase() !== 'label') {
+                var label = document.createElement('label');
+                label.className = 'd-md-none text-secondary font-weight-bold mb-1';
+                label.style.fontSize = '12px';
+                label.style.alignSelf = 'flex-start';
+                label.innerText = input.type === 'month' ? 'Pilih Bulan/Tahun :' : 'Pilih Tanggal :';
+                
+                // Jika input ada di dalam div.input-group, taruh label sebelum input-group
+                if (input.parentNode.classList.contains('input-group')) {
+                    input.parentNode.parentNode.insertBefore(label, input.parentNode);
+                } else {
+                    input.parentNode.insertBefore(label, input);
+                }
+            }
+        });
+    });
+    </script>
+
+    <?= $this->renderSection('scripts') ?>
 </body>
 </html>
-

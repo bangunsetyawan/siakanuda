@@ -17,6 +17,11 @@
                 </button>
             </form>
             <?php endif; ?>
+            <?php if (in_array(session()->get('role'), ['admin', 'kepsek'])): ?>
+            <button class="btn btn-outline-info mr-2" id="btn-export-excel">
+                <i class="fas fa-file-excel mr-2"></i> Export Excel
+            </button>
+            <?php endif; ?>
             <button class="btn btn-outline-success mr-2" data-toggle="modal" data-target="#modal-import-group">
                 <i class="fas fa-file-excel mr-2"></i> Import Excel
             </button>
@@ -45,7 +50,7 @@
     <!-- /.card-header -->
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover table-striped mb-0">
+            <table class="table table-hover table-striped mb-0" id="table-pkl-groups">
                 <thead>
                     <tr>
                         <th style="width: 80px;">#</th>
@@ -807,6 +812,58 @@ document.addEventListener('DOMContentLoaded', function() {
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Kelompok PKL");
             XLSX.writeFile(workbook, "template_kelompok_pkl.xlsx");
+        });
+    }
+
+    const btnExportExcel = document.getElementById('btn-export-excel');
+    if (btnExportExcel) {
+        btnExportExcel.addEventListener('click', function() {
+            const table = document.getElementById('table-pkl-groups');
+            if (!table) return;
+            
+            const rows = table.querySelectorAll('tbody tr');
+            const data = [];
+            
+            let counter = 1;
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length < 6) return; // skip empty placeholder row
+                
+                const tempat = cells[1].innerText.trim();
+                
+                // Format Ketua
+                const ketuaDiv = cells[2].querySelector('div');
+                const ketuaSmall = cells[2].querySelector('small');
+                const ketuaText = (ketuaDiv ? ketuaDiv.innerText.trim() : '') + (ketuaSmall ? ' (' + ketuaSmall.innerText.trim() + ')' : '');
+                
+                // Format Anggota
+                const anggotaSpans = cells[3].querySelectorAll('span');
+                const anggotaText = Array.from(anggotaSpans).map(s => s.innerText.trim()).join(', ');
+                
+                // Format Pembimbing
+                const pembimbing = cells[4].innerText.trim();
+                
+                // Format Instruktur
+                const instrukturDiv = cells[5].querySelector('div');
+                const instrukturSmall = cells[5].querySelector('small');
+                const instrukturText = (instrukturDiv ? instrukturDiv.innerText.trim() : '') + (instrukturSmall ? ' (' + instrukturSmall.innerText.trim() + ')' : '');
+                
+                data.push({
+                    'No': counter++,
+                    'Tempat DU/DI': tempat,
+                    'Ketua Kelompok': ketuaText || cells[2].innerText.trim(),
+                    'Daftar Anggota': anggotaText || cells[3].innerText.trim(),
+                    'Guru Pembimbing': pembimbing,
+                    'Instruktur DU/DI': instrukturText || cells[5].innerText.trim()
+                });
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Daftar Kelompok");
+            
+            const date = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(workbook, "Data_Kelompok_PKL_" + date + ".xlsx");
         });
     }
 

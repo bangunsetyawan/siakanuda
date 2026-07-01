@@ -84,13 +84,15 @@ siakanuda/dashboard  ← CodeIgniter 4
 **JANGAN** membuat folder versi baru (seperti `siakanuda-v1.2.0/` atau `siakanuda-v2/`). Semua kode tetap di folder yang sama.
 
 ### 3. Lingkungan Lokal & Deployment
-* **Development (Lokal):** Dijalankan pada Windows PC menggunakan SSD Portabel (`F:\Antigravity\...`).
+* **Development (Lokal):** Dijalankan pada Windows PC menggunakan SSD Portabel (`E:\Antigravity\...`, drive letter bisa berubah).
   - API & Bot WA (Node.js): `npm run dev` di folder `siakanuda/` (Port 7860).
   - Dashboard (CI4): `php spark serve` di folder `siakanuda/dashboard/` (Port 8080).
 * **Production (Debian):** Lenovo Notebook Debian 13 Headless dengan SSD Internal (128GB).
   - **Metode Deployment:** Dideploy melalui jaringan (SSH) dengan membuat file arsip `.tar.gz` dari folder lokal, lalu diekstrak di server Debian. Bukan dengan mencolokkan SSD portabel secara fisik.
-  - Service `bot.siswa.service` → Node.js background API di `~/siakanuda`
-  - Service `siakadash.service` → PHP spark serve di `~/siakanuda/dashboard`
+  - **Web Server:** Nginx (port 8080) + PHP 8.4 FPM (pm.max_children=12). **JANGAN** gunakan `php spark serve` di production.
+  - Service `bot.siswa.service` → Node.js background API di `~/siakanuda` (Port 7860)
+  - Cloudflare Tunnel (`cloudflared`) → reverse proxy ke Nginx
+  - Domain: `https://siakanuda.qzz.io`
 
 ### 4. Eksekusi Command & Keamanan
 * **JANGAN** jalankan `npm install` atau `composer install` tanpa konfirmasi user.

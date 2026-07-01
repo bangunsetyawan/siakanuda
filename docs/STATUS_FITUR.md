@@ -4,7 +4,7 @@
 > **PERINGATAN PENTING BOT WHATSAPP:**
 > Saat menguji coba (testing) fitur broadcast/antrean pesan, **WAJIB menggunakan nomor tujuan yang berbeda-beda** untuk setiap role target (Guru, Orang Tua, Instruktur, dll). Menggunakan satu nomor yang sama untuk semua target akan memicu pengiriman pesan bertubi-tubi dalam waktu singkat. Ini akan membuat nomor Bot terdeteksi sebagai SPAM oleh WhatsApp dan mengakibatkan akun dibatasi atau diblokir permanen.
 
-> **Versi:** v1.16.0 | **Tanggal:** 22 Juni 2026 | **Total Commit:** 212
+> **Versi:** v1.21.0 | **Tanggal:** 1 Juli 2026 | **Total Commit:** 297
 > **Untuk siapa:** Developer solo yang perlu re-orient cepat tanpa baca ulang ratusan baris.
 > **Cara pakai:** Scan checklist → cari bagian yang relevan → langsung kerja.
 
@@ -24,24 +24,24 @@
 
 | Metrik | Nilai |
 |--------|-------|
-| **Total Commit** | 212 |
+| **Total Commit** | 297 |
 | **Branch** | `master` (single branch) |
-| **Tags** | `v1.0.0`, `v1.1.0`, `v1.2.0`, `v1.4.6`, `v1.5.0`, `v1.5.1`, `v1.10.0`, `v1.11.0`, `v1.11.1` |
+| **Tags** | `v1.0.0`, `v1.1.0`, `v1.2.0`, `v1.4.6`, `v1.5.0`, `v1.5.1`, `v1.10.0`, `v1.11.0`, `v1.11.1`, `v1.18.0`, `v1.21.0-security-patch` |
 | **Remote** | Tidak ada (lokal only) |
 | **Git User** | `SIAKANUDA Agent <siakanuda@smknudarussalam.sch.id>` |
 | **Commit Pertama** | v1.0.0 — Fondasi WhatsApp Bot + Web Dashboard |
-| **Commit Terakhir** | v1.16.0 — Strict GPS Flow, Riwayat Gallery, and Anggota Access |
-| **Rentang Waktu** | ±15 hari pengembangan aktif (28 Mei – 15 Juni 2026) |
+| **Commit Terakhir** | v1.21.0 — sinkronisasi versi v1.21.0, perbaiki dokumentasi stale, tambah CLI server reference |
+| **Rentang Waktu** | ±33 hari pengembangan aktif (28 Mei – 30 Juni 2026) |
 
 ### Statistik Commit per Tipe
 | Tipe | Jumlah | Keterangan |
 |------|--------|------------|
 
-| `feat` | ~108 | Fitur baru |
-| `fix` | ~46 | Perbaikan bug |
-| `docs` | ~33 | Dokumentasi |
-| `chore` | ~16 | Maintenance |
-| `clean` / `refactor` | ~9 | Pembersihan & restrukturisasi |
+| `feat` | ~139 | Fitur baru |
+| `fix` | ~64 | Perbaikan bug |
+| `docs` | ~50 | Dokumentasi |
+| `chore` | ~21 | Maintenance |
+| `clean` / `refactor` | ~23 | Pembersihan & restrukturisasi |
 
 ### Konvensi Commit
 ```
@@ -230,6 +230,9 @@ siakanuda/                              ← Root (Node.js + SQLite)
 - [x] 3 stat card: total / sudah lapor / belum lapor
 - [x] Guru hanya lihat kelompok bimbingannya
 - [x] Sinkronisasi foto ke Supabase Storage (`photo_sync.js`)
+- [x] Fitur Hapus Foto Laporan (Checkbox Hapus Foto) di UI Siswa (v1.18.0)
+- [x] Form Foto Kelompok otomatis Opsional saat seluruh siswa berstatus Sakit/Izin/Alpha (v1.18.0)
+- [x] Penanganan fallback URL Foto lokal jika upload Supabase gagal/dimatikan (v1.18.0)
 - [x] Preview laporan mingguan PKL (read-only anggota, tanpa cetak) (v1.6.18)
 - [x] Cetak PDF rekap mingguan PKL — 1 hari = 1 halaman, ~6 halaman/minggu (v1.6.18)
 - [x] Manajemen Peran Siswa di dashboard admin (dropdown & edit manual) (v1.6.19)
@@ -264,6 +267,7 @@ siakanuda/                              ← Root (Node.js + SQLite)
 - [x] 🔄 **v1.10.0:** Hapus PDF realtime PKL (harian & mingguan jurnal/dokumentasi)
 - [x] 🔄 **v1.10.0:** Halaman Riwayat Laporan PKL (HTML preview + CSS print + print browser)
 - [x] 🔄 **v1.10.0:** Cleanup dead code PDF generator (3 fungsi) + GAS dependency
+- [x] Fitur Monitoring PKL: Catatan kunjungan monitoring Guru Pembimbing ke lokasi PKL (+ upload 1-3 foto dokumentasi, GPS Tracking, Auto-Compress Foto) (v1.19.0)
 
 ### 📅 F. Kalender Akademik & Hari Libur
 - [x] CRUD kalender (admin)
@@ -317,7 +321,10 @@ siakanuda/                              ← Root (Node.js + SQLite)
 - [x] Penanda [#Pembaruan Absensi] untuk update (v1.7.13)
 - [x] Lewati Minggu & Hari Libur otomatis (v1.8.8)
 - [x] Kombo-produksi force config (anti ban) (v1.8.8)
-- [x] ~~AI parser 9Router~~ Refactor ke REST agnostik (v1.8.6)
+- [x] Refactor arsitektur 9Router/OpenRouter API AI (digabung penuh ke dalam bot.siswa.service) (v1.18.0)
+- [x] UI Konfigurasi JID Grup Guru Pembimbing di Pengaturan WhatsApp (v1.18.0)
+- [x] Pemisahan logic notifikasi: JID Grup Utama (Manajemen) vs JID Grup Guru Pembimbing (v1.18.0)
+- [x] Pembersihan format lama `pkl_masuk_broadcast` & migrasi database ke template terpisah (v1.18.0)
 - [x] ~~Auto-reply AI chatbot~~ ❌ Diarsip (produksi = notifikasi only)
 - [ ] 💡 Notifikasi ke orang tua/wali siswa? (saran)
 
@@ -382,7 +389,7 @@ siakanuda/                              ← Root (Node.js + SQLite)
 ### 🚀 P. Deployment & Infrastruktur
 - [x] Systemd services — `bot.siswa.service` + `siakadash.service`
 - [x] Nginx Reverse Proxy — local HTTP to 8080 (v1.11.0)
-- [x] Tailscale VPN (`100.110.83.48`)
+- [x] Tailscale VPN (`[IP_SERVER_TAILSCALE]`)
 - [x] ~~Cloudflare Tunnel — akses internet via domain (v1.7.0)~~ (Digantikan v1.11.0)
 - [x] Cloudflare Tunnel (cloudflared) terhubung ke Nginx port 80 (v1.11.0)
 - [x] Domain kustom gratis DigitalPlat `https://siakanuda.qzz.io/` (v1.11.0)
@@ -412,10 +419,10 @@ siakanuda/                              ← Root (Node.js + SQLite)
 - [x] `PROMPT_TEMPLATE.md` — template instruksi AI
 - [x] `tests/` — E2E Testing dengan Playwright (Login, KBM, PKL) (v1.10.4)
 
-### 📱 S. PWA Mobile & BKK Portal
+### 📱 S. PWA Mobile & Ekosistem Terpadu
 - [x] PWA Manifest & Service Worker
 - [x] ~~WebView APK~~ ❌ Dihapus (Ganti PWA penuh)
-- [x] BKK Portal di `public/bkk/` — workspace lokal, deploy terpisah ke github.io
+- [x] **Bursa Kerja Khusus (BKK) & Tracer Study** — Migrasi penuh dari Supabase ke Native CI4 SQLite, lengkap dengan Import/Export Excel.
 
 ---
 
@@ -499,31 +506,31 @@ siakanuda/                              ← Root (Node.js + SQLite)
 
 | # | Hash | Tanggal | Pesan Commit |
 |---|------|---------|-------------|
-| 1 | `511f68c` | 22 Jun | Update v1.16.0: Strict GPS Flow, Riwayat Gallery, and Anggota Access |
-| 2 | `4aaeb5b` | 20 Jun | refactor: optimasi UI dashboard mobile ringan dan responsif (tanpa animasi) |
-| 3 | `5f9d35c` | 20 Jun | chore: hapus opsi APK dan ganti ke PWA secara penuh |
-| 4 | `b1cd12c` | 20 Jun | docs: tambahkan peringatan ketat anti-spam bot WA |
-| 5 | `15d4bf8` | 20 Jun | docs: clarify test note regarding anti-spam issue |
-| 6 | `8d5f8af` | 20 Jun | docs: update DEPLOY_LOG with v1.14.4 details |
-| 7 | `64384f8` | 20 Jun | feat: WhatsApp PKL multi-target broadcast, templates, and anti-spam handling |
-| 8 | `196aa49` | 19 Jun | fix(v1.13.1): display instruktur_phone column in PKL groups list |
-| 9 | `133f60c` | 19 Jun | feat(v1.13.0): support custom scheduled broadcast messages via dashboard |
-| 10 | `9378899` | 19 Jun | fix(v1.12.1): update backend bulk import for PKL groups and UI mapping for students |
-| 11 | `c200048` | 19 Jun | feat(v1.12.0): add target broadcast PKL config and message queue system |
-| 12 | `5369379` | 19 Jun | chore(v1.11.3): remove sharp dependency to fix SIGILL crashes on older CPUs |
-| 13 | `b071c0d` | 19 Jun | docs: update PROMPT_TEMPLATE universal + tambah template kelompok PKL Excel |
-| 14 | `8a711ee` | 19 Jun | feat(v1.11.2): tambah tombol Reset Semua Password Ketua PKL ke default NISN |
-| 15 | `8f528be` | 19 Jun | chore(v1.11.2): refactor PKL NISN identifier, append photo links to WA broadcast, remove testing mode, clean dummy data, and ignore temp files |
-| 16 | `40a6f98` | 19 Jun | chore: pembaruan dokumentasi, arsip, dan ignore temp files |
-| 17 | `5fed973` | 19 Jun | fix: atasi tampilan guru pembimbing kosong dan label ketua salah pada cetak laporan |
-| 18 | `8e5f03c` | 18 Jun | fix: atasi error Mixed Content HTTPS pada fetch JS import Excel |
-| 19 | `97c906e` | 18 Jun | feat: tambahkan halaman Pusat Bantuan (Mobile WebView) & SOP Patch Update |
-| 20 | `b44aca9` | 18 Jun | docs, UI, & PWA (v1.11.1): update deployment info, hamburger menu label, and manifest sizes |
-| 21 | `a0f208a` | 18 Jun | feat(v1.11.1): tambah favicon, web manifest, dan PWA meta tags — icon muncul di Home Screen HP |
-| 22 | `ef9a10f` | 18 Jun | docs(v1.11.1): tambah README GitHub profesional + perbaiki .gitignore untuk public repo |
-| 23 | `88f18d8` | 18 Jun | docs(v1.11.1): tambah SOP deploy, troubleshooting guide, dan health-check script |
-| 24 | `8bc05fc` | 18 Jun | fix(v1.11.1): Socket.io & API frontend auto-detect origin untuk production Nginx proxy |
-| 25 | `05c5493` | 18 Jun | fix(v1.11.1): perbaiki Supabase auth state (createClient) & banner versi dinamis |
+| 1 | `b2f1d0e` | 1 Jul | docs: sinkronisasi versi v1.21.0, perbaiki dokumentasi stale, tambah CLI server reference |
+| 2 | `076f216` | 30 Jun | fix(security): patch IDOR vulnerability in PKL takeover report |
+| 3 | `b88bd42` | 30 Jun | docs: tambahkan referensi nama service dan struktur direktori server debian |
+| 4 | `84264cf` | 30 Jun | docs(v1.21.0): wrap up sesi dokumentasi handoff dan update versi |
+| 5 | `9fedb46` | 30 Jun | fix(ui): perbaiki struktur tag html div yang belum tertutup pada menu pengaturan wa |
+| 6 | `e695fcd` | 30 Jun | chore(wa): hapus template usang dari antarmuka pengaturan WA |
+| 7 | `1c1b824` | 30 Jun | fix(pkl): perbaiki bug pembuatan short link untuk foto monitoring |
+| 8 | `f65813f` | 30 Jun | refactor(wa): sederhanakan struktur grup menjadi 3 target spesifik sesuai request |
+| 9 | `4f9e790` | 30 Jun | feat(wa): tambahkan pengaturan grup dinamis untuk laporan monitoring PKL |
+| 10 | `f75703c` | 30 Jun | fix(wa): perbaiki blank screen saat membuka halaman pengaturan WA melalui link langsung tab |
+| 11 | `c9cbf79` | 30 Jun | feat(pkl): tambahkan dukungan short URL untuk broadcast laporan monitoring |
+| 12 | `630103a` | 30 Jun | docs(v1.20.9): perbaiki saran tuning php-fpm yang fatal untuk mencegah server crash (OOM) |
+| 13 | `dd7187e` | 30 Jun | docs(v1.20.9): rewrite PROMPT_TEMPLATE.md — refleksikan arsitektur Nginx+FPM, path docs/ yang benar, dan lessons learned dari 285 commits |
+| 14 | `25d82a9` | 30 Jun | docs(v1.20.9): rapikan AI_CONTEXT.md — tambah changelog v1.19.1-v1.20.9, perbaiki versi & tanggal, tambah info arsitektur Nginx+FPM |
+| 15 | `6f56228` | 30 Jun | fix(v1.20.9): sinkronisasi versi ke v1.20.9 di seluruh file dan perbaiki dokumentasi stale |
+| 16 | `a4a1a80` | 30 Jun | docs: perbarui panduan template prompt deployment dengan ketentuan Nginx + FPM baru |
+| 17 | `38d3abe` | 30 Jun | feat(v1.20.9): perbarui seeder template pkl_monitoring_broadcast agar mendukung variabel foto_urls |
+| 18 | `520863c` | 30 Jun | feat(v1.20.8): tambahkan daftar link foto dokumentasi pada broadcast monitoring PKL |
+| 19 | `fc35ccf` | 30 Jun | fix(v1.20.7): ganti jQuery ready dengan vanilla DOMContentLoaded untuk cegah error dollar is not defined |
+| 20 | `40724a1` | 30 Jun | fix(v1.20.6): hapus total elemen GPS dan perbaiki JavaScript error pada modul monitoring PKL |
+| 21 | `86e0c5c` | 30 Jun | feat(v1.20.5): ringkas format detail rekap absensi PKL harian menjadi 1 baris per kelompok |
+| 22 | `562f46c` | 30 Jun | fix(v1.20.4): batasi akses tombol rekap absensi PKL harian WhatsApp hanya untuk admin |
+| 23 | `568c77b` | 30 Jun | feat(v1.20.3): tambah tombol rekap absensi PKL harian via WhatsApp grup guru pembimbing |
+| 24 | `e6fb959` | 30 Jun | fix(db): wrap sqlite pragmas in try-catch to prevent SQLITE_BUSY crashes on bot startup, add critical production architecture warnings to README |
+| 25 | `17f8958` | 30 Jun | feat(v1.20.2): integrasikan monitoring PKL ke sistem template WA yang bisa diedit admin |
 
 <!-- AUTO_CHANGELOG_END -->
 
@@ -608,15 +615,15 @@ siakanuda/                              ← Root (Node.js + SQLite)
 - **Perangkat:** Lenovo Notebook (~2010), Intel Atom N455, 2GB RAM, 128GB SSD
 - **Sistem Operasi:** Debian 13 (Trixie) Minimal CLI Headless
 - **Service Manager:** Systemd (`bot.siswa.service` & `siakadash.service`)
-- **Jaringan:** IP Statis LAN Sekolah (`ip-lan-lokal`) + Tailscale VPN (`100.110.83.48`)
+- **Jaringan:** IP Statis LAN Sekolah (`[IP_SERVER_LAN]`) + Tailscale VPN (`[IP_SERVER_TAILSCALE]`)
 
 ### 2 Jalur Akses
 | Jalur | Via | URL | Fitur |
 |-------|-----|-----|-------|
-| **Lokal (WiFi)** | LAN Sekolah | `http://10.10.11.37:8080` | Semua fitur + cetak PDF (foto asli) |
+| **Lokal (WiFi)** | LAN Sekolah | `http://[IP_SERVER_LAN]:8080` | Semua fitur + cetak PDF (foto asli) |
 | **Internet** | Cloudflare Tunnel | `https://domain.tld` | Semua fitur — cetak PDF (foto thumbnail) |
 
 ---
 
 > 📌 **Dokumen ini di-update setiap ada rilis versi baru.**
-> Terakhir diperbarui: **22 Juni 2026** oleh Antigravity Agent.
+> Terakhir diperbarui: **1 Juli 2026** oleh Antigravity Agent.

@@ -1,5 +1,5 @@
 # SIAKANUDA — Roadmap Pengembangan
-> **Versi:** 1.11.1 | **Sekolah:** SMK NU Darussalam | **Diperbarui:** 18 Juni 2026
+> **Versi:** 1.21.0 | **Sekolah:** SMK NU Darussalam | **Diperbarui:** 1 Juli 2026
 
 Dokumen ini berisi rencana pengembangan dan status rilis proyek SIAKANUDA.
 
@@ -94,4 +94,4 @@ Dokumen ini berisi rencana pengembangan dan status rilis proyek SIAKANUDA.
 - **Perangkat:** Lenovo Notebook (~2010), Intel Atom N455, 2GB RAM, 128GB SSD.
 - **Sistem Operasi:** Debian 13 (Trixie) Minimal CLI Headless.
 - **Service Manager:** Systemd (`bot.siswa.service` & `siakadash.service`).
-- **Jaringan:** IP Statis LAN Sekolah (`10.10.11.37`) + Tailscale VPN (`100.110.83.48`).
+- **Jaringan:** IP Statis LAN Sekolah (`[IP_SERVER_LAN]`) + Tailscale VPN (`[IP_SERVER_TAILSCALE]`).

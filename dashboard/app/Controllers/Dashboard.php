@@ -124,6 +124,25 @@ class Dashboard extends BaseController
         $userName = $session->get('name');
         $userRole = $session->get('role');
 
+        if (!empty($userPhone) && str_starts_with($userPhone, '08')) {
+            $userPhone = '628' . substr($userPhone, 2);
+        }
+
+        $pklBimbinganGroups = [];
+        if (in_array($userRole, ['guru', 'guru_bk', 'guru_mapel'])) {
+            $pklBimbinganGroups = $kelompokPklModel->where('tahun_pelajaran_id', $tpId)
+                                                   ->where('pembimbing_phone', $userPhone)
+                                                   ->orderBy('tempat_pkl', 'ASC')
+                                                   ->findAll();
+            $monitoringPklModel = new \App\Models\MonitoringPklModel();
+            foreach ($pklBimbinganGroups as &$bg) {
+                $lastMon = $monitoringPklModel->where('kelompok_pkl_id', $bg['id'])
+                                              ->orderBy('tanggal', 'DESC')
+                                              ->first();
+                $bg['last_monitoring'] = $lastMon ? date('d M Y', strtotime($lastMon['tanggal'])) : 'Belum pernah';
+            }
+        }
+
         // Personal attendance and achievements for student
         $personalAttendance = null;
         $personalAchievements = null;
@@ -187,6 +206,7 @@ class Dashboard extends BaseController
                 }
             }
 
+            $pklLastMonitoring = null;
             if ($group) {
                 $pklGroupData = $group;
                 $pklMembers = array_map('trim', explode(',', $group['anggota']));
@@ -199,6 +219,21 @@ class Dashboard extends BaseController
                     $todayRaw['jurnal'] = json_decode($todayRaw['jurnal_kegiatan'] ?: '{}', true) ?: [];
                     $todayRaw['photo_urls'] = json_decode($todayRaw['photo_url'] ?: '[]', true) ?: [];
                     $pklTodayReport = $todayRaw;
+                }
+
+                // Get last monitoring details
+                $monitoringPklModel = new \App\Models\MonitoringPklModel();
+                $lastMon = $monitoringPklModel->where('kelompok_pkl_id', $group['id'])
+                                              ->orderBy('tanggal', 'DESC')
+                                              ->first();
+                if ($lastMon) {
+                    $allowedNumberModel = new \App\Models\AllowedNumberModel();
+                    $teacher = $allowedNumberModel->where('phone', $lastMon['pembimbing_phone'])->first();
+                    $pklLastMonitoring = [
+                        'tanggal' => date('d M Y', strtotime($lastMon['tanggal'])),
+                        'pembimbing' => $teacher ? ($teacher['name'] ?? $teacher['name']) : $lastMon['pembimbing_phone'],
+                        'catatan' => $lastMon['catatan']
+                    ];
                 }
             }
 
@@ -301,6 +336,63 @@ class Dashboard extends BaseController
             }
         } // Role siswa biasa tidak mendapatkan notifikasi apa pun (kosong)
 
+        // === Logika Data Grafik Analitik (Vite/Chart.js) ===
+        $monthLabels = json_encode([]);
+        $hadirKbmMonth = json_encode([]);
+        $hadirPklMonth = json_encode([]);
+        $kbmAbsenData = json_encode([0, 0, 0]);
+        $pklAbsenData = json_encode([0, 0, 0]);
+        $dailyPklLabels = json_encode([]);
+        $dailyPklData = json_encode([]);
+
+        if (in_array($userRole, ['admin', 'kepsek', 'guru', 'guru_bk', 'guru_mapel'])) {
+            $monthLabelsArr = [];
+            $hadirKbmMonthArr = [];
+            $hadirPklMonthArr = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $monthString = date('Y-m', strtotime("-$i months"));
+                $monthLabelsArr[] = date('M Y', strtotime("-$i months"));
+                
+                $hadirKbmMonthArr[] = $attendanceModel->like('date', $monthString, 'after')
+                                                   ->where('status', 'hadir')
+                                                   ->notLike('note', 'PKL:')
+                                                   ->where('tahun_pelajaran_id', $tpId)
+                                                   ->countAllResults();
+
+                $hadirPklMonthArr[] = $attendanceModel->like('date', $monthString, 'after')
+                                                   ->where('status', 'hadir')
+                                                   ->like('note', 'PKL:')
+                                                   ->where('tahun_pelajaran_id', $tpId)
+                                                   ->countAllResults();
+            }
+            $monthLabels = json_encode($monthLabelsArr);
+            $hadirKbmMonth = json_encode($hadirKbmMonthArr);
+            $hadirPklMonth = json_encode($hadirPklMonthArr);
+
+            // KBM Ketidakhadiran
+            $kbmSakit = $attendanceModel->where('status', 'sakit')->notLike('note', 'PKL:')->where('tahun_pelajaran_id', $tpId)->countAllResults();
+            $kbmIzin  = $attendanceModel->where('status', 'izin')->notLike('note', 'PKL:')->where('tahun_pelajaran_id', $tpId)->countAllResults();
+            $kbmAlpha = $attendanceModel->where('status', 'alpha')->notLike('note', 'PKL:')->where('tahun_pelajaran_id', $tpId)->countAllResults();
+            $kbmAbsenData = json_encode([$kbmSakit, $kbmIzin, $kbmAlpha]);
+
+            // PKL Ketidakhadiran
+            $pklSakit = $attendanceModel->where('status', 'sakit')->like('note', 'PKL:')->where('tahun_pelajaran_id', $tpId)->countAllResults();
+            $pklIzin  = $attendanceModel->where('status', 'izin')->like('note', 'PKL:')->where('tahun_pelajaran_id', $tpId)->countAllResults();
+            $pklAlpha = $attendanceModel->where('status', 'alpha')->like('note', 'PKL:')->where('tahun_pelajaran_id', $tpId)->countAllResults();
+            $pklAbsenData = json_encode([$pklSakit, $pklIzin, $pklAlpha]);
+
+            // Tren harian laporan PKL (14 Hari Terakhir)
+            $dailyPklLabelsArr = [];
+            $dailyPklDataArr = [];
+            for ($i = 13; $i >= 0; $i--) {
+                $d = date('Y-m-d', strtotime("-$i days"));
+                $dailyPklLabelsArr[] = date('d M', strtotime($d));
+                $dailyPklDataArr[] = $attendancePklModel->where('date', $d)->where('tahun_pelajaran_id', $tpId)->countAllResults();
+            }
+            $dailyPklLabels = json_encode($dailyPklLabelsArr);
+            $dailyPklData = json_encode($dailyPklDataArr);
+        }
+
         $data = [
             'title' => 'Dashboard SIAKANUDA',
             'userName' => $userName,
@@ -325,11 +417,20 @@ class Dashboard extends BaseController
             'pklIsKetua' => $pklIsKetua,
             'pklMembers' => $pklMembers,
             'pklActive' => $settingModel->getSetting('pkl_active', '1'),
+            'pklBimbinganGroups' => $pklBimbinganGroups,
+            'pklLastMonitoring' => $pklLastMonitoring ?? null,
             'kalender' => $kalender ?? [],
             'personalAchievements' => $personalAchievements,
             'recentAchievements' => $recentAchievements,
             'notifications' => $notifications, // Kirim notifikasi ke view
             'todayHoliday' => $todayHoliday, // Info hari libur untuk JS realtime
+            'monthLabels' => $monthLabels,
+            'hadirKbmMonth' => $hadirKbmMonth,
+            'hadirPklMonth' => $hadirPklMonth,
+            'kbmAbsenData' => $kbmAbsenData,
+            'pklAbsenData' => $pklAbsenData,
+            'dailyPklLabels' => $dailyPklLabels,
+            'dailyPklData' => $dailyPklData,
         ];
 
         return view('dashboard/index', $data);

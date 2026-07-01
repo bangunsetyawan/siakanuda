@@ -25,9 +25,9 @@ if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY) {
   supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 }
   console.log('[DB] Mode: Local SQLite Database');
-  db = new Database(DB_PATH);
-  db.pragma('journal_mode = DELETE');
-  db.pragma('foreign_keys = ON');
+  db = new Database(DB_PATH, { timeout: 15000 });
+  try { db.pragma('journal_mode = WAL'); } catch (e) {}
+  try { db.pragma('foreign_keys = ON'); } catch (e) {}
 
 // Helper to wrap SQLite sync functions in Promise
 export const runAsync = (fn) => {
@@ -233,6 +233,22 @@ export async function initSchema() {
         value       TEXT NOT NULL,
         updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS monitoring_pkl (
+        id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+        kelompok_pkl_id     INTEGER NOT NULL,
+        tanggal             DATE NOT NULL,
+        pembimbing_phone    TEXT NOT NULL,
+        catatan             TEXT NOT NULL,
+        photo_url           TEXT,
+        location_data       TEXT,
+        tahun_pelajaran_id  INTEGER DEFAULT 1,
+        created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at          DATETIME,
+        FOREIGN KEY (kelompok_pkl_id) REFERENCES kelompok_pkl(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_monitoring_pkl_kelompok ON monitoring_pkl(kelompok_pkl_id);
+      CREATE INDEX IF NOT EXISTS idx_monitoring_pkl_pembimbing ON monitoring_pkl(pembimbing_phone);
     `);
 
     // Migrasi SQLite — kolom lama
@@ -251,6 +267,7 @@ export async function initSchema() {
     try { db.exec(`ALTER TABLE violations ADD COLUMN follow_up TEXT`); } catch (_) {}
     try { db.exec("ALTER TABLE kelompok_pkl ADD COLUMN instruktur_phone TEXT"); } catch (_) {}
     try { db.exec("ALTER TABLE cron_configs ADD COLUMN payload TEXT DEFAULT '{}'"); } catch (_) {}
+    try { db.exec("ALTER TABLE monitoring_pkl ADD COLUMN location_data TEXT"); } catch (_) {}
 
     // Migrasi v1.6.0 — tambah kolom tahun_pelajaran_id ke 8 tabel transaksional
     try { db.exec(`ALTER TABLE attendance ADD COLUMN tahun_pelajaran_id INTEGER DEFAULT 1`); } catch (_) {}
@@ -348,38 +365,85 @@ export async function initSchema() {
         console.error('[DB] Gagal backfill nama template lama:', err.message);
       }
 
-      // Seed 10 PKL templates
+      // Update default cron configs descriptions and names to reflect group consolidation and correct times
+      try {
+        db.prepare("UPDATE cron_configs SET name = 'Pengecekan Absensi Kelas', description = 'Mengirim warning absensi harian KBM pada pukul 08:30 WIB ke grup sekolah.' WHERE key = 'class_attendance_check'").run();
+        db.prepare("UPDATE cron_configs SET name = 'Pengingat Jurnal PKL (Grup KBM)', description = 'Mengirim rekap pengingat kelompok PKL yang belum lapor pada pukul 14:00 WIB ke grup sekolah.', cron_expression = '0 14 * * *' WHERE key = 'pkl_report_check'").run();
+        db.prepare("UPDATE cron_configs SET name = 'Eskalasi Peringatan PKL (Pembimbing)', description = 'Mengirim rekap eskalasi kelompok PKL yang belum lapor pada pukul 16:00 WIB ke guru pembimbing.', cron_expression = '0 16 * * *' WHERE key = 'pkl_escalation_check'").run();
+        db.prepare("UPDATE cron_configs SET name = 'Tutup Buku & Auto-Alpha', description = 'Mengunci absensi harian KBM dan PKL serta menetapkan status Alpha bagi yang belum absen pada jam 23:59 WIB.' WHERE key = 'auto_alpha_job'").run();
+        console.log('[DB] Updated default cron_configs names, descriptions, and schedules.');
+      } catch (err) {
+        console.error('[DB] Gagal mengupdate cron_configs default:', err.message);
+      }
+
+      // Seed PKL templates and enforce revised versions
       const pklTemplates = [
         // PKL Masuk
-        { key: 'pkl_masuk_grup', name: 'PKL Masuk (Grup Sekolah)', body: 'Halo, laporan PKL masuk untuk grup sekolah.\nTanggal: {tanggal}\nTempat: {tempat_pkl}\nDetail: {url}' },
-        { key: 'pkl_masuk_pembimbing', name: 'PKL Masuk (Guru Pembimbing)', body: 'Yth. Bapak/Ibu {pembimbing}, laporan PKL baru saja masuk.\nTanggal: {tanggal}\nTempat: {tempat_pkl}\nDetail: {url}' },
-        { key: 'pkl_masuk_ortu', name: 'PKL Masuk (Orang Tua)', body: 'Bapak/Ibu Orang Tua, anak Anda telah melaporkan kegiatan PKL hari ini.\nTanggal: {tanggal}\nTempat: {tempat_pkl}\nDetail: {url}' },
-        { key: 'pkl_masuk_instruktur', name: 'PKL Masuk (Instruktur)', body: 'Yth. Instruktur DU/DI, laporan kegiatan harian siswa di tempat {tempat_pkl} telah disubmit.\nTanggal: {tanggal}\nDetail: {url}' },
-        { key: 'pkl_masuk_siswa', name: 'PKL Masuk (Siswa/Ketua)', body: 'Halo {ketua}, laporan PKL kelompokmu di {tempat_pkl} sudah masuk ke sistem.\nTanggal: {tanggal}\nDetail: {url}' },
+        { key: 'pkl_masuk_grup', name: 'PKL Masuk (Grup Sekolah)', body: '📝 *INFO JURNAL PKL*\nTim di *{tempat_pkl}* telah mensubmit laporan kegiatan hari ini ({tanggal}).\n👨‍🎓 *Ketua:* {ketua}\n📍 Lokasi: {lokasi}\n\n📑 *Jurnal Kegiatan Anggota:*\n{jurnal_lines}\n\n📸 *Lampiran Foto:*\n{foto_urls}\n\n_Pesan ini dikirim otomatis oleh Siakanuda - SMK NU Darussalam_' },
+        { key: 'pkl_masuk_grup_guru', name: 'PKL Masuk (Grup Guru)', body: '👨‍🏫 *LAPORAN PKL SISWA*\nYth. Bapak/Ibu Pembimbing, anak-anak PKL di *{tempat_pkl}* telah mengirimkan laporan harian mereka ({tanggal}).\n👨‍🎓 *Ketua Kelompok:* {ketua}\n👨‍🏫 *Pembimbing:* {pembimbing}\n📍 Lokasi Submit: {lokasi}\n\n📑 *Jurnal Kegiatan Anggota:*\n{jurnal_lines}\n\n📸 *Lampiran Foto:*\n{foto_urls}\n\n_Pesan ini dikirim otomatis oleh Siakanuda - SMK NU Darussalam_' },
+        { key: 'pkl_masuk_instruktur', name: 'PKL Masuk (Instruktur)', body: '🏭 *NOTIFIKASI SIAKANUDA*\nYth. Bapak/Ibu Instruktur DU/DI. Kelompok siswa PKL di *{tempat_pkl}* telah menginput jurnal kegiatan mereka untuk hari ini ({tanggal}).\n👨‍🎓 *Ketua:* {ketua}\n📍 Kordinat Lokasi: {lokasi}\n\n📑 *Jurnal Kegiatan Anggota:*\n{jurnal_lines}\n\n📸 *Lampiran Foto:*\n{foto_urls}\n\n_Pesan ini dikirim otomatis oleh Siakanuda - SMK NU Darussalam_' },
         // PKL Libur
-        { key: 'pkl_libur_grup', name: 'PKL Libur (Grup Sekolah)', body: 'Info: Kelompok PKL di {tempat_pkl} melaporkan libur pada hari ini ({tanggal}).\nAlasan: {jurnal_lines}' },
-        { key: 'pkl_libur_pembimbing', name: 'PKL Libur (Guru Pembimbing)', body: 'Yth. {pembimbing}, kelompok bimbingan Anda di {tempat_pkl} melaporkan libur hari ini.\nAlasan: {jurnal_lines}' },
-        { key: 'pkl_libur_ortu', name: 'PKL Libur (Orang Tua)', body: 'Bapak/Ibu Orang Tua, anak Anda melaporkan bahwa tempat PKL sedang libur hari ini.\nAlasan: {jurnal_lines}' },
-        { key: 'pkl_libur_instruktur', name: 'PKL Libur (Instruktur)', body: 'Yth. Instruktur DU/DI, kelompok di {tempat_pkl} menginput laporan libur hari ini.\nAlasan: {jurnal_lines}' },
-        { key: 'pkl_libur_siswa', name: 'PKL Libur (Siswa/Ketua)', body: 'Halo {ketua}, laporan bahwa tempat PKL kalian ({tempat_pkl}) libur hari ini telah tercatat.' }
+        { key: 'pkl_libur_grup', name: 'PKL Libur (Grup Sekolah)', body: '⛔ *INFO PKL LIBUR*\nKelompok di *{tempat_pkl}* melaporkan tidak ada kegiatan/libur pada hari ini ({tanggal}).\n📍 Lokasi Lapor: {lokasi}\nKeterangan: {jurnal_lines}\n\n_Pesan ini dikirim otomatis oleh Siakanuda - SMK NU Darussalam_' },
+        { key: 'pkl_libur_grup_guru', name: 'PKL Libur (Grup Guru)', body: '👨‍🏫 *INFO PKL LIBUR*\nYth. Bapak/Ibu Pembimbing, siswa PKL di *{tempat_pkl}* melaporkan libur/tutup hari ini ({tanggal}).\n📍 Lokasi Submit: {lokasi}\nKeterangan: {jurnal_lines}\n\n_Pesan ini dikirim otomatis oleh Siakanuda - SMK NU Darussalam_' },
+        { key: 'pkl_libur_instruktur', name: 'PKL Libur (Instruktur)', body: '🏭 *NOTIFIKASI SIAKANUDA*\nYth. Bapak/Ibu Instruktur DU/DI, siswa melaporkan bahwa instansi *{tempat_pkl}* sedang libur hari ini ({tanggal}).\n📍 Kordinat Lokasi: {lokasi}\nKeterangan: {jurnal_lines}\n\n_Pesan ini dikirim otomatis oleh Siakanuda - SMK NU Darussalam_' }
       ];
 
-      for (const t of pklTemplates) {
-        try {
+      // Enforce the new templates
+      try {
+        db.prepare(`DELETE FROM bot_templates WHERE key IN ('pkl_masuk_ortu', 'pkl_masuk_siswa', 'pkl_masuk_pembimbing', 'pkl_libur_ortu', 'pkl_libur_siswa', 'pkl_libur_pembimbing')`).run();
+        console.log('[DB] Cleaned up deprecated PKL targets (Orang Tua, Siswa, Pembimbing).');
+        
+        // Enforce KBM template revisions
+        db.prepare(`UPDATE bot_templates SET body = ?, variables = ? WHERE key = 'class_attendance_warning'`).run(
+          '🚨 *PENGINGAT ABSENSI KBM*\n📅 {tanggal}\n\nYth. Bapak/Ibu Guru, waktu telah menunjukkan pukul 08:30 WIB.\nBerikut adalah daftar kelas yang *belum* dilaporkan absensinya:\n{daftar_kelas}\n\nMohon perkenan Bapak/Ibu guru pengajar untuk segera melakukan pengisian absensi kelas pada portal SIAKANUDA. Terima kasih.\n\n_Pesan ini dikirim otomatis oleh Siakanuda - SMK NU Darussalam_',
+          'tanggal, daftar_kelas'
+        );
+        db.prepare(`UPDATE bot_templates SET body = ?, variables = ? WHERE key = 'kbm_attendance_broadcast'`).run(
+          '📢 *LAPORAN ABSENSI KELAS {kelas}*\n👨‍🏫 *Guru Pengajar:* {guru}\n📅 {tanggal} (Pukul {waktu} WIB)\n\n📊 *Ringkasan Kehadiran:*\n✅ Hadir : {hadir} Siswa\n🤒 Sakit : {sakit} Siswa\n💌 Izin  : {izin} Siswa\n❌ Alpha : {alpha} Siswa\n\n_{detail_absen}_\n\n_Pesan ini dikirim otomatis oleh Siakanuda - SMK NU Darussalam_',
+          'tanggal, waktu, kelas, guru, hadir, sakit, izin, alpha, detail_absen'
+        );
+        db.prepare(`UPDATE bot_templates SET body = ?, variables = ? WHERE key = 'kbm_consolidated_recap'`).run(
+          '📊 *REKAPITULASI TOTAL ABSEN KBM*\n🏫 *{nama_sekolah}*\n📅 {tanggal} (Pukul {waktu} WIB)\n\nStatus: ✅ *100% Terisi* (Semua Kelas Sudah Melapor)\n\n*Akumulasi Total ({total_siswa} Siswa):*\n✅ Hadir : {total_hadir} Siswa\n🤒 Sakit : {total_sakit} Siswa\n💌 Izin  : {total_izin} Siswa\n❌ Alpha : {total_alpha} Siswa\n\n*Rincian per Kelas:*\n{rekap_kelas}\n\n_Pesan ini dikirim otomatis oleh Siakanuda - SMK NU Darussalam_',
+          'tanggal, waktu, nama_sekolah, rekap_kelas, total_siswa, total_hadir, total_sakit, total_izin, total_alpha'
+        );
+
+        // Enforce PKL template revisions
+        for (const t of pklTemplates) {
           const c = db.prepare("SELECT COUNT(*) as c FROM bot_templates WHERE key = ?").get(t.key).c;
           if (c === 0) {
             db.prepare(`
               INSERT INTO bot_templates (key, name, body, variables, description)
               VALUES (?, ?, ?, ?, ?)
-            `).run(t.key, t.name, t.body, 'tanggal, waktu, tempat_pkl, pembimbing, ketua, kehadiran, absen_list, jurnal_lines, url', 'Template spesifik per target');
-            console.log(`[DB] Seeded PKL template: ${t.key}`);
+            `).run(t.key, t.name, t.body, 'tanggal, waktu, tempat_pkl, pembimbing, ketua, kehadiran, absen_list, jurnal_lines, lokasi, foto_urls, url', 'Template spesifik per target');
           } else {
-            // Update the name if it was empty
-            db.prepare("UPDATE bot_templates SET name = ? WHERE key = ? AND name = ''").run(t.name, t.key);
+            db.prepare("UPDATE bot_templates SET body = ?, variables = ?, name = ? WHERE key = ?").run(t.body, 'tanggal, waktu, tempat_pkl, pembimbing, ketua, kehadiran, absen_list, jurnal_lines, lokasi, foto_urls, url', t.name, t.key);
           }
-        } catch (e) {
-          console.error(`[DB] Gagal seeding PKL template ${t.key}:`, e.message);
         }
+        console.log('[DB] Enforced revised WA templates for KBM & PKL.');
+
+        // Seed or update PKL Monitoring template
+        const monCount = db.prepare("SELECT COUNT(*) as c FROM bot_templates WHERE key = 'pkl_monitoring_broadcast'").get().c;
+        const monBody = '📋 *[SIAKANUDA] Laporan Monitoring PKL*\n\n📅 *Tanggal Kunjungan:* {tanggal}\n🕐 *Waktu Lapor:* Pukul {waktu} WIB\n🏭 *Tempat PKL:* {tempat_pkl}\n👨‍🏫 *Pembimbing:* {pembimbing}\n👥 *Anggota:* {anggota}\n📍 *Lokasi:* {lokasi}\n📸 *Foto Dokumentasi:* {foto_count} foto{foto_urls}\n\n📝 *Catatan Monitoring:*\n_{catatan}_\n\n_Pesan ini dikirim otomatis oleh SIAKANUDA ~ SMK NU Darussalam_';
+        const monVars = 'tanggal, waktu, tempat_pkl, pembimbing, anggota, lokasi, foto_count, foto_urls, catatan';
+
+        if (monCount === 0) {
+          db.prepare(`
+            INSERT INTO bot_templates (key, name, body, variables, description)
+            VALUES (?, ?, ?, ?, ?)
+          `).run(
+            'pkl_monitoring_broadcast',
+            'Laporan Monitoring PKL',
+            monBody,
+            monVars,
+            'Broadcast hasil monitoring kunjungan guru pembimbing PKL ke grup WhatsApp.'
+          );
+          console.log('[DB] Seeded pkl_monitoring_broadcast template.');
+        } else {
+          db.prepare("UPDATE bot_templates SET body = ?, variables = ? WHERE key = 'pkl_monitoring_broadcast'").run(monBody, monVars);
+          console.log('[DB] Updated pkl_monitoring_broadcast template to include photo links.');
+        }
+      } catch (e) {
+        console.error('[DB] Gagal enforce template:', e.message);
       }
 
     console.log('[DB] Local SQLite schema initialized');

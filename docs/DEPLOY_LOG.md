@@ -1,6 +1,6 @@
 # 📋 SIAKANUDA — Deploy Log
 
-> Catatan riwayat deploy ke server Debian (`smknuda@100.110.83.48`).
+> Catatan riwayat deploy ke server Debian (`[SSH_USER]@[IP_SERVER_TAILSCALE]`).
 > File ini ada di **lokal (SSD)** dan **server** sebagai referensi.
 
 ---
@@ -24,6 +24,20 @@
 ---
 
 ## Riwayat Deploy
+
+### 29 Juni 2026 — v1.19.0 — `update_siakanuda_pwa.tar.gz`
+- **Commit:** `4c792d3`, `8ec6fae`
+- **File:**
+  - `dashboard/app/Controllers/Auth.php`
+  - `dashboard/app/Views/auth/login.php`
+  - `dashboard/app/Views/pkl/monitoring_add.php`
+  - `dashboard/app/Views/pkl/monitoring_edit.php`
+- **Restart:** (Tidak wajib)
+- **Catatan:**
+  - PWA: Fix bug login memantul (Safari/Mobile) dengan field statis dan tab-state memori.
+  - PKL Monitoring: Lock form sampai GPS ada, timeout fallback 20s, dan kompresi foto klien.
+
+---
 
 ### 18 Juni 2026 — v1.11.1 — Full Deploy
 - **Commit:** `8bc05fc`, `05c5493`, `810c947`
@@ -63,6 +77,40 @@
 
 ---
 
+### 23 Juni 2026 — v1.18.0 — `patch_v1180_docs.tar.gz`
+- **Commit:** `045c1cd`
+- **File:**
+  - `dashboard/app/Controllers/Bkk.php`
+  - `dashboard/app/Views/bkk/data_alumni.php`
+  - `dashboard/app/Views/bkk/dashboard.php`
+  - `dashboard/app/Views/auth/login.php`
+  - `dashboard/app/Views/dashboard/index.php`
+  - `dashboard/app/Views/layouts/template.php`
+  - `package.json`
+  - `DEPLOY_LOG.md`
+- **Restart:** `siakadash.service` (opsional)
+- **Catatan:**
+  - Integrasi penuh modul BKK & Tracer Study ke dalam ekosistem CI4 murni
+  - Fitur Import Excel (Hybrid dengan SheetJS + endpoint API CI4)
+  - Fitur Export Excel terintegrasi (DataTables Buttons)
+  - Form CRUD 23 Kolom interaktif via Pop-up Modal untuk keamanan data
+  - Pembersihan bug Mojibake (UTF-8) di seluruh Dashboard
+  - Update dependensi struktur database dari Supabase menjadi full SQLite lokal
+
+---
+
+### 26 Juni 2026 — v1.16.1 — `patch_wa_ui_20260626.tar.gz`
+- **Commit:** `285044d`
+- **File:**
+  - `dashboard/app/Views/whatsapp_settings/index.php`
+  - `DEPLOY_LOG.md`
+- **Restart:** (Tidak wajib, UI otomatis berubah saat refresh browser)
+- **Catatan:**
+  - Redesign antarmuka Pengaturan WhatsApp menjadi struktur *Dashboard* (Kotak Menu).
+  - Memisahkan form setiap template WA agar masing-masing memiliki tombol Simpan independen, mempermudah pengeditan dan mencegah kesalahan simpan massal.
+
+---
+
 ### 26 Juni 2026 — v1.16.2 — `patch_test_bot_20260626.tar.gz`
 - **Commit:** `caa0e70`
 - **File:**
@@ -77,6 +125,71 @@
   - Sistem validasi ketat pengecekan eksistensi nomor WA (`sock.onWhatsApp()`) di backend untuk mencegah *silent failure* (contoh: nomor kurang angka 8).
   - Controller PHP kini mem-parsing JSON *error message* dari Node.js alih-alih menampilkan pesan *error* generik.
   - Dukungan penuh pengujian kirim pesan ke **Grup WhatsApp** menggunakan Group JID (`@g.us`).
+
+---
+
+### 26 Juni 2026 — v1.18.0 — (Massive Deploy: WA Templates, UI PKL, OpenRouter)
+- **File & Patch Terkait:**
+  - `patch_template_db_20260626.tar.gz`
+  - `patch_template_cleanup_20260626.tar.gz`
+  - `patch_wa_templates_revised_20260626.tar.gz`
+  - `patch_teacher_group_final_20260626.tar.gz`
+  - `patch_photo_url_hotfix_20260626.tar.gz`
+  - `patch_student_report_20260626.tar.gz`
+- **Restart:** `bot.siswa.service` (Wajib untuk backend Node.js)
+- **Catatan & Pembaruan:**
+  - **Arsitektur Bot:** `bot.siswa.service` kini merangkap sebagai server AI dan Broadcast, menggantikan arsitektur lama yang terpisah. 9Router/OpenRouter API AI resmi terhubung (OpenAI-compatible).
+  - **Pemisahan JID Grup:** Menambahkan input khusus JID Grup Guru Pembimbing di Dashboard agar notifikasi *real-time* laporan PKL hanya terpusat ke grup panitia, bukan grup Yayasan (yang difokuskan untuk rekap harian).
+  - **Pembaruan Template WA:** Membersihkan template-template usang dari database (misal `pkl_masuk_broadcast`) dan menggantikannya dengan template granular (`pkl_masuk_siswa`, `pkl_masuk_pembimbing`, dsb) di UI Pengaturan WhatsApp.
+  - **Perbaikan UI Laporan PKL Siswa:** Anak-anak kini bisa menghapus salah *upload* foto langsung dengan mencentang kotak 'Hapus Foto Ini' lalu menekan Simpan.
+  - **Penyesuaian Aturan Absensi PKL:** Jika **seluruh** anggota berstatus Sakit, Izin, atau Alpha, form sistem tidak lagi mewajibkan unggah "Foto Dokumentasi Kelompok", melainkan menjadi opsional (Hanya foto bukti surat sakit/izin dari anggota yang bersangkutan yang diwajibkan).
+  - **Bugfix Hotfix:** Memperbaiki insiden URL ganda (`https://siakanuda.qzz.iohttps://...`) karena masalah logika *fallback* lokal/Supabase Storage.
+
+---
+
+### 28 Juni 2026 — v1.18.1 — `patch_wa_anti_spam_20260628.tar.gz`
+- **Commit:** `1abdae7`
+- **File:**
+  - `package.json`
+  - `execution/server.js`
+  - `execution/cron_jobs.js`
+  - `execution/db.js`
+  - `dashboard/app/Views/whatsapp_settings/index.php`
+  - `docs/DEPLOY_LOG.md`
+- **Restart:** `bot.siswa.service` (Wajib direstart karena perubahan berkas di execution/)
+- **Catatan:**
+  - Rombak total logika cron job: Pengecekan absensi KBM dan Pengingat Jurnal PKL **hanya** dikirim ke Grup WhatsApp sekolah (Grup KBM), meniadakan pengiriman DMs ke nomor pribadi siswa/Ketua PKL.
+  - Mempertahankan logika pengiriman eskalasi peringatan PKL ke nomor pribadi Guru Pembimbing (menggunakan rekap konsolidasi agar terhindar dari spam beruntun), namun status aktifnya dinonaktifkan sementara di panel settings agar admin bebas mengaktifkannya sewaktu-waktu.
+  - Mempertahankan logika pengiriman laporan PKL masuk ke nomor pribadi Instruktur industri, dikontrol langsung via toggle settings di dashboard.
+  - Memperbarui skema inisialisasi SQLite (`db.js`) agar secara otomatis mengupdate nama, deskripsi, dan jadwal default (cron expression) di database agar UI sinkron dengan logika baru.
+  - Memperbarui petunjuk teks ekspresi cron di View dashboard (`whatsapp_settings/index.php`).
+  - Memperbaiki bug form bertumpuk (nested HTML forms) di halaman Pengaturan WA yang menyebabkan tombol "Hapus" tugas cron kustom tidak bekerja (malah memicu submit update form utama). Kini tombol Hapus memicu JavaScript POST via single hidden form.
+  - Memperbarui template bawaan `pkl_masuk_grup`, `pkl_masuk_grup_guru`, dan `pkl_masuk_instruktur` di `db.js` untuk menambahkan informasi Ketua dan Guru Pembimbing sebelum bagian lokasi.
+  - Mengimplementasikan helper pencocokan nomor telepon toleran (`cleanPhone`) untuk lookup nama Ketua PKL dan Guru Pembimbing agar yang tampil selalu nama lengkap mereka, bukan nomor HP/NISN.
+  - Menyempurnakan UI Editor Template Pesan (`index.php`) dengan menambahkan panel informasi Target Kirim, Pemicu (Trigger), dan Deskripsi Fungsional pada tiap kartu template agar admin tidak bingung saat menyunting.
+  - Menonaktifkan inisialisasi AI command parser (9Router) saat booting server karena chatbot pintar sudah tidak aktif di produksi.
+  - Status: v1.18.1 siap dideploy.
+
+
+---
+
+### 29 Juni 2026 — v1.19.0 — `patch_pkl_monitoring_20260629.tar.gz`
+- **File:**
+  - `dashboard/app/Config/Routes.php`
+  - `dashboard/app/Controllers/Pkl.php`
+  - `dashboard/app/Models/MonitoringPklModel.php`
+  - `dashboard/app/Views/layouts/template.php`
+  - `dashboard/app/Views/pkl/monitoring.php`
+  - `execution/db.js`
+  - `docs/AI_CONTEXT.md`
+  - `docs/STATUS_FITUR.md`
+  - `docs/DEPLOY_LOG.md`
+- **Restart:** `bot.siswa.service` + `siakadash.service`
+- **Catatan:**
+  - Menambahkan fitur dan menu baru "Monitoring PKL" bagi guru pembimbing untuk mendata kunjungan monitoring secara langsung di DU/DI.
+  - CRUD monitoring_pkl lengkap dengan validasi form minimal 10 karakter catatan kunjungan.
+  - Upload dokumentasi foto kunjungan maksimal 3 foto, terintegrasi dengan upload path lokal.
+  - Tampilan dinamis per-role (guru pembimbing menginput dan melihat catatan monitoring miliknya, admin/kepsek dapat melihat keseluruhan, siswa melihat monitoring kelompoknya sendiri).
 
 ---
 

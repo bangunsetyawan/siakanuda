@@ -377,7 +377,7 @@ siakanuda/                              ← Root (Node.js + SQLite)
 ### 🚀 P. Deployment & Infrastruktur
 - [x] Systemd services — `bot.siswa.service` + `siakadash.service`
 - [x] Nginx Reverse Proxy — local HTTP to 8080 (v1.11.0)
-- [x] Tailscale VPN (`100.110.83.48`)
+- [x] Tailscale VPN (`[IP_SERVER_TAILSCALE]`)
 - [x] ~~Cloudflare Tunnel — akses internet via domain (v1.7.0)~~ (Digantikan v1.11.0)
 - [x] Cloudflare Tunnel (cloudflared) terhubung ke Nginx port 80 (v1.11.0)
 - [x] Domain kustom gratis DigitalPlat `https://siakanuda.qzz.io/` (v1.11.0)
@@ -604,12 +604,12 @@ siakanuda/                              ← Root (Node.js + SQLite)
 - **Perangkat:** Lenovo Notebook (~2010), Intel Atom N455, 2GB RAM, 128GB SSD
 - **Sistem Operasi:** Debian 13 (Trixie) Minimal CLI Headless
 - **Service Manager:** Systemd (`bot.siswa.service` & `siakadash.service`)
-- **Jaringan:** IP Statis LAN Sekolah (`10.10.11.37`) + Tailscale VPN (`100.110.83.48`)
+- **Jaringan:** IP Statis LAN Sekolah (`[IP_SERVER_LAN]`) + Tailscale VPN (`[IP_SERVER_TAILSCALE]`)
 
 ### 2 Jalur Akses
 | Jalur | Via | URL | Fitur |
 |-------|-----|-----|-------|
-| **Lokal (WiFi)** | LAN Sekolah | `http://10.10.11.37:8080` | Semua fitur + cetak PDF (foto asli) |
+| **Lokal (WiFi)** | LAN Sekolah | `http://[IP_SERVER_LAN]:8080` | Semua fitur + cetak PDF (foto asli) |
 | **Internet** | Cloudflare Tunnel | `https://domain.tld` | Semua fitur — cetak PDF (foto thumbnail) |
 
 ---

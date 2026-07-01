@@ -10,6 +10,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
 
 export async function syncLocalPhotosToSupabase() {
+  // Sinkronisasi dinonaktifkan sementara untuk mencegah log SPAM
+  // (Kegagalan RLS policy dari sisi Supabase)
+  return;
+
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_KEY = process.env.SUPABASE_KEY;
   if (!SUPABASE_URL || !SUPABASE_KEY) {
@@ -20,8 +24,6 @@ export async function syncLocalPhotosToSupabase() {
   // Impor koneksi DB secara dinamis
   const db = await import('./db.js');
   const { supabase, useSupabase, getDb } = db;
-
-  console.log('[SYNC] Menjalankan pengecekan sinkronisasi foto lokal ke Supabase Storage...');
 
   try {
     // Ambil 100 laporan PKL terakhir untuk mendeteksi file lokal yang belum di-backup

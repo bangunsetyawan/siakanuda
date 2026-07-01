@@ -1,7 +1,7 @@
 <?= $this->extend('layouts/template') ?>
 
 <?= $this->section('content') ?>
-<div class="content-header p-0 mb-3">
+<div class="content-header p-0 mb-3 d-none d-md-block">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center flex-wrap">
             <div>
@@ -17,8 +17,34 @@
     </div>
 </div>
 
+<!-- Mobile-Only App Header -->
+<div class="d-block d-md-none mb-3">
+    <!-- Premium Profile Header Card -->
+    <div class="card mb-3 border-0" style="background: linear-gradient(135deg, #16a34a, #115e59); border-radius: 18px; box-shadow: 0 4px 15px rgba(22, 163, 74, 0.2);">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle mr-3 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: rgba(255, 255, 255, 0.2);">
+                        <i class="fas fa-user-circle text-white" style="font-size: 24px;"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-white font-weight-bold mb-0" style="font-size: 14px;"><?= htmlspecialchars($userName ?? 'Pengguna') ?></h6>
+                        <span class="badge font-weight-bold" style="font-size: 10px; background: rgba(255, 255, 255, 0.25); color: #ffffff; border-radius: 6px;">
+                            <i class="fas fa-shield-alt mr-1"></i><?= htmlspecialchars($roleLabel ?? 'Pengguna') ?>
+                        </span>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="text-white-50" style="font-size: 9px; display: block; opacity: 0.8;">WAKTU</span>
+                    <span class="text-white font-weight-bold" id="mobile-clock-time" style="font-size: 14px; letter-spacing: 0.5px;"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Role-based Welcome Card -->
-<div class="card mb-4 border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+<div class="card mb-4 border-0 shadow-sm d-none d-md-block" style="border-radius: 16px; overflow: hidden;">
     <div class="card-body p-0">
         <div class="d-flex align-items-stretch" style="min-height: 80px;">
             <!-- Accent strip -->
@@ -39,7 +65,7 @@
                 <p class="text-secondary mb-0" style="font-size: 13px; line-height: 1.6;">
                     <?php
                     $roleDescriptions = [
-                        'admin'      => 'Kamu bisa akses <strong>semua menu</strong>: Manajemen Siswa & Guru, Absensi KBM, Laporan & Kelompok PKL, Pelanggaran, Catatan BK, Jadwal, Kotak Suara, Log WA, dan Alumni & BKK.',
+                        'admin'      => 'Kamu bisa akses <strong>semua menu</strong>: Manajemen Siswa & Guru, Absensi KBM, Laporan & Kelompok PKL, Pelanggaran, Catatan BK, Jadwal, Kotak Suara, dan Log WA.',
                         'kepsek'     => 'Kamu bisa melihat <strong>laporan lengkap</strong>: Rekap Absensi KBM, Laporan & Kelompok PKL, Poin Pelanggaran, Jadwal Pelajaran, dan Kotak Suara Siswa.',
                         'guru_bk'    => 'Kamu bisa akses menu <strong>Absensi KBM</strong>, <strong>Poin Pelanggaran (Penuh)</strong>, <strong>Catatan BK</strong>, <strong>Laporan & Kelompok PKL</strong>, Manajemen Siswa, dan Jadwal Pelajaran.',
                         'guru'       => 'Kamu bisa akses menu <strong>Absensi KBM</strong>, <strong>Jadwal Pelajaran</strong>, <strong>Manajemen Siswa (Hanya Lihat)</strong>, <strong>Poin Pelanggaran (Hanya Lihat)</strong>, dan <strong>Kelompok PKL</strong> yang Anda bimbing.',
@@ -97,12 +123,17 @@
                         ];
                         $borderStyle = $borderStyles[$n['type']] ?? 'border: 1px solid rgba(0,0,0,0.05)';
                         ?>
-                        <div class="p-3 rounded-lg d-flex align-items-center justify-content-between flex-wrap <?= $bgClass ?>" style="border-radius: 12px; <?= $borderStyle ?>; gap: 10px;">
-                            <div class="d-flex align-items-center flex-grow-1">
-                                <div class="d-flex align-items-center justify-content-center rounded-circle mr-3 <?= $bgClass ?>" style="width: 36px; height: 36px; min-width: 36px;">
-                                    <i class="<?= $n['icon'] ?> <?= $textColor ?>" style="font-size: 16px;"></i>
+                        <div class="p-3 rounded-lg d-flex align-items-start <?= $bgClass ?> mobile-expandable-notif" style="border-radius: 12px; <?= $borderStyle ?>; gap: 10px; cursor: pointer; transition: all 0.2s ease-in-out;" onclick="toggleNotification(this)">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle mr-2 <?= $bgClass ?>" style="width: 36px; height: 36px; min-width: 36px; margin-top: 1px;">
+                                <i class="<?= $n['icon'] ?> <?= $textColor ?>" style="font-size: 16px;"></i>
+                            </div>
+                            <div class="flex-grow-1 overflow-hidden" style="min-width: 0;">
+                                <div class="notification-text text-dark text-truncate-mobile" style="font-size: 13.5px; line-height: 1.4;">
+                                    <?= $n['message'] ?>
                                 </div>
-                                <span style="font-size: 13.5px;" class="text-dark"><?= $n['message'] ?></span>
+                            </div>
+                            <div class="notification-chevron d-md-none text-muted" style="align-self: center; margin-left: auto; padding-left: 8px;">
+                                <i class="fas fa-chevron-down" style="font-size: 11px; transition: transform 0.2s;"></i>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -123,6 +154,25 @@
     .bg-dark-soft { background-color: rgba(52, 58, 64, 0.08) !important; }
     .bg-danger-soft { background-color: rgba(220, 53, 69, 0.08) !important; }
     .bg-pink-soft { background-color: rgba(236, 72, 153, 0.08) !important; }
+
+    /* Expandable Notifications on Mobile (< 768px) */
+    @media (max-width: 767.98px) {
+        .text-truncate-mobile {
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .mobile-expandable-notif.expanded .text-truncate-mobile {
+            display: block !important;
+            overflow: visible !important;
+            -webkit-line-clamp: unset !important;
+        }
+        .mobile-expandable-notif.expanded .notification-chevron i {
+            transform: rotate(180deg);
+        }
+    }
     .bg-teal-soft { background-color: rgba(32, 201, 151, 0.08) !important; }
     .bg-whatsapp-soft { background-color: rgba(40, 167, 69, 0.08) !important; }
     .bg-green-soft { background-color: rgba(22, 163, 74, 0.08) !important; }
@@ -195,12 +245,12 @@ if ($role === 'admin') {
         ['title' => 'Absensi KBM',       'url' => '/attendance',      'icon' => 'fas fa-calendar-check',      'bg' => 'bg-info-soft',      'text' => 'text-info'],
         ['title' => 'Laporan PKL',       'url' => '/pkl',             'icon' => 'fas fa-briefcase',           'bg' => 'bg-secondary-soft', 'text' => 'text-secondary'],
         ['title' => 'Kelompok PKL',      'url' => '/pkl/groups',      'icon' => 'fas fa-map-marked-alt',      'bg' => 'bg-dark-soft',      'text' => 'text-dark'],
+        ['title' => 'Monitoring PKL',    'url' => '/pkl/monitoring',  'icon' => 'fas fa-eye',                 'bg' => 'bg-primary-soft',   'text' => 'text-primary'],
         ['title' => 'Poin Pelanggaran', 'url' => '/violations',      'icon' => 'fas fa-exclamation-triangle', 'bg' => 'bg-danger-soft',    'text' => 'text-danger'],
         ['title' => 'Catatan BK',        'url' => '/counseling',      'icon' => 'fas fa-heart',               'bg' => 'bg-pink-soft',      'text' => 'text-pink'],
         ['title' => 'Prestasi Siswa',    'url' => '/prestasi',        'icon' => 'fas fa-trophy',               'bg' => 'bg-green-soft',     'text' => 'text-green'],
         ['title' => 'Kotak Suara',       'url' => '/feedbacks',       'icon' => 'fas fa-comment-alt',         'bg' => 'bg-teal-soft',      'text' => 'text-teal'],
         ['title' => 'Log Audit WA',      'url' => '/logs',            'icon' => 'fab fa-whatsapp',            'bg' => 'bg-whatsapp-soft',  'text' => 'text-whatsapp'],
-        ['title' => 'Alumni & BKK',       'url' => base_url('bkk/dashboard'), 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-indigo-soft', 'text' => 'text-indigo', 'external' => true],
     ];
 } elseif ($role === 'kepsek') {
     $shortcuts = [
@@ -208,11 +258,11 @@ if ($role === 'admin') {
         ['title' => 'Kalender Akademik',  'url' => '/kalender-akademik', 'icon' => 'fas fa-calendar-week',  'bg' => 'bg-success-soft',   'text' => 'text-success'],
         ['title' => 'Laporan PKL',       'url' => '/pkl',         'icon' => 'fas fa-briefcase',            'bg' => 'bg-secondary-soft', 'text' => 'text-secondary'],
         ['title' => 'Kelompok PKL',      'url' => '/pkl/groups',  'icon' => 'fas fa-map-marked-alt',       'bg' => 'bg-dark-soft',      'text' => 'text-dark'],
+        ['title' => 'Monitoring PKL',    'url' => '/pkl/monitoring', 'icon' => 'fas fa-eye',              'bg' => 'bg-primary-soft',   'text' => 'text-primary'],
         ['title' => 'Jadwal Pelajaran',  'url' => '/schedules',   'icon' => 'fas fa-calendar-alt',         'bg' => 'bg-warning-soft',   'text' => 'text-warning'],
         ['title' => 'Poin Pelanggaran', 'url' => '/violations',  'icon' => 'fas fa-exclamation-triangle',  'bg' => 'bg-danger-soft',    'text' => 'text-danger'],
         ['title' => 'Prestasi Siswa',    'url' => '/prestasi',    'icon' => 'fas fa-trophy',               'bg' => 'bg-green-soft',     'text' => 'text-green'],
         ['title' => 'Kotak Suara',       'url' => '/feedbacks',   'icon' => 'fas fa-comment-alt',          'bg' => 'bg-teal-soft',      'text' => 'text-teal'],
-        ['title' => 'Alumni & BKK',      'url' => base_url('bkk/dashboard'), 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-indigo-soft', 'text' => 'text-indigo', 'external' => true],
     ];
 } elseif ($role === 'guru_bk') {
     $shortcuts = [
@@ -223,19 +273,19 @@ if ($role === 'admin') {
         ['title' => 'Catatan BK',        'url' => '/counseling',  'icon' => 'fas fa-heart',                'bg' => 'bg-pink-soft',    'text' => 'text-pink'],
         ['title' => 'Laporan PKL',       'url' => '/pkl',         'icon' => 'fas fa-briefcase',            'bg' => 'bg-secondary-soft', 'text' => 'text-secondary'],
         ['title' => 'Kelompok PKL',      'url' => '/pkl/groups',  'icon' => 'fas fa-map-marked-alt',       'bg' => 'bg-dark-soft',    'text' => 'text-dark'],
+        ['title' => 'Monitoring PKL',    'url' => '/pkl/monitoring', 'icon' => 'fas fa-eye',              'bg' => 'bg-primary-soft',   'text' => 'text-primary'],
         ['title' => 'Manajemen Siswa',   'url' => '/students',    'icon' => 'fas fa-users',                'bg' => 'bg-primary-soft',   'text' => 'text-primary'],
-        ['title' => 'Alumni & BKK',      'url' => base_url('bkk/dashboard'), 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-indigo-soft', 'text' => 'text-indigo', 'external' => true],
     ];
 } elseif (in_array($role, ['guru', 'guru_mapel'])) {
     $shortcuts = [
-        ['title' => 'Absensi KBM',       'url' => '/attendance',  'icon' => 'fas fa-calendar-check',       'bg' => 'bg-info-soft',      'text' => 'text-info'],
-        ['title' => 'Kalender Akademik',  'url' => '/kalender-akademik', 'icon' => 'fas fa-calendar-week',  'bg' => 'bg-success-soft',   'text' => 'text-success'],
-        ['title' => 'Jadwal Pelajaran',  'url' => '/schedules',   'icon' => 'fas fa-calendar-alt',         'bg' => 'bg-warning-soft',   'text' => 'text-warning'],
-        ['title' => 'Poin Pelanggaran', 'url' => '/violations',  'icon' => 'fas fa-exclamation-triangle',  'bg' => 'bg-danger-soft',    'text' => 'text-danger'],
-        ['title' => 'Prestasi Siswa',    'url' => '/prestasi',    'icon' => 'fas fa-trophy',               'bg' => 'bg-green-soft',     'text' => 'text-green'],
-        ['title' => 'Laporan PKL',       'url' => '/pkl',         'icon' => 'fas fa-briefcase',            'bg' => 'bg-secondary-soft', 'text' => 'text-secondary'],
-        ['title' => 'Kelompok PKL',      'url' => '/pkl/groups',  'icon' => 'fas fa-map-marked-alt',       'bg' => 'bg-dark-soft',      'text' => 'text-dark'],
-        ['title' => 'Alumni & BKK',      'url' => base_url('bkk/dashboard'), 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-indigo-soft', 'text' => 'text-indigo', 'external' => true],
+        ['title' => 'Absensi KBM',       'url' => '/attendance',      'icon' => 'fas fa-calendar-check',      'bg' => 'bg-info-soft',      'text' => 'text-info'],
+        ['title' => 'Laporan PKL',       'url' => '/pkl',             'icon' => 'fas fa-briefcase',           'bg' => 'bg-secondary-soft', 'text' => 'text-secondary'],
+        ['title' => 'Kelompok PKL',      'url' => '/pkl/groups',      'icon' => 'fas fa-map-marked-alt',      'bg' => 'bg-dark-soft',      'text' => 'text-dark'],
+        ['title' => 'Monitoring PKL',    'url' => '/pkl/monitoring',  'icon' => 'fas fa-eye',                 'bg' => 'bg-primary-soft',   'text' => 'text-primary'],
+        ['title' => 'Kalender Akademik',  'url' => '/kalender-akademik', 'icon' => 'fas fa-calendar-week',     'bg' => 'bg-success-soft',   'text' => 'text-success'],
+        ['title' => 'Jadwal Pelajaran',  'url' => '/schedules',       'icon' => 'fas fa-calendar-alt',        'bg' => 'bg-warning-soft',   'text' => 'text-warning'],
+        ['title' => 'Poin Pelanggaran', 'url' => '/violations',      'icon' => 'fas fa-exclamation-triangle', 'bg' => 'bg-danger-soft',    'text' => 'text-danger'],
+        ['title' => 'Prestasi Siswa',    'url' => '/prestasi',        'icon' => 'fas fa-trophy',               'bg' => 'bg-green-soft',     'text' => 'text-green'],
     ];
 } elseif ($role === 'ketua_pkl') {
     $shortcuts = [
@@ -247,10 +297,9 @@ if ($role === 'admin') {
         ['title' => 'Prestasi Saya',     'url' => '/prestasi',   'icon' => 'fas fa-trophy',               'bg' => 'bg-green-soft',   'text' => 'text-green'],
         ['title' => 'Catatan BK',        'url' => '/counseling', 'icon' => 'fas fa-heart',                'bg' => 'bg-pink-soft',    'text' => 'text-pink'],
         ['title' => 'Kotak Suara',       'url' => '/feedbacks',  'icon' => 'fas fa-comment-alt',          'bg' => 'bg-teal-soft',    'text' => 'text-teal'],
-        ['title' => 'Alumni & BKK',      'url' => base_url('bkk/dashboard'), 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-indigo-soft', 'text' => 'text-indigo', 'external' => true],
     ];
 } else {
-    // siswa & fallback â€” selaras dengan sidebar
+    // siswa & fallback — selaras dengan sidebar
     $shortcuts = [
         ['title' => 'Absensi KBM',       'url' => '/attendance',  'icon' => 'fas fa-calendar-check',       'bg' => 'bg-info-soft',      'text' => 'text-info'],
         ['title' => 'Kalender Akademik',  'url' => '/kalender-akademik', 'icon' => 'fas fa-calendar-week',  'bg' => 'bg-success-soft',   'text' => 'text-success'],
@@ -259,12 +308,12 @@ if ($role === 'admin') {
         ['title' => 'Prestasi Saya',     'url' => '/prestasi',   'icon' => 'fas fa-trophy',               'bg' => 'bg-green-soft',     'text' => 'text-green'],
         ['title' => 'Catatan BK',        'url' => '/counseling', 'icon' => 'fas fa-heart',                'bg' => 'bg-pink-soft',    'text' => 'text-pink'],
         ['title' => 'Kotak Suara',       'url' => '/feedbacks',  'icon' => 'fas fa-comment-alt',          'bg' => 'bg-teal-soft',      'text' => 'text-teal'],
-        ['title' => 'Alumni & BKK',      'url' => base_url('bkk/dashboard'), 'icon' => 'fas fa-graduation-cap', 'bg' => 'bg-indigo-soft', 'text' => 'text-indigo', 'external' => true],
     ];
     // Tambahkan PKL hanya jika siswa adalah anggota/ketua PKL
     if (!empty($isPklMember)) {
         array_splice($shortcuts, 2, 0, [
             ['title' => 'Laporan PKL Saya', 'url' => '/pkl', 'icon' => 'fas fa-briefcase', 'bg' => 'bg-secondary-soft', 'text' => 'text-secondary'],
+            ['title' => 'Monitoring PKL', 'url' => '/pkl/monitoring', 'icon' => 'fas fa-eye', 'bg' => 'bg-primary-soft', 'text' => 'text-primary'],
         ]);
     }
 }
@@ -289,6 +338,53 @@ if ($role === 'admin') {
 </div>
 
 <?php /* ================================================================
+   WIDGET MONITORING PKL — Tampil untuk Guru Pembimbing
+   ================================================================ */ ?>
+<?php if (in_array($role, ['guru', 'guru_bk', 'guru_mapel']) && !empty($pklBimbinganGroups)): ?>
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+            <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
+                <h6 class="font-weight-bold text-dark mb-0">
+                    <i class="fas fa-eye text-primary mr-2"></i> Monitoring PKL Bimbingan Anda
+                </h6>
+                <a href="<?= base_url('/pkl/monitoring') ?>" class="text-xs text-primary font-weight-bold">Lihat Semua <i class="fas fa-chevron-right ml-1"></i></a>
+            </div>
+            <div class="card-body pt-3">
+                <div class="row">
+                    <?php foreach ($pklBimbinganGroups as $bg): ?>
+                        <div class="col-md-6 mb-3">
+                            <div class="p-3 border rounded-lg bg-light d-flex flex-column justify-content-between h-100" style="border-radius: 12px; border: 1px dashed #cbd5e1 !important;">
+                                <div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="badge badge-primary font-weight-bold px-2 py-1" style="font-size: 10px;">
+                                            🏭 DU/DI
+                                        </span>
+                                        <span class="badge <?= $bg['last_monitoring'] === 'Belum pernah' ? 'badge-secondary' : 'badge-success' ?> font-weight-bold px-2 py-1" style="font-size: 10px;">
+                                            Monitoring: <?= $bg['last_monitoring'] ?>
+                                        </span>
+                                    </div>
+                                    <h6 class="font-weight-bold text-dark mb-1"><?= htmlspecialchars($bg['tempat_pkl']) ?></h6>
+                                    <p class="text-secondary small mb-2" style="line-height: 1.3;">
+                                        <strong>Siswa:</strong> <?= htmlspecialchars($bg['anggota']) ?>
+                                    </p>
+                                </div>
+                                <div class="mt-2 text-right">
+                                    <a href="<?= base_url('/pkl/monitoring/add?group_id=' . $bg['id']) ?>" class="btn btn-primary btn-xs font-weight-bold px-3 py-1.5" style="border-radius: 6px; font-size: 11px;">
+                                        <i class="fas fa-plus mr-1"></i> Input Kunjungan
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php /* ================================================================
    PKL ABSENSI WIDGET â€” hanya tampil untuk ketua_pkl yang punya grup PKL
    ================================================================ */ ?>
 <?php if ($role === 'ketua_pkl' && !empty($pklGroupData)): ?>
@@ -310,7 +406,7 @@ if ($role === 'admin') {
                         <div>
                             <h4 class="font-weight-bold text-white mb-1" style="font-size: 18px; letter-spacing: 0.3px;">Info PKL</h4>
                             <p class="text-white mb-0" style="opacity: 0.9; font-size: 13.5px; font-weight: 500;">
-                                ðŸ“ <?= htmlspecialchars($pklGroupData['tempat_pkl']) ?>
+                                <?= htmlspecialchars($pklGroupData['tempat_pkl']) ?>
                             </p>
                         </div>
                     </div>
@@ -340,8 +436,8 @@ if ($role === 'admin') {
                         <div>
                             <h4 class="font-weight-bold text-white mb-1" style="font-size: 18px; letter-spacing: 0.3px;">Absensi PKL Hari Ini</h4>
                             <p class="text-white mb-0" style="opacity: 0.9; font-size: 13.5px; font-weight: 500;">
-                                ðŸ“ <?= htmlspecialchars($pklGroupData['tempat_pkl']) ?> &nbsp;|&nbsp;
-                                ðŸ“… <?= date('l, d F Y') ?>
+                                <?= htmlspecialchars($pklGroupData['tempat_pkl']) ?> &nbsp;|&nbsp;
+                                <?= date('l, d F Y') ?>
                             </p>
                         </div>
                     </div>
@@ -351,7 +447,7 @@ if ($role === 'admin') {
                             <?php if ($pklTodayReport['status_libur']): ?>
                                 <div class="px-4 py-2 font-weight-bold rounded-pill text-center"
                                      style="background: rgba(255, 255, 255, 0.2); color: #fff; border: 1px solid rgba(255, 255, 255, 0.4); font-size: 13px; letter-spacing: 0.5px;">
-                                    ðŸ¢ DU/DI LIBUR HARI INI
+                                    DU/DI LIBUR HARI INI
                                 </div>
                             <?php else: ?>
                                 <div class="px-4 py-2 font-weight-bold rounded-pill text-center"
@@ -376,7 +472,7 @@ if ($role === 'admin') {
 
 <?php endif; ?>
 
-<?php /* Siswa biasa â€” tampilkan status PKL hari ini jika punya grup */ ?>
+<?php /* Siswa biasa — tampilkan status PKL hari ini jika punya grup */ ?>
 <?php if (in_array($role, ['siswa', 'anggotapkl']) && !empty($pklGroupData)): ?>
 <div class="card mb-4 border-0 shadow-sm" style="border-radius:16px;">
     <div class="card-body d-flex align-items-center" style="gap:16px;">
@@ -391,7 +487,7 @@ if ($role === 'admin') {
             <?php else: ?>
                 <?php if (!empty($pklTodayReport)): ?>
                     <?php if ($pklTodayReport['status_libur']): ?>
-                        <small class="text-warning font-weight-bold">ðŸ¢ DU/DI Libur: <?= htmlspecialchars($pklTodayReport['libur_reason'] ?? 'Tanpa alasan') ?></small>
+                        <small class="text-warning font-weight-bold">DU/DI Libur: <?= htmlspecialchars($pklTodayReport['libur_reason'] ?? 'Tanpa alasan') ?></small>
                     <?php else: ?>
                         <?php
                         $myName = session()->get('name');
@@ -410,6 +506,12 @@ if ($role === 'admin') {
                     <small class="text-secondary">Belum ada laporan masuk hari ini.</small>
                 <?php endif; ?>
             <?php endif; ?>
+
+            <?php if (!empty($pklLastMonitoring)): ?>
+                <div class="mt-2 pt-2 border-top small text-success font-weight-bold" style="font-size: 11.5px;">
+                    <i class="fas fa-eye mr-1"></i> Kunjungan Pembimbing Terakhir: <?= $pklLastMonitoring['tanggal'] ?> oleh <?= htmlspecialchars($pklLastMonitoring['pembimbing']) ?>
+                </div>
+            <?php endif; ?>
         </div>
         <a href="<?= base_url('/pkl') ?>" class="btn btn-sm btn-outline-success" style="border-radius:10px; white-space:nowrap;">
             Lihat Detail <i class="fas fa-arrow-right ml-1"></i>
@@ -418,8 +520,8 @@ if ($role === 'admin') {
 </div>
 <?php endif; ?>
 
-<!-- Widgets Row â€” stat cards (role-aware) -->
-<?php if (in_array($role, ['admin', 'kepsek', 'guru_bk', 'guru_mapel'])): ?>
+<!-- Widgets Row — stat cards (role-aware) -->
+<?php if (in_array($role, ['admin', 'kepsek', 'guru_bk', 'guru', 'guru_mapel'])): ?>
 <!-- GURU/ADMIN: Rekap Global -->
 <div class="row justify-content-center">
     <div class="col-xl-2.4 col-lg-3 col-md-4 col-6">
@@ -694,7 +796,7 @@ if ($role === 'admin') {
                                 <span class="badge badge-success rounded-pill font-weight-bold px-2 py-1" style="font-size: 10px;"><?= htmlspecialchars($ra['student_class']) ?></span>
                             </div>
                             <h6 class="font-weight-bold mb-1 text-success" style="font-size: 13px;"><?= htmlspecialchars($ra['title']) ?></h6>
-                            <small class="text-secondary" style="font-size: 10px;">ðŸ“… <?= date('d M Y', strtotime($ra['date'])) ?> &nbsp;|&nbsp; Kategori: <?= htmlspecialchars($ra['category']) ?></small>
+                            <small class="text-secondary" style="font-size: 10px;"><?= date('d M Y', strtotime($ra['date'])) ?> &nbsp;|&nbsp; Kategori: <?= htmlspecialchars($ra['category']) ?></small>
                         </li>
                     <?php endforeach; ?>
                 </ul>
@@ -703,6 +805,78 @@ if ($role === 'admin') {
         <?php endif; ?>
     </div>
 </div>
+
+<?php if (in_array($role, ['admin', 'kepsek', 'guru_bk', 'guru', 'guru_mapel'])): ?>
+<!-- EMBEDDED DASHBOARD ANALYTICS CHARTS -->
+<div class="card mt-4 border-0 shadow-sm" style="border-radius: 16px;">
+    <div class="card-header bg-white border-0 pt-4 pb-0">
+        <h5 class="font-weight-bold text-dark mb-0">
+            <i class="fas fa-chart-pie text-success mr-2"></i> Grafik &amp; Analisis Tren Akademik
+        </h5>
+        <p class="text-secondary small mb-0 mt-1">Tren kehadiran harian, bulanan, dan ketidakhadiran siswa KBM &amp; PKL.</p>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <!-- Tren Absensi KBM -->
+            <div class="col-lg-6 mb-4">
+                <div class="p-3 border rounded-lg bg-white h-100" style="border-radius: 12px; border: 1px solid rgba(0,0,0,0.06) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.01);">
+                    <h6 class="font-weight-bold text-dark mb-3"><i class="fas fa-chart-line text-success mr-1"></i> Tren Kehadiran KBM (6 Bulan Terakhir)</h6>
+                    <div style="height: 250px; position: relative;">
+                        <canvas id="kbmAttendanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ketidakhadiran KBM Pie Chart -->
+            <div class="col-lg-6 mb-4">
+                <div class="p-3 border rounded-lg bg-white h-100" style="border-radius: 12px; border: 1px solid rgba(0,0,0,0.06) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.01);">
+                    <h6 class="font-weight-bold text-dark mb-3"><i class="fas fa-chart-pie text-danger mr-1"></i> Ketidakhadiran KBM (Total Akumulasi)</h6>
+                    <div style="height: 250px; position: relative;">
+                        <canvas id="kbmAbsenPieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Tren Absensi PKL -->
+            <div class="col-lg-6 mb-4">
+                <div class="p-3 border rounded-lg bg-white h-100" style="border-radius: 12px; border: 1px solid rgba(0,0,0,0.06) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.01);">
+                    <h6 class="font-weight-bold text-dark mb-3"><i class="fas fa-chart-line text-primary mr-1"></i> Tren Kehadiran PKL (6 Bulan Terakhir)</h6>
+                    <div style="height: 250px; position: relative;">
+                        <canvas id="pklAttendanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ketidakhadiran PKL Pie Chart -->
+            <div class="col-lg-6 mb-4">
+                <div class="p-3 border rounded-lg bg-white h-100" style="border-radius: 12px; border: 1px solid rgba(0,0,0,0.06) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.01);">
+                    <h6 class="font-weight-bold text-dark mb-3"><i class="fas fa-chart-pie text-warning mr-1"></i> Ketidakhadiran PKL (Total Akumulasi)</h6>
+                    <div style="height: 250px; position: relative;">
+                        <canvas id="pklAbsenPieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Tren Harian Laporan PKL -->
+            <div class="col-lg-12">
+                <div class="p-3 border rounded-lg bg-white" style="border-radius: 12px; border: 1px solid rgba(0,0,0,0.06) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.01);">
+                    <h6 class="font-weight-bold text-dark mb-3"><i class="fas fa-chart-bar text-info mr-1"></i> Tren Harian Laporan PKL Masuk (14 Hari Terakhir)</h6>
+                    <div style="height: 280px; position: relative;">
+                        <canvas id="dailyPklChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Load Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<?php endif; ?>
 
 <script>
 function updateClock() {
@@ -717,14 +891,29 @@ function updateClock() {
     const monthName = months[now.getMonth()];
     const year = now.getFullYear();
     
-    // Format: 18 :45: 00  Rabu, 3 Juni 2026
-    document.getElementById('clock-time').innerHTML = `${hours} :${minutes}: ${seconds} &nbsp;&nbsp; ${dayName}, ${dateNum} ${monthName} ${year}`;
+    // Format Desktop: 18 :45: 00  Rabu, 3 Juni 2026
+    const deskClock = document.getElementById('clock-time');
+    if (deskClock) {
+        deskClock.innerHTML = `${hours} :${minutes}: ${seconds} &nbsp;&nbsp; ${dayName}, ${dateNum} ${monthName} ${year}`;
+    }
+    
+    // Format Mobile: 18:45:00
+    const mobClock = document.getElementById('mobile-clock-time');
+    if (mobClock) {
+        mobClock.innerHTML = `${hours}:${minutes}:${seconds}`;
+    }
 }
 
 function formatDashJournalInput(input) {
     let val = input.value.trim();
     if (val.length > 0) {
         input.value = val.charAt(0).toUpperCase() + val.slice(1);
+    }
+}
+
+function toggleNotification(el) {
+    if (window.innerWidth < 768) {
+        el.classList.toggle('expanded');
     }
 }
 
@@ -744,9 +933,9 @@ function updateDayLabel() {
         .then(data => {
             if (now.getDay() === 0 || data.is_holiday) {
                 const reason = data.is_holiday ? data.reason : 'Minggu';
-                el.innerHTML = `<span class="text-danger">ðŸ›Œ Hari Libur: ${reason}</span>, ${dateNum} ${monthName} ${year}`;
+                el.innerHTML = `<span class="text-danger">Hari Libur: ${reason}</span>, ${dateNum} ${monthName} ${year}`;
             } else {
-                el.innerHTML = `<span class="text-success">ðŸ“š Hari Aktif Sekolah</span>, ${dayName} ${dateNum} ${monthName} ${year}`;
+                el.innerHTML = `<span class="text-success">Hari Aktif Sekolah</span>, ${dayName} ${dateNum} ${monthName} ${year}`;
             }
         })
         .catch(() => {
@@ -755,9 +944,9 @@ function updateDayLabel() {
             const holidayReason = holidayData ? holidayData.dataset.reason : '';
             if (now.getDay() === 0 || isHoliday) {
                 const reason = isHoliday ? holidayReason : 'Minggu';
-                el.innerHTML = `<span class="text-danger">ðŸ›Œ Hari Libur: ${reason}</span>, ${dateNum} ${monthName} ${year}`;
+                el.innerHTML = `<span class="text-danger">Hari Libur: ${reason}</span>, ${dateNum} ${monthName} ${year}`;
             } else {
-                el.innerHTML = `<span class="text-success">ðŸ“š Hari Aktif Sekolah</span>, ${dayName} ${dateNum} ${monthName} ${year}`;
+                el.innerHTML = `<span class="text-success">Hari Aktif Sekolah</span>, ${dayName} ${dateNum} ${monthName} ${year}`;
             }
         });
 }
@@ -770,6 +959,129 @@ document.addEventListener('DOMContentLoaded', function () {
     // Realtime day label (cek perubahan hari setiap 60 detik)
     updateDayLabel();
     setInterval(updateDayLabel, 60000);
+
+    // Initialize Analytics Charts if elements exist
+    const hasCharts = document.getElementById('kbmAttendanceChart');
+    if (hasCharts) {
+        // 1. KBM Line Chart
+        const ctxKbmAtt = document.getElementById('kbmAttendanceChart').getContext('2d');
+        new Chart(ctxKbmAtt, {
+            type: 'line',
+            data: {
+                labels: <?= $monthLabels ?>,
+                datasets: [
+                    {
+                        label: 'Siswa KBM Hadir',
+                        data: <?= $hadirKbmMonth ?>,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#10b981',
+                        pointRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        // 2. PKL Line Chart
+        const ctxPklAtt = document.getElementById('pklAttendanceChart').getContext('2d');
+        new Chart(ctxPklAtt, {
+            type: 'line',
+            data: {
+                labels: <?= $monthLabels ?>,
+                datasets: [
+                    {
+                        label: 'Siswa PKL Hadir',
+                        data: <?= $hadirPklMonth ?>,
+                        borderColor: '#0284c7',
+                        backgroundColor: 'rgba(2, 132, 199, 0.15)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#0284c7',
+                        pointRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        // 3. KBM Ketidakhadiran Doughnut Chart
+        const ctxKbmAbsen = document.getElementById('kbmAbsenPieChart').getContext('2d');
+        new Chart(ctxKbmAbsen, {
+            type: 'doughnut',
+            data: {
+                labels: ['Sakit', 'Izin', 'Alpha'],
+                datasets: [{
+                    data: <?= $kbmAbsenData ?>,
+                    backgroundColor: ['#f59e0b', '#3b82f6', '#ef4444'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+
+        // 4. PKL Ketidakhadiran Doughnut Chart
+        const ctxPklAbsen = document.getElementById('pklAbsenPieChart').getContext('2d');
+        new Chart(ctxPklAbsen, {
+            type: 'doughnut',
+            data: {
+                labels: ['Sakit', 'Izin', 'Alpha'],
+                datasets: [{
+                    data: <?= $pklAbsenData ?>,
+                    backgroundColor: ['#f59e0b', '#3b82f6', '#ef4444'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+
+        // 5. Tren Harian PKL Bar Chart
+        const ctxDailyPkl = document.getElementById('dailyPklChart').getContext('2d');
+        new Chart(ctxDailyPkl, {
+            type: 'bar',
+            data: {
+                labels: <?= $dailyPklLabels ?>,
+                datasets: [
+                    {
+                        label: 'Total Kelompok Lapor',
+                        data: <?= $dailyPklData ?>,
+                        backgroundColor: 'rgba(14, 165, 233, 0.85)',
+                        borderColor: '#0284c7',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
 });
 </script>
 <?= $this->endSection() ?>

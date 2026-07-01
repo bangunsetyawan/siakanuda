@@ -2,7 +2,7 @@
 > **Baca file ini PERTAMA sebelum membuka file apapun.**
 > Dirancang untuk semua AI model (Gemini, Claude, GPT, dll) di semua PC/agent.
 > File ini adalah pengganti scanning seluruh folder — hemat token secara drastis.
-> **Terakhir diupdate:** 18 Juni 2026 — v1.11.1 (Sinkronisasi versi & dokumentasi).
+> **Terakhir diupdate:** 30 Juni 2026 — v1.21.0 (Sinkronisasi versi & cleanup dokumentasi).
 
 > ⚠️ **SSD Portabel** — Proyek ini berada di SSD portabel. Drive letter bisa berubah (E:\, F:\, G:\).
 > Gunakan path relatif. Root proyek = folder tempat file ini berada.
@@ -17,9 +17,19 @@
 Aplikasi sekolah berbasis **WhatsApp Bot + Web Dashboard + PWA**.
 Working directory aktif: `siakanuda/` — root proyek (SSD portabel exFAT, drive letter bisa berubah).
 
-Arsitektur **v1.11.1**:
+Arsitektur **v1.21.0**:
 1. **Satu pintu masuk**: Web Dashboard di **Port 8080** (CodeIgniter 4). Semua akses user (Admin, Guru, Siswa) dan PWA langsung menuju ke sini.
 2. **Background Service**: WhatsApp Bot + API di **Port 7860** (Node.js). Berjalan diam-diam di belakang layar untuk notifikasi/broadcast, pdf generator, sync Supabase, dan cron jobs. Panel ringan hanya untuk manajemen koneksi WA (QR code, kirim pesan, log, cron trigger).
+3. **Production Server**: Nginx (port 8080) + PHP 8.4 FPM + Cloudflare Tunnel. **JANGAN** gunakan `php spark serve` di production.
+
+## 🖥️ Struktur Server & Service (Penting untuk Deployment)
+- **Lokasi Proyek (Working Directory)**: `~/siakanuda/` (atau `/home/smknuda/siakanuda/`)
+  > ⛔ **JANGAN PERNAH** deploy atau ekstrak ke `/var/www/siakanuda/`. Selalu gunakan `~/siakanuda/`.
+- **SystemD Services Terdaftar**:
+  1. `bot.siswa` (Menjalankan bot WA Node.js. Restart jika edit file `.js`)
+  2. `php8.4-fpm` (Menjalankan eksekusi PHP CodeIgniter. Restart jika edit file `.php`)
+  3. `nginx` (Sebagai Reverse Proxy / Web Server)
+  4. `siakadash` (⛔ **SUDAH DISABLED**, JANGAN dihidupkan ulang karena bentrok port 8080 dengan Nginx)
 
 ---
 
@@ -41,11 +51,12 @@ Arsitektur **v1.11.1**:
 ```
 ./                             ← ROOT PROYEK (SSD portabel, drive letter bisa berubah)
 ├── AI_CONTEXT.md              ← FILE INI (Single Source of Truth)
+├── STRUKTUR_PROYEK.md         ← Panduan folder lengkap (lokal & server) + aturan kebersihan
 ├── AGENTS.md                  ← Aturan untuk AI agent
 ├── .env                       ← Credentials (JANGAN expose!)
 ├── .env.example               ← Template .env (aman dibaca)
 ├── .gitignore
-├── package.json               ← version: 1.16.0, type: module
+├── package.json               ← version: 1.21.0, type: module
 ├── siakanuda.db               ← SQLite 16 tabel (data lokal)
 ├── bot.siswa.service          ← Systemd file untuk Debian
 │
@@ -59,11 +70,8 @@ Arsitektur **v1.11.1**:
 │
 ├── public/                    ← ASSET UMUM
 │   ├── logo-smk.png           ← Logo sekolah (dipakai PDF generator)
-│   └── bkk/                   ← [STANDALONE] Portal BKK Tracer Study Alumni
-│                                HTML+Supabase, auth & DB terpisah dari SIAKANUDA.
-│                                Folder ini HANYA workspace edit lokal.
-│                                Deploy terpisah ke: github.io & smknudarussalam.sch.id/bkk
-│                                JANGAN deploy bersama SIAKANUDA.
+│
+
 │
 ├── dashboard/                 ← CODEIGNITER 4 DASHBOARD (Port 8080)
 │   ├── .env                   ← CI4 config (DB path relatif ke siakanuda.db)
@@ -179,6 +187,53 @@ php spark serve
 ---
 
 ## 🪵 Log Perubahan Terbaru (Recent Changes Log)
+
+### **v1.21.0** (30 Jun 2026) - Refaktor Arsitektur Grup WA
+1. **Refaktor Target Grup Bot WA**: Menyederhanakan target pengiriman pesan otomatis menjadi 3 grup terisolasi:
+   - **Grup Khusus Absensi PKL (BROADCAST_GROUP_JID)**: Murni menampung jurnal/absensi dari siswa dan pengingat harian jam 14.00.
+   - **Grup Khusus Guru (TEACHER_GROUP_JID)**: Murni untuk Rekap/Eskalasi siswa bolos sore hari dan laporan Kunjungan Monitoring Guru (terhindar dari spam absen siswa).
+   - **Grup Khusus KBM (SCHOOL_GROUP_JID)**: Murni untuk peringatan guru piket, laporan absensi kelas realtime, dan rekapitulasi sekolah.
+2. **Fix Algoritma Short URL**: Memperbarui algoritma *shortener* agar menggunakan random hash untuk foto monitoring PKL sehingga *link* dapat diakses dengan normal, dengan fallback otomatis untuk kompatibilitas ke belakang (laporan lama).
+3. **Pembersihan Template Pesan Usang**: Menghapus template notifikasi yang sudah tidak terpakai dari menu pengaturan Web Dashboard dan memperbaiki layout Bootstrap UI tab.
+
+
+### **v1.19.0** (29 Jun 2026) - Fitur Monitoring PKL
+1. **Fitur Kunjungan Monitoring PKL**:
+   - Menambahkan menu baru "Monitoring" di modul PKL di sidebar untuk semua role yang relevan.
+   - Pembimbing PKL dapat mencatat tanggal kunjungan, menuliskan catatan/laporan monitoring, serta mengunggah hingga 3 foto dokumentasi.
+   - Menyediakan form modal Tambah & Edit interaktif yang dilengkapi preview foto sebelum diunggah dan counter karakter catatan (minimal 10 karakter).
+   - Mendukung edit dan hapus catatan kunjungan monitoring bagi guru pembimbing pembuat atau admin/kepsek.
+   - Mendukung mode read-only untuk siswa/anggota PKL guna memantau riwayat kunjungan monitoring kelompoknya.
+
+### **v1.19.1 — v1.19.7** (29-30 Jun 2026) - Patch Mobile & UI
+- **v1.19.1**: Fix table overflow di riwayat PKL, sembunyikan bottom nav saat cetak.
+- **v1.19.2**: Global mobile responsiveness untuk tabel, form, dan info box.
+- **v1.19.3**: Kembalikan scrolling horizontal pada tabel mobile (word-break dihapus).
+- **v1.19.4**: Perbaiki teks tanggal dan elemen dashboard yang hancur pada card.
+- **v1.19.5**: Auto-inject label 'Pilih Tanggal' / 'Pilih Bulan' pada filter form mobile.
+- **v1.19.6**: Sembunyikan form upload foto dokumentasi saat ketua memilih 'Libur/Tutup'.
+- **v1.19.7**: Perjelas label foto dokumentasi kelompok dan foto bukti izin/sakit.
+
+### **v1.20.0** (30 Jun 2026) - Anti-Spam & URL Shortener
+1. **Arsitektur Anti-Spam WA**: Implementasi message queue dengan delay acak 12-20 detik antar pesan untuk mencegah banned.
+2. **Local URL Shortener**: Endpoint `/s/:code` untuk mempersingkat URL dalam pesan WA.
+3. **Automatic Broadcast Timestamp**: Format waktu otomatis pada pesan broadcast.
+
+### **v1.20.1** (30 Jun 2026) - Security Patch
+- Hapus bot backdoor, amankan URL shortener, optimasi PKL print layout.
+
+### **v1.20.2** (30 Jun 2026) - Broadcast Monitoring PKL
+- Broadcast monitoring PKL ke grup WhatsApp saat guru pembimbing simpan/update data kunjungan.
+- Integrasikan monitoring PKL ke sistem template WA yang bisa diedit admin.
+
+### **v1.20.3 — v1.20.9** (30 Jun 2026) - Rekap Absensi & Cleanup
+- **v1.20.3**: Tambah tombol "Kirim Rekap WA" untuk broadcast rekap absensi PKL harian ke grup guru.
+- **v1.20.4**: Batasi akses tombol rekap hanya untuk admin.
+- **v1.20.5**: Ringkas format rekap menjadi 1 baris per kelompok.
+- **v1.20.6**: Hapus total elemen GPS dan perbaiki JavaScript error di monitoring PKL.
+- **v1.20.7**: Ganti jQuery ready dengan vanilla DOMContentLoaded (fix `$ is not defined`).
+- **v1.20.8**: Tambah daftar link foto dokumentasi pada broadcast monitoring PKL.
+- **v1.20.9**: Update seeder template monitoring, sinkronisasi versi di seluruh file, perbaiki dokumentasi stale.
 
 ### **v1.9.0** (9 Jun 2026) - Optimasi Client-Side & Cloud Offloading
 1. **Optimasi Upload Foto PKL (Client-Side Compression)**:

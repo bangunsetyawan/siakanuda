@@ -21,7 +21,14 @@ class Auth extends BaseController
 
     public function attemptLogin()
     {
-        $username = $this->request->getPost('username');
+        $loginType = $this->request->getPost('login_type');
+        
+        if ($loginType === 'guru') {
+            $username = $this->request->getPost('username_guru');
+        } else {
+            $username = $this->request->getPost('username_siswa');
+        }
+        
         $password = $this->request->getPost('password');
 
         if (empty($username) || empty($password)) {

@@ -7,7 +7,7 @@
 * **Sumber (Lokal):** Windows PC `F:\Antigravity\siakanuda`
 * **Target (Produksi):** Lenovo Notebook Debian 13 Headless
 * **Lokasi Folder Target:** `/home/smknuda/siakanuda`
-* **IP Server Debian:** Lokal `10.10.11.37` | Tailscale `100.110.83.48`
+* **IP Server Debian:** Lokal `[IP_SERVER_LAN]` | Tailscale `[IP_SERVER_TAILSCALE]`
 * **Port Layanan:**
   - **8080** (CodeIgniter 4 Dashboard) — **Exposed / Diakses oleh Pengguna & APK**
   - **7860** (Node.js Background API) — **Internal / Hidden** (Hanya dipanggil secara lokal oleh CI4)
@@ -31,30 +31,6 @@ scp update.tar.gz [SSH_USER]@[IP_SERVER_TAILSCALE]:~/
 ssh [SSH_USER]@[IP_SERVER_TAILSCALE]
 tar -xzf update.tar.gz -C ~/
 ```
-
-## 🚀 Prosedur Deploy (Patch Update)
-
-Gunakan metode ini jika hanya mengubah sebagian kecil file (misalnya update Controller atau logic bot).
-
-### Langkah 1: Siapkan Patch di Lokal Windows
-1. Jalankan CLI/Terminal di folder project lokal Anda.
-2. Buat arsip update menggunakan perintah:
-   ```bash
-   tar -czvf update.tar.gz dashboard/app/Controllers/ nama_file_yang_diupdate.php
-   ```
-
-### Langkah 2: Transfer File ke Server Debian
-Gunakan SCP untuk memindahkan patch ke server:
-```bash
-scp update.tar.gz [SSH_USER]@[IP_SERVER_TAILSCALE]:~/
-```
-
-### Langkah 3: Ekstrak Patch di Server
-1. Masuk ke server menggunakan SSH:
-   ```bash
-   ssh [SSH_USER]@[IP_SERVER_TAILSCALE]
-   tar -xzf update.tar.gz -C ~/
-   ```
 
 ### Step 2: Install Dependency (Jika Diperlukan saja)
 Jika ada library baru yang dipasang selama development:
@@ -127,7 +103,7 @@ sudo systemctl enable --now siakadash
 ## 🔍 Cara Verifikasi Hasil Deployment
 
 1. **Akses Dashboard Sekolah:**
-   Buka `http://10.10.11.37:8080` dari laptop/HP yang terhubung ke Wi-Fi sekolah.
+   Buka `http://[IP_SERVER_LAN]:8080` dari laptop/HP yang terhubung ke Wi-Fi sekolah.
 2. **Cek Koneksi WhatsApp Bot:**
    Buka menu panel WhatsApp di dashboard CI4 (Admin Area). Pastikan status bot terlaporkan sebagai `connected`.
 3. **Pantau Log Layanan:**
